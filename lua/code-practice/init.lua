@@ -265,12 +265,43 @@ function code_practice.show_solution()
 
   close_solution_window()
 
+  local comment_prefix = "#"
+  if exercise.language == "rust" then
+    comment_prefix = "//"
+  elseif exercise.language == "theory" then
+    comment_prefix = ""
+  end
+
+  local lines = {}
+  local function add_meta(line)
+    if comment_prefix == "" then
+      table.insert(lines, line)
+    else
+      if line == "" then
+        table.insert(lines, comment_prefix)
+      else
+        table.insert(lines, comment_prefix .. " " .. line)
+      end
+    end
+  end
+
+  add_meta("Solution: " .. exercise.title)
+  add_meta("Difficulty: " .. exercise.difficulty .. " | Language: " .. exercise.language)
+  add_meta("")
+  add_meta("")
+  add_meta(string.rep("-", 40))
+  add_meta("")
+
+  for _, line in ipairs(utils.split_lines(exercise.solution)) do
+    table.insert(lines, line)
+  end
+
   local bufnr = vim.api.nvim_create_buf(false, true)
   vim.bo[bufnr].buftype = "nofile"
   vim.bo[bufnr].bufhidden = "wipe"
   vim.bo[bufnr].swapfile = false
   vim.bo[bufnr].filetype = utils.filetype_from_language(exercise.language)
-  vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, utils.split_lines(exercise.solution))
+  vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
   vim.bo[bufnr].modifiable = false
   vim.bo[bufnr].readonly = true
 
