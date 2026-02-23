@@ -9,7 +9,7 @@ M.defaults = {
     -- Database file path
     db_path = vim.fn.stdpath("data") .. "/code-practice/exercises.db",
   },
-  
+
   -- UI settings
   ui = {
     -- Window width (0.0-1.0 for percentage, or absolute number)
@@ -21,7 +21,7 @@ M.defaults = {
     -- Show relative line numbers in browser
     show_numbers = true,
   },
-  
+
   -- Language settings
   languages = {
     python = {
@@ -40,7 +40,7 @@ M.defaults = {
       -- File extension
       ext = "rs",
       -- Default template
-      template = "fn solution() {\n    // Your code here\n}\n\nfn main() {\n    println!(\"{:?}\", solution());\n}",
+      template = 'fn solution() {\n    // Your code here\n}\n\nfn main() {\n    println!("{:?}", solution());\n}',
     },
     theory = {
       enabled = true,
@@ -50,7 +50,7 @@ M.defaults = {
       template = "# Theory Question\n\n## Question\n\nYour question here.\n\n## Options\n1. Option A\n2. Option B\n3. Option C\n4. Option D\n\n## Answer\nCorrect option number (1-4)",
     },
   },
-  
+
   -- Test runner settings
   runner = {
     -- Timeout for test execution (seconds)
@@ -60,7 +60,7 @@ M.defaults = {
     -- Auto-save before running tests
     auto_save = true,
   },
-  
+
   -- Keymaps
   keymaps = {
     -- Browser keymaps
@@ -94,7 +94,7 @@ M.config = vim.deepcopy(M.defaults)
 function M.setup(user_config)
   user_config = user_config or {}
   M.config = vim.tbl_deep_extend("force", M.defaults, user_config)
-  
+
   -- Ensure storage directory exists
   vim.fn.mkdir(M.config.storage.home, "p")
 end
@@ -103,14 +103,14 @@ end
 function M.get(key)
   local keys = vim.split(key, ".", { plain = true })
   local value = M.config
-  
+
   for _, k in ipairs(keys) do
     value = value[k]
     if value == nil then
       return nil
     end
   end
-  
+
   return value
 end
 

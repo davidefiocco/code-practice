@@ -88,14 +88,30 @@ local function setup_exercise_keymaps(bufnr)
     end
   end
 
-  bmap(km.run_tests, function() code_practice.run_tests() end, "CP: Run tests")
-  bmap(km.show_hint, function() code_practice.show_hints() end, "CP: Show hints")
-  bmap(km.view_solution, function() code_practice.show_solution() end, "CP: View solution")
-  bmap(km.show_description, function() code_practice.show_description() end, "CP: Show description")
-  bmap(km.next_exercise, function() code_practice.next_exercise() end, "CP: Next exercise")
-  bmap(km.prev_exercise, function() code_practice.prev_exercise() end, "CP: Previous exercise")
-  bmap(km.skip_exercise, function() code_practice.skip_exercise() end, "CP: Skip exercise")
-  bmap(km.open_browser, function() code_practice.open_browser() end, "CP: Open browser")
+  bmap(km.run_tests, function()
+    code_practice.run_tests()
+  end, "CP: Run tests")
+  bmap(km.show_hint, function()
+    code_practice.show_hints()
+  end, "CP: Show hints")
+  bmap(km.view_solution, function()
+    code_practice.show_solution()
+  end, "CP: View solution")
+  bmap(km.show_description, function()
+    code_practice.show_description()
+  end, "CP: Show description")
+  bmap(km.next_exercise, function()
+    code_practice.next_exercise()
+  end, "CP: Next exercise")
+  bmap(km.prev_exercise, function()
+    code_practice.prev_exercise()
+  end, "CP: Previous exercise")
+  bmap(km.skip_exercise, function()
+    code_practice.skip_exercise()
+  end, "CP: Skip exercise")
+  bmap(km.open_browser, function()
+    code_practice.open_browser()
+  end, "CP: Open browser")
 end
 
 function code_practice.open_exercise(id)
@@ -209,7 +225,8 @@ end
 function code_practice.show_stats()
   local stats = manager.get_stats()
 
-  local msg = string.format([[
+  local msg = string.format(
+    [[
 Code Practice Statistics
 ========================
 Total Exercises: %d
@@ -343,7 +360,6 @@ function code_practice.show_solution()
 
   utils.notify("Solution opened in a split (q/<Esc>/<Enter> to close)", "info")
 end
-
 
 function code_practice.show_description()
   local exercise_id = code_practice.get_current_exercise_id()
