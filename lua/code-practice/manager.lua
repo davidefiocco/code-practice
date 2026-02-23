@@ -51,6 +51,7 @@ function manager.open_exercise(id)
   end
 
   local filetype = utils.filetype_from_language(exercise.language)
+  vim.bo[bufnr].buftype = "nofile"
   vim.bo[bufnr].filetype = filetype
   vim.bo[bufnr].swapfile = false
 
