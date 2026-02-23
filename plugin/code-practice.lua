@@ -1,6 +1,5 @@
 -- Code Practice - Plugin Commands
 local code_practice = require("code-practice.init")
-local config = require("code-practice.config")
 
 vim.api.nvim_create_user_command("CodePractice", function(opts)
     local args = opts.fargs[1] or "open"
@@ -30,25 +29,6 @@ end, {
     complete = function()
         return { "open", "close", "refresh", "stats" }
     end,
-})
-
-vim.api.nvim_create_user_command("CPAdd", function(opts)
-    local args = opts.fargs
-    local data = {
-        title = args[1] or "New Exercise",
-        description = args[2] or "Enter description",
-        difficulty = args[3] or "easy",
-        language = args[4] or "python",
-        test_cases = {},
-    }
-
-    local id = code_practice.add_exercise(data)
-    if id then
-        code_practice.open_exercise(id)
-    end
-end, {
-    nargs = "*",
-    desc = "Add a new exercise (title description difficulty language)",
 })
 
 vim.api.nvim_create_user_command("CPRun", function()
@@ -93,76 +73,69 @@ end, {
     desc = "Show solution for current exercise",
 })
 
-vim.api.nvim_create_user_command("CPDelete", function(opts)
-    local exercise_id = code_practice.get_current_exercise_id()
-    if not exercise_id then
-        vim.notify("No exercise associated with this buffer", vim.log.levels.ERROR)
-        return
-    end
-
-    local confirmed = vim.fn.confirm("Delete this exercise?", "&Yes\n&No")
-    if confirmed == 1 then
-        code_practice.delete_exercise(exercise_id)
-        vim.cmd("bd!")
-    end
-end, {
-    desc = "Delete current exercise",
-})
-
-
-vim.api.nvim_create_user_command("CPImport", function(opts)
-    local filepath = opts.fargs[1]
-    if not filepath then
-        vim.notify("Usage: CPImport <filepath>", vim.log.levels.ERROR)
-        return
-    end
-    code_practice.import_exercises(filepath)
-end, {
-    nargs = 1,
-    desc = "Import exercises from JSON file",
-})
-
-vim.api.nvim_create_user_command("CPExport", function(opts)
-    local filepath = opts.fargs[1]
-    code_practice.export_exercises(filepath)
-end, {
-    nargs = "?",
-    desc = "Export exercises to JSON file",
-})
-
 vim.api.nvim_create_user_command("CPHelp", function()
     code_practice.show_help()
 end, {
     desc = "Show Code Practice quick guide",
 })
 
-local M = {}
+vim.api.nvim_create_user_command("CPGenerate", function()
+    local topic = vim.fn.input("Topic: ")
+    if not topic or topic == "" then
+        return
+    end
+    local count = vim.fn.input("Count [5]: ")
+    count = (count and count ~= "") and count or "5"
+    local difficulty = vim.fn.input("Difficulty (easy/medium/hard) [medium]: ")
+    difficulty = (difficulty and difficulty ~= "") and difficulty or "medium"
+    local language = vim.fn.input("Language (python/rust/theory) [python]: ")
+    language = (language and language ~= "") and language or "python"
 
-function M.setup(opts)
-    code_practice.setup(opts)
+    local plugin_dir = vim.fn.fnamemodify(debug.getinfo(1, "S").source:sub(2), ":h:h")
+    local script = plugin_dir .. "/tools/generate_exercises.py"
+    local db_path = require("code-practice.config").get("storage.db_path")
 
-    local keymaps = config.get("keymaps.browser")
+    local cmd = {
+        "python3", script,
+        "--topic", topic,
+        "--count", count,
+        "--difficulty", difficulty,
+        "--language", language,
+        "--db-path", db_path,
+    }
 
-    vim.keymap.set("n", keymaps.open or "<leader>cp", function()
-        code_practice.open_browser()
-    end, { desc = "Open Code Practice browser" })
+    vim.notify("[code-practice] Generating exercises...", vim.log.levels.INFO)
 
-    vim.keymap.set("n", keymaps.add or "<leader>cpa", function()
-        vim.cmd("CPAdd")
-    end, { desc = "Add new exercise" })
+    local output_lines = {}
+    vim.fn.jobstart(cmd, {
+        stdout_buffered = true,
+        stderr_buffered = true,
+        on_stdout = function(_, data)
+            if data then
+                vim.list_extend(output_lines, data)
+            end
+        end,
+        on_stderr = function(_, data)
+            if data then
+                vim.list_extend(output_lines, data)
+            end
+        end,
+        on_exit = function(_, exit_code)
+            vim.schedule(function()
+                local msg = table.concat(output_lines, "\n")
+                if exit_code == 0 then
+                    vim.notify("[code-practice] " .. msg, vim.log.levels.INFO)
+                    local browser = require("code-practice.browser")
+                    if browser.refresh then
+                        browser.refresh()
+                    end
+                else
+                    vim.notify("[code-practice] Generation failed:\n" .. msg, vim.log.levels.ERROR)
+                end
+            end)
+        end,
+    })
+end, {
+    desc = "Generate exercises via Hugging Face LLM",
+})
 
-    vim.keymap.set("n", keymaps.run or "<leader>cpr", function()
-        vim.cmd("CPRun")
-    end, { desc = "Run tests" })
-
-    vim.keymap.set("n", keymaps.stats or "<leader>cps", function()
-        vim.cmd("CPStats")
-    end, { desc = "Show statistics" })
-
-
-    vim.keymap.set("n", "<leader>cph", function()
-        code_practice.show_help()
-    end, { desc = "Show Code Practice guide" })
-end
-
-return M

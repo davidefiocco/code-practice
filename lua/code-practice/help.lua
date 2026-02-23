@@ -1,5 +1,9 @@
 -- Code Practice - Help Module
-local Popup = require("nui.popup")
+local ok, Popup = pcall(require, "nui.popup")
+if not ok then
+    vim.notify("[code-practice] nui.nvim not found. Install MunifTanjim/nui.nvim", vim.log.levels.ERROR)
+    return {}
+end
 
 local help = {}
 
@@ -53,13 +57,11 @@ function help.show()
         "",
         "  COMMANDS",
         "  " .. string.rep("─", width - 4),
-        "  :CP              Open exercise browser              :CPAdd           Add new exercise",
-        "  :CPRun           Run tests on current exercise      :CPStats         Show statistics",
+        "  :CP              Open exercise browser              :CPStats         Show statistics",
+        "  :CPRun           Run tests on current exercise      :CPHelp          Show this guide",
         "  :CPNext          Open next exercise                 :CPPrev          Open previous exercise",
         "  :CPSkip          Skip current exercise",
         "  :CPHint          Show hints for current exercise    :CPSolution      Show solution",
-        "  :CPDelete        Delete current exercise            :CPHelp          Show this guide",
-        "  :CPImport <file> Import exercises from JSON         :CPExport <file> Export exercises",
         "",
         "  BROWSER KEYMAPS",
         "  " .. string.rep("─", width - 4),
@@ -67,29 +69,27 @@ function help.show()
         "  e                Filter by Easy difficulty          m                Filter by Medium",
         "  h                Filter by Hard difficulty          a                Clear all filters",
         "  p                Filter by Python exercises         r                Filter by Rust",
-        "  t                Filter by Theory questions         n                Create new exercise",
-        "  d                Delete selected exercise           q / Esc          Close browser",
+        "  t                Filter by Theory questions         q / Esc          Close browser",
         "  ?                Show this help guide",
         "",
         "  EXERCISE BUFFER KEYMAPS",
         "  " .. string.rep("─", width - 4),
         "  :CPRun           Run tests and show results         :CPHint          Show hints",
-        "  :CPSolution      Show reference solution            :CPDelete        Delete exercise",
+        "  :CPSolution      Show reference solution",
         "",
         "  TIPS",
         "  " .. string.rep("─", width - 4),
         "  • Tests compare exact output - watch for trailing whitespace and newlines",
         "  • Theory questions: add a line like 'Answer: 2' before running tests",
-        "  • Use :CPImport to load exercises from a JSON file",
         "  • Press <leader>cp as a shortcut to open the browser",
         "",
         "  Press q or <Esc> to close this guide",
         "",
     }
     
-    vim.api.nvim_buf_set_option(popup.bufnr, "modifiable", true)
+    vim.bo[popup.bufnr].modifiable = true
     vim.api.nvim_buf_set_lines(popup.bufnr, 0, -1, false, lines)
-    vim.api.nvim_buf_set_option(popup.bufnr, "modifiable", false)
+    vim.bo[popup.bufnr].modifiable = false
     
     -- Add highlights
     local ns = vim.api.nvim_create_namespace("code_practice_help")

@@ -18,9 +18,9 @@ local function create_results_window()
     local col = math.floor((vim.o.columns - width) / 2)
     
     local bufnr = vim.api.nvim_create_buf(false, true)
-    vim.api.nvim_buf_set_option(bufnr, "buftype", "nofile")
-    vim.api.nvim_buf_set_option(bufnr, "bufhidden", "wipe")
-    vim.api.nvim_buf_set_option(bufnr, "swapfile", false)
+    vim.bo[bufnr].buftype = "nofile"
+    vim.bo[bufnr].bufhidden = "wipe"
+    vim.bo[bufnr].swapfile = false
 
     local winid = vim.api.nvim_open_win(bufnr, true, {
         relative = "editor",
@@ -110,11 +110,11 @@ function results.show(result)
     if #lines == 0 then
         lines = { "No results available." }
     end
-    vim.api.nvim_buf_set_option(bufnr, "modifiable", true)
-    vim.api.nvim_buf_set_option(bufnr, "readonly", false)
+    vim.bo[bufnr].modifiable = true
+    vim.bo[bufnr].readonly = false
     vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
-    vim.api.nvim_buf_set_option(bufnr, "modifiable", false)
-    vim.api.nvim_buf_set_option(bufnr, "readonly", true)
+    vim.bo[bufnr].modifiable = false
+    vim.bo[bufnr].readonly = true
     
     vim.keymap.set({ "n", "i" }, "q", results.close, { buffer = bufnr, silent = true, nowait = true })
     vim.keymap.set({ "n", "i" }, "<Esc>", results.close, { buffer = bufnr, silent = true, nowait = true })

@@ -1,6 +1,11 @@
 -- Code Practice - Database Module
 local config = require("code-practice.config")
-local sqlite = require("sqlite")
+
+local ok, sqlite = pcall(require, "sqlite")
+if not ok then
+    vim.notify("[code-practice] sqlite.lua not found. Install kkharji/sqlite.lua", vim.log.levels.ERROR)
+    return {}
+end
 
 local db = {}
 local db_connection = nil
@@ -27,7 +32,11 @@ local function safe_insert(conn, table_name, columns, values)
         end
     end
     local sql = string.format("INSERT INTO %s (%s) VALUES (%s)", table_name, col_list, table.concat(val_list, ", "))
-    conn:eval(sql)
+    local ok, err = pcall(conn.eval, conn, sql)
+    if not ok then
+        return false, tostring(err)
+    end
+    return true
 end
 
 function db.connect()
@@ -38,11 +47,12 @@ function db.connect()
     local db_path = config.get("storage.db_path")
     
     db_connection = sqlite.new(db_path)
-    db_connection:open()
-
     if not db_connection then
         error("Failed to open database at: " .. db_path)
     end
+    db_connection:open()
+
+    db_connection:eval("PRAGMA foreign_keys = ON")
 
     db.create_tables()
 
@@ -173,54 +183,6 @@ function db.get_exercise_by_id(id)
     return nil
 end
 
-function db.create_exercise(exercise)
-    local conn = db.connect()
-    
-    local tags = vim.json.encode(exercise.tags or {})
-    local hints = vim.json.encode(exercise.hints or {})
-
-    safe_insert(conn, "exercises", 
-        { "title", "description", "difficulty", "language", "tags", "hints", "solution", "starter_code" },
-        { exercise.title, exercise.description, exercise.difficulty, exercise.language, tags, hints, exercise.solution or "", exercise.starter_code or "" }
-    )
-
-    local result = conn:eval("SELECT MAX(id) as id FROM exercises")
-    if result and type(result) == "table" and result[1] and result[1].id then
-        return result[1].id
-    end
-
-    return nil, "Failed to get insert ID"
-end
-
-function db.update_exercise(id, exercise)
-    local conn = db.connect()
-    
-    local tags = vim.json.encode(exercise.tags or {})
-    local hints = vim.json.encode(exercise.hints or {})
-
-    local sql = string.format(
-        "UPDATE exercises SET title = '%s', description = '%s', difficulty = '%s', language = '%s', tags = '%s', hints = '%s', solution = '%s', starter_code = '%s' WHERE id = %d",
-        escape_sql_string(exercise.title),
-        escape_sql_string(exercise.description),
-        escape_sql_string(exercise.difficulty),
-        escape_sql_string(exercise.language),
-        escape_sql_string(tags),
-        escape_sql_string(hints),
-        escape_sql_string(exercise.solution or ""),
-        escape_sql_string(exercise.starter_code or ""),
-        id
-    )
-    conn:eval(sql)
-
-    return true
-end
-
-function db.delete_exercise(id)
-    local conn = db.connect()
-    conn:eval(string.format("DELETE FROM exercises WHERE id = %d", id))
-    return true
-end
-
 function db.get_test_cases(exercise_id)
     local conn = db.connect()
     local results = conn:eval(string.format("SELECT * FROM test_cases WHERE exercise_id = %d ORDER BY id", exercise_id))
@@ -236,37 +198,19 @@ function db.get_test_cases(exercise_id)
     return results or {}
 end
 
-function db.add_test_case(exercise_id, test_case)
-    local conn = db.connect()
-
-    safe_insert(conn, "test_cases",
-        { "exercise_id", "input", "expected_output", "is_hidden", "description" },
-        { exercise_id, test_case.input or "", test_case.expected_output, test_case.is_hidden and 1 or 0, test_case.description or "" }
-    )
-
-    local result = conn:eval(string.format("SELECT MAX(id) as id FROM test_cases WHERE exercise_id = %d", exercise_id))
-    if result and type(result) == "table" and result[1] and result[1].id then
-        return result[1].id
-    end
-
-    return nil
-end
-
-function db.delete_test_case(id)
-    local conn = db.connect()
-    conn:eval(string.format("DELETE FROM test_cases WHERE id = %d", id))
-    return true
-end
-
 function db.record_attempt(exercise_id, code, passed, output, duration_ms)
     local conn = db.connect()
 
-    safe_insert(conn, "attempts",
+    local ok, err = safe_insert(conn, "attempts",
         { "exercise_id", "code", "passed", "output", "duration_ms" },
         { exercise_id, code, passed and 1 or 0, output, duration_ms }
     )
 
-    return true
+    if not ok then
+        vim.notify("[code-practice] Failed to record attempt: " .. (err or "unknown"), vim.log.levels.WARN)
+    end
+
+    return ok
 end
 
 function db.get_attempts(exercise_id)
@@ -284,14 +228,18 @@ function db.get_attempts(exercise_id)
     return results or {}
 end
 
+local function extract_count(result)
+    if not result then return 0 end
+    if result.count ~= nil then return result.count end
+    if type(result) == "table" and result[1] and result[1].count ~= nil then return result[1].count end
+    return 0
+end
+
 function db.get_stats()
     local conn = db.connect()
     local stats = {}
 
-    local result = conn:eval("SELECT COUNT(*) as count FROM exercises")
-    if result and result.count then
-        stats.total = result.count
-    end
+    stats.total = extract_count(conn:eval("SELECT COUNT(*) as count FROM exercises"))
 
     stats.by_difficulty = {}
     local results = conn:eval("SELECT difficulty, COUNT(*) as count FROM exercises GROUP BY difficulty")
@@ -305,10 +253,7 @@ function db.get_stats()
         end
     end
 
-    result = conn:eval("SELECT COUNT(DISTINCT exercise_id) as count FROM attempts WHERE passed = 1")
-    if result and result.count then
-        stats.solved = result.count
-    end
+    stats.solved = extract_count(conn:eval("SELECT COUNT(DISTINCT exercise_id) as count FROM attempts WHERE passed = 1"))
 
     return stats
 end
@@ -348,23 +293,6 @@ function db.get_theory_options(exercise_id)
     end
 
     return results or {}
-end
-
-function db.add_theory_option(exercise_id, option)
-    local conn = db.connect()
-
-    safe_insert(conn, "theory_options",
-        { "exercise_id", "option_number", "option_text", "is_correct" },
-        { exercise_id, option.option_number, option.option_text, option.is_correct and 1 or 0 }
-    )
-
-    return true
-end
-
-function db.delete_theory_options(exercise_id)
-    local conn = db.connect()
-    conn:eval(string.format("DELETE FROM theory_options WHERE exercise_id = %d", exercise_id))
-    return true
 end
 
 return db
