@@ -24,11 +24,11 @@ Requirements
 
 Quick Start
 -----------
-1. Open browser: `:CP`
+1. Open browser: `:CP` (or `<leader>cp`)
 2. Navigate with `j`/`k`, open with `Enter`
 3. Write your solution in the buffer
-4. Run tests: `:CPRun`
-5. Move on: `:CPNext`
+4. Run tests: `<leader>r` (or `:CPRun`)
+5. Move on: `<leader>n` (or `:CPNext`)
 
 Commands
 --------
@@ -45,6 +45,8 @@ Commands
 | `:CPStats`     | Show practice statistics             |
 | `:CPHelp`      | Show the in-editor quick guide       |
 | `:CPGenerate`  | Generate exercises via LLM           |
+
+All commands support tab completion -- type `:CP<Tab>` to explore.
 
 Browser Keymaps
 ---------------
@@ -64,14 +66,27 @@ Browser Keymaps
 | `Esc`     | Close browser                   |
 | `?`       | Show help guide                 |
 
-Default Keymaps
----------------
+Global Keymaps
+--------------
 | Key            | Action                   |
 |----------------|--------------------------|
 | `<leader>cp`   | Open exercise browser   |
-| `<leader>cpr`  | Run tests               |
 | `<leader>cps`  | Show statistics         |
-| `<leader>cph`  | Show help guide         |
+
+Exercise Buffer Keymaps
+-----------------------
+These are active only inside exercise buffers (set via `keymaps.exercise` config):
+
+| Key            | Action                          |
+|----------------|---------------------------------|
+| `<leader>r`    | Run tests                       |
+| `<leader>h`    | Show hints                      |
+| `<leader>s`    | View solution (split)           |
+| `<leader>d`    | Show description                |
+| `<leader>n`    | Next exercise                   |
+| `<leader>p`    | Previous exercise               |
+| `<leader>k`    | Skip exercise                   |
+| `<leader>m`    | Open browser (menu)             |
 
 Tools
 -----

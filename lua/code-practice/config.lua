@@ -82,8 +82,7 @@ M.defaults = {
       next_exercise = "<leader>n",
       prev_exercise = "<leader>p",
       skip_exercise = "<leader>k",
-      open_browser = "<leader>b",
-      close = "<leader>q",
+      open_browser = "<leader>m",
     },
   },
 }
