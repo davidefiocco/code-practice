@@ -13,6 +13,14 @@ local solution_window = {
   bufnr = nil,
 }
 
+local function close_solution_window()
+  if solution_window.winid and vim.api.nvim_win_is_valid(solution_window.winid) then
+    vim.api.nvim_win_close(solution_window.winid, true)
+  end
+  solution_window.winid = nil
+  solution_window.bufnr = nil
+end
+
 local session = {
   history = {},
   index = 0,
@@ -62,6 +70,7 @@ function code_practice.setup(opts)
 end
 
 function code_practice.open_browser()
+  close_solution_window()
   browser.open()
 end
 
@@ -74,6 +83,7 @@ function code_practice.refresh_browser()
 end
 
 function code_practice.open_exercise(id)
+  close_solution_window()
   local bufnr = manager.open_exercise(id)
   if bufnr then
     if session.history[session.index] ~= id then
@@ -141,6 +151,7 @@ function code_practice.run_tests()
 end
 
 function code_practice.next_exercise()
+  close_solution_window()
   require("code-practice.results").close()
   if session.index < #session.history then
     session.index = session.index + 1
@@ -166,6 +177,7 @@ function code_practice.skip_exercise()
 end
 
 function code_practice.prev_exercise()
+  close_solution_window()
   if session.index <= 1 then
     utils.notify("No previous exercise in this session", "info")
     return nil
@@ -251,9 +263,7 @@ function code_practice.show_solution()
     return
   end
 
-  if solution_window.winid and vim.api.nvim_win_is_valid(solution_window.winid) then
-    vim.api.nvim_win_close(solution_window.winid, true)
-  end
+  close_solution_window()
 
   local bufnr = vim.api.nvim_create_buf(false, true)
   vim.bo[bufnr].buftype = "nofile"
@@ -272,11 +282,7 @@ function code_practice.show_solution()
   solution_window.bufnr = bufnr
 
   local function close_solution()
-    if solution_window.winid and vim.api.nvim_win_is_valid(solution_window.winid) then
-      vim.api.nvim_win_close(solution_window.winid, true)
-    end
-    solution_window.winid = nil
-    solution_window.bufnr = nil
+    close_solution_window()
   end
 
   vim.keymap.set({ "n", "i" }, "q", close_solution, { buffer = bufnr, silent = true, nowait = true })
