@@ -6,16 +6,6 @@ function utils.notify(msg, level)
   vim.notify("[code-practice] " .. msg, vim.log.levels[level:upper()])
 end
 
-function utils.read_file(path)
-  local file = io.open(path, "r")
-  if not file then
-    return nil
-  end
-  local content = file:read("*a")
-  file:close()
-  return content
-end
-
 function utils.write_file(path, content)
   local file = io.open(path, "w")
   if not file then

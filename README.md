@@ -15,12 +15,11 @@ Features
 
 Requirements
 ------------
-- Neovim 0.8+
+- Neovim 0.10+
 - MunifTanjim/nui.nvim
 - kkharji/sqlite.lua
-- nvim-lua/plenary.nvim
 - python3 (for Python exercises)
-- rustc/cargo (optional, for Rust exercises)
+- cargo (optional, for Rust exercises)
 
 Quick Start
 -----------
@@ -62,6 +61,8 @@ Browser Keymaps
 | `p`       | Toggle filter: Python           |
 | `r`       | Toggle filter: Rust             |
 | `t`       | Toggle filter: Theory           |
+| `gg`      | Go to top of list               |
+| `G`       | Go to bottom of list            |
 | `q`       | Close browser                   |
 | `Esc`     | Close browser                   |
 | `?`       | Show help guide                 |
@@ -111,7 +112,7 @@ python generate_exercises.py --topic "Big-O notation" --count 3 --language theor
 python generate_exercises.py --topic "sorting" --count 2 --dry-run
 ```
 
-Or from Neovim: `:CPGenerate` (prompts for topic and count).
+Or from Neovim: `:CPGenerate` (prompts for topic, count, difficulty, and language).
 
 Data
 ----

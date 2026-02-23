@@ -120,13 +120,6 @@ function db.create_tables()
     conn:eval("CREATE INDEX IF NOT EXISTS idx_attempts_exercise ON attempts(exercise_id)")
 end
 
-function db.close()
-    if db_connection then
-        db_connection:close()
-        db_connection = nil
-    end
-end
-
 function db.get_all_exercises(filters)
     local conn = db.connect()
     local query = "SELECT * FROM exercises"
@@ -211,21 +204,6 @@ function db.record_attempt(exercise_id, code, passed, output, duration_ms)
     end
 
     return ok
-end
-
-function db.get_attempts(exercise_id)
-    local conn = db.connect()
-    local results = conn:eval(string.format("SELECT * FROM attempts WHERE exercise_id = %d ORDER BY attempted_at DESC", exercise_id))
-
-    if not results or type(results) ~= "table" then
-        return {}
-    end
-
-    if type(results) == "table" and results.id then
-        return { results }
-    end
-
-    return results or {}
 end
 
 local function extract_count(result)

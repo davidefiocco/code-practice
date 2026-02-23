@@ -4,10 +4,10 @@ function M.check()
     vim.health.start("code-practice")
 
     -- Check Neovim version
-    if vim.fn.has("nvim-0.8") == 1 then
-        vim.health.ok("Neovim >= 0.8")
+    if vim.fn.has("nvim-0.10") == 1 then
+        vim.health.ok("Neovim >= 0.10")
     else
-        vim.health.error("Neovim 0.8+ is required")
+        vim.health.error("Neovim 0.10+ is required")
     end
 
     -- Check nui.nvim
@@ -24,14 +24,6 @@ function M.check()
         vim.health.ok("sqlite.lua found")
     else
         vim.health.error("sqlite.lua not found", { "Install kkharji/sqlite.lua" })
-    end
-
-    -- Check plenary.nvim
-    local ok_plenary = pcall(require, "plenary")
-    if ok_plenary then
-        vim.health.ok("plenary.nvim found")
-    else
-        vim.health.warn("plenary.nvim not found", { "Install nvim-lua/plenary.nvim" })
     end
 
     -- Check python3

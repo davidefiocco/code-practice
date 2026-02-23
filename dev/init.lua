@@ -15,7 +15,6 @@ vim.opt.rtp:prepend(lazypath)
 require("lazy").setup({
   spec = {
     { "MunifTanjim/nui.nvim", event = "VeryLazy" },
-    { "nvim-lua/plenary.nvim", event = "VeryLazy" },
     { "kkharji/sqlite.lua", lazy = true },
   },
 })
