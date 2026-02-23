@@ -35,7 +35,7 @@ local function create_results_window()
     return bufnr, winid
 end
 
-function results.show(result)
+function results.show(result, on_next)
     if not result then
         vim.notify("No results to display", vim.log.levels.WARN)
         return
@@ -105,7 +105,11 @@ function results.show(result)
     end
     
     push("")
-    push("Press q, <Esc>, or <Enter> to close")
+    if on_next then
+        push("Press n for next exercise | q, <Esc>, or <Enter> to close")
+    else
+        push("Press q, <Esc>, or <Enter> to close")
+    end
     
     if #lines == 0 then
         lines = { "No results available." }
@@ -119,6 +123,10 @@ function results.show(result)
     vim.keymap.set({ "n", "i" }, "q", results.close, { buffer = bufnr, silent = true, nowait = true })
     vim.keymap.set({ "n", "i" }, "<Esc>", results.close, { buffer = bufnr, silent = true, nowait = true })
     vim.keymap.set({ "n", "i" }, "<CR>", results.close, { buffer = bufnr, silent = true, nowait = true })
+
+    if on_next then
+        vim.keymap.set("n", "n", on_next, { buffer = bufnr, silent = true, nowait = true })
+    end
     
     if result.passed then
         vim.api.nvim_buf_add_highlight(bufnr, -1, "DiagnosticOk", 0, 0, -1)
