@@ -13,6 +13,33 @@ Features
 - Results window and solution viewer
 - LLM-powered exercise generation (see Tools below)
 
+Installation
+------------
+Using [lazy.nvim](https://github.com/folke/lazy.nvim):
+
+```lua
+{
+  "davidefiocco/code-practice",
+  dependencies = {
+    "MunifTanjim/nui.nvim",
+    "kkharji/sqlite.lua",
+  },
+  config = function()
+    require("code-practice").setup()
+  end,
+}
+```
+
+Then populate the exercise database (requires Python 3 and a [Hugging Face token](https://huggingface.co/settings/tokens)):
+
+```bash
+cd ~/.local/share/nvim/lazy/code-practice/tools
+pip install -r requirements.txt
+HF_TOKEN=your_token python generate_exercises.py --topic "lists" --count 5
+```
+
+Or generate exercises from inside Neovim with `:CPGenerate`.
+
 Requirements
 ------------
 - Neovim 0.10+
