@@ -5,7 +5,19 @@ if not ok then
     return {}
 end
 
+local config = require("code-practice.config")
+
 local help = {}
+
+local function fmt_key(key)
+    if not key then return "—" end
+    return key:gsub("<leader>", "<leader>")
+end
+
+local function pad(text, width)
+    if #text >= width then return text end
+    return text .. string.rep(" ", width - #text)
+end
 
 function help.show()
     local width = math.min(120, vim.o.columns - 4)
@@ -44,6 +56,8 @@ function help.show()
         vim.api.nvim_set_current_win(popup.winid)
     end
     vim.cmd("stopinsert")
+
+    local km = config.get("keymaps.exercise") or {}
     
     local lines = {
         "",
@@ -53,7 +67,7 @@ function help.show()
         "  2. j/k            Navigate through exercises",
         "  3. Enter          Open selected exercise",
         "  4. Write code     Edit your solution",
-        "  5. :CPRun         Run tests and see results",
+        "  5. " .. pad(fmt_key(km.run_tests), 16) .. "Run tests and see results",
         "",
         "  COMMANDS",
         "  " .. string.rep("─", width - 4),
@@ -72,16 +86,23 @@ function help.show()
         "  t                Filter by Theory questions         q / Esc          Close browser",
         "  ?                Show this help guide",
         "",
-        "  EXERCISE BUFFER KEYMAPS",
+        "  EXERCISE BUFFER KEYMAPS (active inside exercise buffers)",
         "  " .. string.rep("─", width - 4),
-        "  :CPRun           Run tests and show results         :CPHint          Show hints",
-        "  :CPDesc          Show exercise description          :CPSolution      Show reference solution",
+        "  " .. pad(fmt_key(km.run_tests), 19) .. "Run tests" ..
+            string.rep(" ", 24) .. pad(fmt_key(km.show_hint), 17) .. "Show hints",
+        "  " .. pad(fmt_key(km.view_solution), 19) .. "View solution" ..
+            string.rep(" ", 20) .. pad(fmt_key(km.show_description), 17) .. "Show description",
+        "  " .. pad(fmt_key(km.next_exercise), 19) .. "Next exercise" ..
+            string.rep(" ", 20) .. pad(fmt_key(km.prev_exercise), 17) .. "Previous exercise",
+        "  " .. pad(fmt_key(km.skip_exercise), 19) .. "Skip exercise" ..
+            string.rep(" ", 20) .. pad(fmt_key(km.open_browser), 17) .. "Open browser",
+        "  " .. pad(fmt_key(km.close), 19) .. "Back to browser",
         "",
         "  TIPS",
         "  " .. string.rep("─", width - 4),
         "  • Tests compare exact output - watch for trailing whitespace and newlines",
         "  • Theory questions: add a line like 'Answer: 2' before running tests",
-        "  • Press <leader>cp as a shortcut to open the browser",
+        "  • All :CP commands remain available as alternatives to the keymaps above",
         "",
         "  Press q or <Esc> to close this guide",
         "",
