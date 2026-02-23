@@ -96,7 +96,6 @@ local function setup_exercise_keymaps(bufnr)
   bmap(km.prev_exercise, function() code_practice.prev_exercise() end, "CP: Previous exercise")
   bmap(km.skip_exercise, function() code_practice.skip_exercise() end, "CP: Skip exercise")
   bmap(km.open_browser, function() code_practice.open_browser() end, "CP: Open browser")
-  bmap(km.close, function() code_practice.open_browser() end, "CP: Back to browser")
 end
 
 function code_practice.open_exercise(id)
