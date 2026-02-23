@@ -132,16 +132,11 @@ function code_practice.run_tests()
       return
     end
 
-    require("code-practice.results").show(result)
-
-    if result and result.passed then
-      utils.notify("All tests passed!", "info")
-      local choice = vim.fn.confirm("Solved! Go to next exercise?", "&Yes\n&No")
-      if choice == 1 then
-        require("code-practice.results").close()
-        code_practice.next_exercise()
-      end
-    end
+    local results_mod = require("code-practice.results")
+    results_mod.show(result, result and result.passed and function()
+      results_mod.close()
+      code_practice.next_exercise()
+    end or nil)
   end)
 end
 
