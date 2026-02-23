@@ -39,6 +39,7 @@ Commands
 | `:CPNext`      | Open the next unsolved exercise      |
 | `:CPPrev`      | Go back to the previous exercise     |
 | `:CPSkip`      | Skip current exercise and move on    |
+| `:CPDesc`      | Show exercise description popup      |
 | `:CPHint`      | Show hints for the current exercise  |
 | `:CPSolution`  | Show reference solution in a split   |
 | `:CPStats`     | Show practice statistics             |

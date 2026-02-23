@@ -73,6 +73,12 @@ end, {
     desc = "Show solution for current exercise",
 })
 
+vim.api.nvim_create_user_command("CPDesc", function()
+    code_practice.show_description()
+end, {
+    desc = "Show description for current exercise",
+})
+
 vim.api.nvim_create_user_command("CPHelp", function()
     code_practice.show_help()
 end, {

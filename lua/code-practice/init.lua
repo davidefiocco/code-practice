@@ -292,6 +292,113 @@ function code_practice.show_solution()
 end
 
 
+function code_practice.show_description()
+  local exercise_id = code_practice.get_current_exercise_id()
+  if not exercise_id then
+    utils.notify("No exercise associated with this buffer", "error")
+    return
+  end
+
+  local exercise = manager.get_exercise(exercise_id)
+  if not exercise then
+    utils.notify("Exercise not found", "error")
+    return
+  end
+
+  local lines = {}
+  table.insert(lines, "# " .. exercise.title)
+  table.insert(lines, "")
+  table.insert(lines, string.format("Difficulty: %s | Language: %s", exercise.difficulty, exercise.language))
+  table.insert(lines, "")
+
+  for _, line in ipairs(utils.split_lines(exercise.description)) do
+    table.insert(lines, line)
+  end
+  table.insert(lines, "")
+
+  if exercise.language == "theory" then
+    local options = exercise.options or {}
+    if #options > 0 then
+      table.insert(lines, "## Options")
+      table.insert(lines, "")
+      for _, opt in ipairs(options) do
+        table.insert(lines, string.format("%d. %s", opt.option_number, opt.option_text))
+      end
+      table.insert(lines, "")
+    end
+  else
+    local test_cases = exercise.test_cases or {}
+    local visible = {}
+    for _, tc in ipairs(test_cases) do
+      if not tc.is_hidden or tc.is_hidden == 0 then
+        table.insert(visible, tc)
+      end
+    end
+    if #visible > 0 then
+      table.insert(lines, "## Test Cases")
+      table.insert(lines, "")
+      for i, tc in ipairs(visible) do
+        table.insert(lines, string.format("Test %d:", i))
+        if tc.description and tc.description ~= "" then
+          table.insert(lines, string.format("  %s", tc.description))
+        end
+        if tc.input and tc.input ~= "" then
+          table.insert(lines, string.format("  Input: %s", tc.input))
+        end
+        table.insert(lines, string.format("  Expected: %s", tc.expected_output))
+        table.insert(lines, "")
+      end
+    end
+  end
+
+  local tags = exercise.tags or {}
+  if #tags > 0 then
+    table.insert(lines, "## Tags")
+    table.insert(lines, table.concat(tags, ", "))
+    table.insert(lines, "")
+  end
+
+  table.insert(lines, "")
+  table.insert(lines, "Press q, <Esc>, or <Enter> to close")
+
+  local width = math.floor(vim.o.columns * 0.6)
+  local height = math.floor(vim.o.lines * 0.6)
+  local row = math.floor((vim.o.lines - height) / 2)
+  local col = math.floor((vim.o.columns - width) / 2)
+
+  local bufnr = vim.api.nvim_create_buf(false, true)
+  vim.bo[bufnr].buftype = "nofile"
+  vim.bo[bufnr].bufhidden = "wipe"
+  vim.bo[bufnr].swapfile = false
+  vim.bo[bufnr].filetype = "markdown"
+
+  local winid = vim.api.nvim_open_win(bufnr, true, {
+    relative = "editor",
+    row = row,
+    col = col,
+    width = width,
+    height = height,
+    border = "rounded",
+    style = "minimal",
+    title = " Description ",
+    title_pos = "center",
+  })
+
+  vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
+  vim.bo[bufnr].modifiable = false
+  vim.bo[bufnr].readonly = true
+
+  local function close()
+    if winid and vim.api.nvim_win_is_valid(winid) then
+      vim.api.nvim_win_close(winid, true)
+    end
+  end
+
+  vim.keymap.set({ "n", "i" }, "q", close, { buffer = bufnr, silent = true, nowait = true })
+  vim.keymap.set({ "n", "i" }, "<Esc>", close, { buffer = bufnr, silent = true, nowait = true })
+  vim.keymap.set({ "n", "i" }, "<CR>", close, { buffer = bufnr, silent = true, nowait = true })
+end
+
 function code_practice.show_help()
   require("code-practice.help").show()
 end
