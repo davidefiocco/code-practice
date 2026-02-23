@@ -118,6 +118,16 @@ Data
 ----
 Exercises are stored in the sqlite database under stdpath("data")/code-practice.
 
+Roadmap
+-------
+- [ ] Random exercise (`:CPRandom`)
+- [ ] Search widget in browser
+- [ ] Bug-finding exercise type
+- [ ] Context-aware LLM hint based on current buffer code
+- [ ] Live timer with opt-out config
+- [ ] Git theory questions
+- [ ] Haskell runner
+
 Development
 -----------
 A minimal Neovim config for testing lives in `dev/init.lua`:
