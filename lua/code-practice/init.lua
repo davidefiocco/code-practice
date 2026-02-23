@@ -343,7 +343,7 @@ function code_practice.show_solution()
   vim.bo[bufnr].modifiable = false
   vim.bo[bufnr].readonly = true
 
-  vim.api.nvim_command("vsplit")
+  vim.api.nvim_command("rightbelow vsplit")
   vim.api.nvim_command("buffer " .. bufnr)
 
   local winid = vim.api.nvim_get_current_win()
