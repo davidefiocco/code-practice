@@ -35,7 +35,8 @@ Then populate the exercise database (requires Python 3 and a [Hugging Face token
 ```bash
 cd ~/.local/share/nvim/lazy/code-practice/tools
 pip install -r requirements.txt
-HF_TOKEN=your_token python generate_exercises.py --topic "lists" --count 5
+export HF_TOKEN=your_token
+python generate_exercises.py --topic "lists" --count 5
 ```
 
 Or generate exercises from inside Neovim with `:CPGenerate`.
