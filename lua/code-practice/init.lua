@@ -303,6 +303,12 @@ function code_practice.show_solution()
   add_meta("Solution: " .. exercise.title)
   add_meta("Difficulty: " .. exercise.difficulty .. " | Language: " .. exercise.language)
   add_meta("")
+  if exercise.description and exercise.description ~= "" then
+    for _, desc_line in ipairs(utils.split_lines(exercise.description)) do
+      add_meta(desc_line)
+    end
+    add_meta("")
+  end
   add_meta("")
   add_meta(string.rep("-", 40))
   add_meta("")
