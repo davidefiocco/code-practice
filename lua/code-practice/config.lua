@@ -73,11 +73,16 @@ M.defaults = {
       filter_all = "a",
       close = "q",
     },
-    -- Exercise editing
+    -- Exercise buffer (buffer-local)
     exercise = {
       run_tests = "<leader>r",
       show_hint = "<leader>h",
       view_solution = "<leader>s",
+      show_description = "<leader>d",
+      next_exercise = "<leader>n",
+      prev_exercise = "<leader>p",
+      skip_exercise = "<leader>k",
+      open_browser = "<leader>b",
       close = "<leader>q",
     },
   },

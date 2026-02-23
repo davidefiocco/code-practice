@@ -52,17 +52,9 @@ function code_practice.setup(opts)
     code_practice.open_browser()
   end, { desc = "Open Code Practice browser" })
 
-  vim.keymap.set("n", keymaps.run or "<leader>cpr", function()
-    vim.cmd("CPRun")
-  end, { desc = "Run tests" })
-
   vim.keymap.set("n", keymaps.stats or "<leader>cps", function()
     vim.cmd("CPStats")
   end, { desc = "Show statistics" })
-
-  vim.keymap.set("n", "<leader>cph", function()
-    code_practice.show_help()
-  end, { desc = "Show Code Practice guide" })
 
   utils.delete_temp_files()
 
@@ -82,10 +74,36 @@ function code_practice.refresh_browser()
   browser.refresh()
 end
 
+local function setup_exercise_keymaps(bufnr)
+  local ok, _ = pcall(vim.api.nvim_buf_get_var, bufnr, "code_practice_keymaps_set")
+  if ok then
+    return
+  end
+  vim.api.nvim_buf_set_var(bufnr, "code_practice_keymaps_set", true)
+
+  local km = config.get("keymaps.exercise") or {}
+  local function bmap(key, fn, desc)
+    if key then
+      vim.keymap.set("n", key, fn, { buffer = bufnr, silent = true, desc = desc })
+    end
+  end
+
+  bmap(km.run_tests, function() code_practice.run_tests() end, "CP: Run tests")
+  bmap(km.show_hint, function() code_practice.show_hints() end, "CP: Show hints")
+  bmap(km.view_solution, function() code_practice.show_solution() end, "CP: View solution")
+  bmap(km.show_description, function() code_practice.show_description() end, "CP: Show description")
+  bmap(km.next_exercise, function() code_practice.next_exercise() end, "CP: Next exercise")
+  bmap(km.prev_exercise, function() code_practice.prev_exercise() end, "CP: Previous exercise")
+  bmap(km.skip_exercise, function() code_practice.skip_exercise() end, "CP: Skip exercise")
+  bmap(km.open_browser, function() code_practice.open_browser() end, "CP: Open browser")
+  bmap(km.close, function() code_practice.open_browser() end, "CP: Back to browser")
+end
+
 function code_practice.open_exercise(id)
   close_solution_window()
   local bufnr = manager.open_exercise(id)
   if bufnr then
+    setup_exercise_keymaps(bufnr)
     if session.history[session.index] ~= id then
       record_history(id)
     end
@@ -151,11 +169,10 @@ function code_practice.run_tests()
 end
 
 function code_practice.next_exercise()
-  close_solution_window()
   require("code-practice.results").close()
   if session.index < #session.history then
     session.index = session.index + 1
-    return manager.open_exercise(session.history[session.index])
+    return code_practice.open_exercise(session.history[session.index])
   end
   local current_id = code_practice.get_current_exercise_id()
   local next_id, err = manager.get_next_exercise_id(current_id, session.skipped)
@@ -177,7 +194,6 @@ function code_practice.skip_exercise()
 end
 
 function code_practice.prev_exercise()
-  close_solution_window()
   if session.index <= 1 then
     utils.notify("No previous exercise in this session", "info")
     return nil
@@ -188,7 +204,7 @@ function code_practice.prev_exercise()
     utils.notify("No previous exercise in this session", "info")
     return nil
   end
-  return manager.open_exercise(prev_id)
+  return code_practice.open_exercise(prev_id)
 end
 
 function code_practice.show_stats()
