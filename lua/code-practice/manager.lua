@@ -26,10 +26,6 @@ function manager.list_exercises(filters)
   return db.get_all_exercises(filters)
 end
 
-function manager.list_unsolved_exercises()
-  return db.get_unsolved_exercises()
-end
-
 function manager.get_stats()
   return db.get_stats()
 end

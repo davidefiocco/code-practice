@@ -11,7 +11,7 @@ local help = {}
 
 local function fmt_key(key)
     if not key then return "—" end
-    return key:gsub("<leader>", "<leader>")
+    return key
 end
 
 local function pad(text, width)
