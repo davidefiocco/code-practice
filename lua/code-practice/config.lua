@@ -34,7 +34,7 @@ M.defaults = {
       template = "def solution():\n    pass\n\nif __name__ == '__main__':\n    print(solution())",
     },
     rust = {
-      enabled = true,
+      enabled = false,
       -- Command to compile and run Rust
       cmd = "rustc",
       -- File extension
@@ -65,14 +65,12 @@ M.defaults = {
   keymaps = {
     -- Browser keymaps
     browser = {
-      open = "<CR>",
+      open = "<leader>cp",
       open_item = "<CR>",
       filter_easy = "e",
       filter_medium = "m",
       filter_hard = "h",
       filter_all = "a",
-      new_exercise = "n",
-      delete = "d",
       close = "q",
     },
     -- Exercise editing

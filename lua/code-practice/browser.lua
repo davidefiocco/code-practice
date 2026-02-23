@@ -3,26 +3,42 @@ local db = require("code-practice.db")
 local manager = require("code-practice.manager")
 local config = require("code-practice.config")
 local utils = require("code-practice.utils")
-local Popup = require("nui.popup")
-local Layout = require("nui.layout")
+
+local ok_popup, Popup = pcall(require, "nui.popup")
+local ok_layout, Layout = pcall(require, "nui.layout")
+if not ok_popup or not ok_layout then
+    vim.notify("[code-practice] nui.nvim not found. Install MunifTanjim/nui.nvim", vim.log.levels.ERROR)
+    return {}
+end
 
 local browser = {}
+local ns = vim.api.nvim_create_namespace("code_practice_browser")
+
+local on_open_exercise = nil
+
+function browser.set_on_open(fn)
+    on_open_exercise = fn
+end
 
 local state = {
     current_filter = { difficulty = nil, language = nil, search = "" },
     selected_index = 1,
     exercises = {},
+    preview_cache = {},
     popup = nil,
     layout = nil,
 }
 
-function browser.render_exercise_list()
+local function fetch_exercises()
     local exercises = manager.list_exercises(state.current_filter)
     if type(exercises) ~= "table" then
         exercises = {}
     end
     state.exercises = exercises
+    state.preview_cache = {}
+end
 
+function browser.render_exercise_list()
     local lines = {}
 
     for i, ex in ipairs(state.exercises) do
@@ -52,12 +68,12 @@ function browser.render_exercise_list()
     end
 
     if #lines == 0 then
-        table.insert(lines, "  No exercises found. Press 'n' to add one.")
+        table.insert(lines, "  No exercises found.")
     end
     
     table.insert(lines, "")
     table.insert(lines, "  " .. string.rep("─", 30))
-    table.insert(lines, "  j/k:nav  Enter:open  ?:help  q:close")
+    table.insert(lines, "  j/k:nav  Enter:open  ?:help  q:close  a:all")
 
     return lines
 end
@@ -70,6 +86,10 @@ function browser.render_preview()
     local exercise = state.exercises[state.selected_index]
     if not exercise then
         return { "Exercise not found" }
+    end
+
+    if state.preview_cache[exercise.id] then
+        return state.preview_cache[exercise.id]
     end
 
     local lines = {}
@@ -128,6 +148,7 @@ function browser.render_preview()
     table.insert(lines, "")
     table.insert(lines, "Press Enter to open, then :CPRun to test")
 
+    state.preview_cache[exercise.id] = lines
     return lines
 end
 
@@ -232,12 +253,10 @@ function browser.setup_keymaps()
     map("t", "<cmd>lua require('code-practice.browser').filter_by_language('theory')<CR>")
     map("q", "<cmd>lua require('code-practice.browser').close()<CR>")
     map("<esc>", "<cmd>lua require('code-practice.browser').close()<CR>")
-    map("n", "<cmd>lua require('code-practice.browser').new_exercise()<CR>")
-    map("d", "<cmd>lua require('code-practice.browser').delete_selected()<CR>")
     map("?", "<cmd>lua require('code-practice.help').show()<CR>")
 end
 
-function browser.refresh()
+local function update_display()
     if not state.popup or not state.popup.list then
         return
     end
@@ -248,22 +267,28 @@ function browser.refresh()
     local list_buf = state.popup.list.bufnr
     local preview_buf = state.popup.preview.bufnr
 
-    vim.api.nvim_buf_set_option(list_buf, "modifiable", true)
-    vim.api.nvim_buf_set_option(preview_buf, "modifiable", true)
-    vim.api.nvim_buf_set_option(list_buf, "readonly", false)
-    vim.api.nvim_buf_set_option(preview_buf, "readonly", false)
+    vim.bo[list_buf].modifiable = true
+    vim.bo[preview_buf].modifiable = true
+    vim.bo[list_buf].readonly = false
+    vim.bo[preview_buf].readonly = false
 
     vim.api.nvim_buf_set_lines(list_buf, 0, -1, false, list_lines)
     vim.api.nvim_buf_set_lines(preview_buf, 0, -1, false, preview_lines)
 
+    vim.api.nvim_buf_clear_namespace(list_buf, ns, 0, -1)
     if state.selected_index > 0 and state.selected_index <= #state.exercises then
-        vim.api.nvim_buf_add_highlight(list_buf, -1, "Visual", state.selected_index - 1, 0, -1)
+        vim.api.nvim_buf_add_highlight(list_buf, ns, "Visual", state.selected_index - 1, 0, -1)
     end
 
-    vim.api.nvim_buf_set_option(list_buf, "modifiable", false)
-    vim.api.nvim_buf_set_option(preview_buf, "modifiable", false)
-    vim.api.nvim_buf_set_option(list_buf, "readonly", true)
-    vim.api.nvim_buf_set_option(preview_buf, "readonly", true)
+    vim.bo[list_buf].modifiable = false
+    vim.bo[preview_buf].modifiable = false
+    vim.bo[list_buf].readonly = true
+    vim.bo[preview_buf].readonly = true
+end
+
+function browser.refresh()
+    fetch_exercises()
+    update_display()
 end
 
 function browser.move_selection(delta)
@@ -274,12 +299,12 @@ function browser.move_selection(delta)
         new_index = #state.exercises
     end
     state.selected_index = new_index
-    browser.refresh()
+    update_display()
 end
 
 function browser.go_top()
     state.selected_index = 1
-    browser.refresh()
+    update_display()
 end
 
 function browser.go_bottom()
@@ -287,7 +312,7 @@ function browser.go_bottom()
     if state.selected_index < 1 then
         state.selected_index = 1
     end
-    browser.refresh()
+    update_display()
 end
 
 function browser.open_selected()
@@ -301,7 +326,9 @@ function browser.open_selected()
     end
 
     browser.close()
-    require("code-practice").open_exercise(exercise.id)
+    if on_open_exercise then
+        on_open_exercise(exercise.id)
+    end
 end
 
 function browser.filter_by_difficulty(difficulty)
@@ -328,28 +355,6 @@ function browser.clear_filters()
     state.current_filter = { difficulty = nil, language = nil, search = "" }
     state.selected_index = 1
     browser.refresh()
-end
-
-function browser.new_exercise()
-    browser.close()
-    vim.cmd("CPAdd")
-end
-
-function browser.delete_selected()
-    if #state.exercises == 0 then
-        return
-    end
-
-    local exercise = state.exercises[state.selected_index]
-    if not exercise then
-        return
-    end
-
-    local confirmed = vim.fn.confirm("Delete exercise: " .. exercise.title .. "?", "&Yes\n&No")
-    if confirmed == 1 then
-        manager.delete_exercise(exercise.id)
-        browser.refresh()
-    end
 end
 
 function browser.close()

@@ -34,6 +34,30 @@ function code_practice.setup(opts)
 
   db.connect()
 
+  browser.set_on_open(function(id)
+    code_practice.open_exercise(id)
+  end)
+
+  local keymaps = config.get("keymaps.browser")
+
+  vim.keymap.set("n", keymaps.open or "<leader>cp", function()
+    code_practice.open_browser()
+  end, { desc = "Open Code Practice browser" })
+
+  vim.keymap.set("n", keymaps.run or "<leader>cpr", function()
+    vim.cmd("CPRun")
+  end, { desc = "Run tests" })
+
+  vim.keymap.set("n", keymaps.stats or "<leader>cps", function()
+    vim.cmd("CPStats")
+  end, { desc = "Show statistics" })
+
+  vim.keymap.set("n", "<leader>cph", function()
+    code_practice.show_help()
+  end, { desc = "Show Code Practice guide" })
+
+  utils.delete_temp_files()
+
   utils.notify("Code Practice initialized!")
 end
 
@@ -47,39 +71,6 @@ end
 
 function code_practice.refresh_browser()
   browser.refresh()
-end
-
-function code_practice.add_exercise(data)
-  local id, err = manager.create_exercise(data)
-  if not id then
-    utils.notify("Failed to create exercise: " .. err, "error")
-    return nil
-  end
-
-  utils.notify(string.format("Created exercise #%d: %s", id, data.title))
-  return id
-end
-
-function code_practice.edit_exercise(id, data)
-  local ok, err = manager.update_exercise(id, data)
-  if not ok then
-    utils.notify("Failed to update exercise: " .. err, "error")
-    return nil
-  end
-
-  utils.notify("Exercise updated successfully")
-  return true
-end
-
-function code_practice.delete_exercise(id)
-  local ok, err = manager.delete_exercise(id)
-  if not ok then
-    utils.notify("Failed to delete exercise: " .. err, "error")
-    return nil
-  end
-
-  utils.notify("Exercise deleted successfully")
-  return true
 end
 
 function code_practice.open_exercise(id)
@@ -99,7 +90,11 @@ function code_practice.run_tests()
 
   if not ok or not exercise_id then
     utils.notify("No exercise associated with this buffer", "error")
-    return nil
+    return
+  end
+
+  if not language_ok then
+    language = "python"
   end
 
   local code = utils.get_buffer_content(bufnr)
@@ -123,35 +118,39 @@ function code_practice.run_tests()
       else
         utils.notify("Missing answer. Add a line like 'Answer: 2'", "error")
       end
-      return nil
+      return
     end
 
     code = answer
   end
 
-  local result, err = runner.run_test(exercise_id, code, language or "python")
+  utils.notify("Running tests...", "info")
 
-  if err then
-    utils.notify("Test failed: " .. err, "error")
-    return nil
-  end
-
-  require("code-practice.results").show(result)
-
-  if result and result.passed then
-    utils.notify("All tests passed!", "info")
-    local choice = vim.fn.confirm("Solved! Go to next exercise?", "&Yes\n&No")
-    if choice == 1 then
-      require("code-practice.results").close()
-      code_practice.next_exercise()
+  runner.run_test_async(exercise_id, code, language or "python", function(result, err)
+    if err then
+      utils.notify("Test failed: " .. err, "error")
+      return
     end
-  end
 
-  return result
+    require("code-practice.results").show(result)
+
+    if result and result.passed then
+      utils.notify("All tests passed!", "info")
+      local choice = vim.fn.confirm("Solved! Go to next exercise?", "&Yes\n&No")
+      if choice == 1 then
+        require("code-practice.results").close()
+        code_practice.next_exercise()
+      end
+    end
+  end)
 end
 
 function code_practice.next_exercise()
   require("code-practice.results").close()
+  if session.index < #session.history then
+    session.index = session.index + 1
+    return manager.open_exercise(session.history[session.index])
+  end
   local current_id = code_practice.get_current_exercise_id()
   local next_id, err = manager.get_next_exercise_id(current_id, session.skipped)
   if not next_id then
@@ -209,40 +208,6 @@ By Difficulty:
   vim.api.nvim_echo({ { msg, "Normal" } }, true, {})
 end
 
-function code_practice.import_exercises(filepath)
-  local content = utils.read_file(filepath)
-  if not content then
-    utils.notify("Failed to read file: " .. filepath, "error")
-    return nil
-  end
-
-  local count, err = manager.import_exercises(content)
-  if not count then
-    utils.notify("Import failed: " .. err, "error")
-    return nil
-  end
-
-  utils.notify(string.format("Imported %d exercises", count))
-  return count
-end
-
-function code_practice.export_exercises(filepath)
-  local content = manager.export_exercises()
-
-  if filepath then
-    local ok = utils.write_file(filepath, content)
-    if not ok then
-      utils.notify("Failed to write to file: " .. filepath, "error")
-      return nil
-    end
-    utils.notify("Exported exercises to: " .. filepath)
-  else
-    vim.api.nvim_put(utils.split_lines(content), "l", true, true)
-  end
-
-  return true
-end
-
 function code_practice.get_current_exercise_id()
   local bufnr = vim.api.nvim_get_current_buf()
   local ok, exercise_id = pcall(vim.api.nvim_buf_get_var, bufnr, "code_practice_exercise_id")
@@ -291,21 +256,18 @@ function code_practice.show_solution()
     return
   end
 
-  local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
-  local current_content = table.concat(lines, "\n")
-
   if solution_window.winid and vim.api.nvim_win_is_valid(solution_window.winid) then
     vim.api.nvim_win_close(solution_window.winid, true)
   end
 
   local bufnr = vim.api.nvim_create_buf(false, true)
-  vim.api.nvim_buf_set_option(bufnr, "buftype", "nofile")
-  vim.api.nvim_buf_set_option(bufnr, "bufhidden", "wipe")
-  vim.api.nvim_buf_set_option(bufnr, "swapfile", false)
-  vim.api.nvim_buf_set_option(bufnr, "filetype", utils.filetype_from_language(exercise.language))
+  vim.bo[bufnr].buftype = "nofile"
+  vim.bo[bufnr].bufhidden = "wipe"
+  vim.bo[bufnr].swapfile = false
+  vim.bo[bufnr].filetype = utils.filetype_from_language(exercise.language)
   vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, utils.split_lines(exercise.solution))
-  vim.api.nvim_buf_set_option(bufnr, "modifiable", false)
-  vim.api.nvim_buf_set_option(bufnr, "readonly", true)
+  vim.bo[bufnr].modifiable = false
+  vim.bo[bufnr].readonly = true
 
   vim.api.nvim_command("vsplit")
   vim.api.nvim_command("buffer " .. bufnr)
