@@ -1,0 +1,37 @@
+# model = "Qwen/Qwen3-Coder-Next"  # uncomment to override DEFAULT_MODEL
+
+[[exercises]]
+topic = "lists"
+language = "python"
+difficulty = "easy"
+count = 5
+
+[[exercises]]
+topic = "recursion"
+language = "python"
+difficulty = "medium"
+count = 5
+
+[[exercises]]
+topic = "sorting algorithms"
+language = "python"
+difficulty = "hard"
+count = 5
+
+[[exercises]]
+topic = "hash maps and dictionaries"
+language = "python"
+difficulty = "medium"
+count = 5
+
+[[exercises]]
+topic = "Big-O notation"
+language = "theory"
+difficulty = "medium"
+count = 5
+
+[[exercises]]
+topic = "data structures fundamentals"
+language = "theory"
+difficulty = "easy"
+count = 5
