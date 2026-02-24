@@ -37,6 +37,7 @@ Return a JSON array of exercise objects. Each object must have exactly these fie
 Rules:
 - For python/rust exercises: include test_cases, omit theory_options.
 - For theory exercises: include theory_options (exactly one must have is_correct=true), omit test_cases.
+  The "solution" field for theory exercises must state the correct option number and a brief explanation (e.g. "Option 2 is correct. Stacks follow LIFO because...").
 - test_cases.input is the literal Python/Rust argument string passed to solution(). Empty string for no-arg calls.
 - test_cases.expected_output is the repr() output of the expected return value.
 - starter_code must define a function called `solution` with the right signature.
