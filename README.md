@@ -30,13 +30,13 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim):
 }
 ```
 
-Then populate the exercise database (requires Python 3 and a [Hugging Face token](https://huggingface.co/settings/tokens)):
+Then populate the exercise database (requires Python 3.11+ and a [Hugging Face token](https://huggingface.co/settings/tokens)):
 
 ```bash
 cd ~/.local/share/nvim/lazy/code-practice/tools
 pip install -r requirements.txt
 export HF_TOKEN=your_token
-python generate_exercises.py --topic "lists" --count 5
+python generate_exercises.py syllabus.toml
 ```
 
 Or generate exercises from inside Neovim with `:CPGenerate`.
@@ -121,23 +121,23 @@ Tools
 -----
 ### Exercise Generator
 
-Generate exercises using Hugging Face models. Requires Python 3 and a HF token
-(set via `HF_TOKEN` env var, or `huggingface-cli login`).
+Generate exercises from a syllabus using Hugging Face models. Requires Python
+3.11+ and a HF token (set via `HF_TOKEN` env var, or `huggingface-cli login`).
+
+The syllabus is a TOML file defining topics, languages, difficulties, and counts
+(see `tools/syllabus.toml` for an example).
 
 ```bash
 cd tools && pip install -r requirements.txt
 
-# Default model (Qwen/Qwen3-Coder-Next)
-python generate_exercises.py --topic "recursion" --count 5 --difficulty easy
+# Generate from syllabus (default model: Qwen/Qwen3-Coder-Next)
+python generate_exercises.py syllabus.toml
 
 # Custom model
-python generate_exercises.py --model meta-llama/Llama-3.3-70B-Instruct --topic "linked lists" --count 3
-
-# Theory questions
-python generate_exercises.py --topic "Big-O notation" --count 3 --language theory
+python generate_exercises.py syllabus.toml --model Qwen/Qwen3-Coder-30B-A3B-Instruct
 
 # Dry run (print JSON, don't insert)
-python generate_exercises.py --topic "sorting" --count 2 --dry-run
+python generate_exercises.py syllabus.toml --dry-run
 ```
 
 Or from Neovim: `:CPGenerate` (prompts for topic, count, difficulty, and language).

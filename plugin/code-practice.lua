@@ -101,20 +101,17 @@ vim.api.nvim_create_user_command("CPGenerate", function()
   local script = plugin_dir .. "/tools/generate_exercises.py"
   local db_path = require("code-practice.config").get("storage.db_path")
 
-  local cmd = {
-    "python3",
-    script,
-    "--topic",
-    topic,
-    "--count",
-    count,
-    "--difficulty",
-    difficulty,
-    "--language",
+  local tmp = vim.fn.tempname() .. ".toml"
+  local toml = string.format(
+    '[[exercises]]\ntopic = "%s"\nlanguage = "%s"\ndifficulty = "%s"\ncount = %s\n',
+    topic:gsub('"', '\\"'),
     language,
-    "--db-path",
-    db_path,
-  }
+    difficulty,
+    count
+  )
+  vim.fn.writefile(vim.split(toml, "\n"), tmp)
+
+  local cmd = { "python3", script, tmp, "--db-path", db_path }
 
   vim.notify("[code-practice] Generating exercises...", vim.log.levels.INFO)
 
@@ -133,6 +130,7 @@ vim.api.nvim_create_user_command("CPGenerate", function()
       end
     end,
     on_exit = function(_, exit_code)
+      vim.fn.delete(tmp)
       vim.schedule(function()
         local msg = table.concat(output_lines, "\n")
         if exit_code == 0 then
