@@ -85,6 +85,33 @@ end, {
   desc = "Show Code Practice quick guide",
 })
 
+vim.api.nvim_create_user_command("CPImport", function(opts)
+  local path = opts.fargs[1] or require("code-practice.config").get("storage.exercises_json") or ""
+  if path == "" then
+    vim.notify("[code-practice] Usage: :CPImport <path-to-exercises.json>", vim.log.levels.WARN)
+    return
+  end
+  local importer = require("code-practice.importer")
+  local counts, err = importer.import(path, { replace = opts.bang })
+  if counts then
+    local mode = opts.bang and "Replaced with" or "Imported"
+    vim.notify(
+      string.format("[code-practice] %s %d exercises, %d test cases, %d theory options",
+        mode, counts.exercises, counts.test_cases, counts.theory_options),
+      vim.log.levels.INFO
+    )
+    local browser = require("code-practice.browser")
+    if browser.refresh then browser.refresh() end
+  else
+    vim.notify("[code-practice] Import failed: " .. (err or "unknown"), vim.log.levels.ERROR)
+  end
+end, {
+  nargs = "?",
+  bang = true,
+  complete = "file",
+  desc = "Import exercises from JSON (use ! to replace existing)",
+})
+
 vim.api.nvim_create_user_command("CPGenerate", function()
   local topic = vim.fn.input("Topic: ")
   if not topic or topic == "" then

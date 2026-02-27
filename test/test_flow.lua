@@ -531,6 +531,73 @@ test("Runner: unsupported language returns error", function()
   assert_eq(result, nil, "result should be nil on error")
 end)
 
+-- 28. Importer: import from JSON file
+test("Importer: loads exercises from JSON fixture", function()
+  local importer = require("code-practice.importer")
+  local db_mod = require("code-practice.db")
+  local conn = db_mod.connect()
+
+  local before_rows = conn:eval("SELECT COUNT(*) as count FROM exercises")
+  local before = before_rows and (before_rows.count or (before_rows[1] and before_rows[1].count)) or 0
+
+  local plugin_root = vim.fn.fnamemodify(debug.getinfo(1, "S").source:sub(2), ":h:h")
+  local fixture = plugin_root .. "/test/example_exercises.json"
+
+  local counts, err = importer.import(fixture)
+  assert_truthy(counts, "import returned nil: " .. tostring(err))
+  assert_gt(counts.exercises, 0, "exercises imported")
+  assert_gt(counts.test_cases, 0, "test_cases imported")
+
+  local after_rows = conn:eval("SELECT COUNT(*) as count FROM exercises")
+  local after = after_rows and (after_rows.count or (after_rows[1] and after_rows[1].count)) or 0
+  assert_truthy(after >= before, "exercise count should not decrease")
+end)
+
+-- 29. Importer: replace mode wipes and re-imports
+test("Importer: replace mode resets data", function()
+  local importer = require("code-practice.importer")
+  local db_mod = require("code-practice.db")
+  local conn = db_mod.connect()
+
+  local plugin_root = vim.fn.fnamemodify(debug.getinfo(1, "S").source:sub(2), ":h:h")
+  local fixture = plugin_root .. "/test/example_exercises.json"
+
+  local counts, err = importer.import(fixture, { replace = true })
+  assert_truthy(counts, "replace import returned nil: " .. tostring(err))
+  assert_gt(counts.exercises, 0, "exercises after replace")
+
+  local attempt_rows = conn:eval("SELECT COUNT(*) as count FROM attempts")
+  local attempts = attempt_rows and (attempt_rows.count or (attempt_rows[1] and attempt_rows[1].count)) or 0
+  assert_eq(attempts, 0, "attempts should be wiped after replace")
+end)
+
+-- 30. Importer: missing file returns error
+test("Importer: missing file returns error", function()
+  local importer = require("code-practice.importer")
+  local counts, err = importer.import("/nonexistent/path.json")
+  assert_eq(counts, nil, "should return nil for missing file")
+  assert_contains(err, "not found", "error message")
+end)
+
+-- 31. Importer: invalid JSON returns error
+test("Importer: invalid JSON returns error", function()
+  local importer = require("code-practice.importer")
+  local tmp = vim.fn.tempname() .. ".json"
+  vim.fn.writefile({ "not valid json {{{" }, tmp)
+  local counts, err = importer.import(tmp)
+  vim.fn.delete(tmp)
+  assert_eq(counts, nil, "should return nil for bad JSON")
+  assert_truthy(err, "should return error message")
+end)
+
+-- 32. Importer: empty path returns error
+test("Importer: empty path returns error", function()
+  local importer = require("code-practice.importer")
+  local counts, err = importer.import("")
+  assert_eq(counts, nil, "should return nil for empty path")
+  assert_contains(err, "No JSON path", "error message")
+end)
+
 -- Summary
 io.write("\n" .. string.rep("=", 44) .. "\n")
 io.write(string.format("  Results: %d passed, %d failed, %d skipped\n", passed, failed, skipped))
