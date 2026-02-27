@@ -5,14 +5,22 @@ local utils = require("code-practice.utils")
 local M = {}
 
 local function escape(s)
-  if type(s) ~= "string" then return s end
+  if type(s) ~= "string" then
+    return s
+  end
   return s:gsub("'", "''")
 end
 
 local function sql_val(v)
-  if v == nil then return "NULL" end
-  if type(v) == "boolean" then return v and "1" or "0" end
-  if type(v) == "number" then return tostring(v) end
+  if v == nil then
+    return "NULL"
+  end
+  if type(v) == "boolean" then
+    return v and "1" or "0"
+  end
+  if type(v) == "number" then
+    return tostring(v)
+  end
   return "'" .. escape(tostring(v)) .. "'"
 end
 
@@ -46,9 +54,13 @@ function M.import(json_path, opts)
 
   for _, ex in ipairs(exercises) do
     local tags = ex.tags
-    if type(tags) == "table" then tags = vim.json.encode(tags) end
+    if type(tags) == "table" then
+      tags = vim.json.encode(tags)
+    end
     local hints = ex.hints
-    if type(hints) == "table" then hints = vim.json.encode(hints) end
+    if type(hints) == "table" then
+      hints = vim.json.encode(hints)
+    end
 
     local sql = string.format(
       [[INSERT OR REPLACE INTO exercises
@@ -86,7 +98,9 @@ function M.import(json_path, opts)
         sql_val(tc.description or "")
       )
       local tc_ok = pcall(conn.eval, conn, tc_sql)
-      if tc_ok then counts.test_cases = counts.test_cases + 1 end
+      if tc_ok then
+        counts.test_cases = counts.test_cases + 1
+      end
     end
 
     for _, opt in ipairs(ex.theory_options or {}) do
@@ -99,7 +113,9 @@ function M.import(json_path, opts)
         sql_val(opt.is_correct and true or false)
       )
       local opt_ok = pcall(conn.eval, conn, opt_sql)
-      if opt_ok then counts.theory_options = counts.theory_options + 1 end
+      if opt_ok then
+        counts.theory_options = counts.theory_options + 1
+      end
     end
   end
 

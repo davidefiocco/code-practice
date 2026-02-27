@@ -96,12 +96,19 @@ vim.api.nvim_create_user_command("CPImport", function(opts)
   if counts then
     local mode = opts.bang and "Replaced with" or "Imported"
     vim.notify(
-      string.format("[code-practice] %s %d exercises, %d test cases, %d theory options",
-        mode, counts.exercises, counts.test_cases, counts.theory_options),
+      string.format(
+        "[code-practice] %s %d exercises, %d test cases, %d theory options",
+        mode,
+        counts.exercises,
+        counts.test_cases,
+        counts.theory_options
+      ),
       vim.log.levels.INFO
     )
     local browser = require("code-practice.browser")
-    if browser.refresh then browser.refresh() end
+    if browser.refresh then
+      browser.refresh()
+    end
   else
     vim.notify("[code-practice] Import failed: " .. (err or "unknown"), vim.log.levels.ERROR)
   end
