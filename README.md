@@ -30,13 +30,12 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim):
 }
 ```
 
-Then populate the exercise database (requires Python 3.11+ and a [Hugging Face token](https://huggingface.co/settings/tokens)):
+Then populate the exercise database (requires [uv](https://docs.astral.sh/uv/) and a [Hugging Face token](https://huggingface.co/settings/tokens)):
 
 ```bash
-cd ~/.local/share/nvim/lazy/code-practice/tools
-pip install -r requirements.txt
+cd ~/.local/share/nvim/lazy/code-practice
 export HF_TOKEN=your_token
-python generate_exercises.py syllabus.toml
+uv run tools/generate_exercises.py tools/syllabus.toml
 ```
 
 Or generate exercises from inside Neovim with `:CPGenerate`.
@@ -121,23 +120,29 @@ Tools
 -----
 ### Exercise Generator
 
-Generate exercises from a syllabus using Hugging Face models. Requires Python
-3.11+ and a HF token (set via `HF_TOKEN` env var, or `huggingface-cli login`).
+Generate exercises from a syllabus using Hugging Face models. The generator is
+fully language-agnostic: the LLM produces a self-contained test harness alongside
+each exercise, so adding a new language is just a run command — no Python glue code needed.
 
-The syllabus is a TOML file defining topics, languages, difficulties, and counts
-(see `tools/syllabus.toml` for an example).
+Requires [uv](https://docs.astral.sh/uv/) and a HF token (set via `HF_TOKEN` env var, or `huggingface-cli login`).
+
+Configuration lives in two TOML files under `tools/`:
+- **`languages.toml`** — defines supported languages (run commands, prompt rules,
+  required fields). Add a new language here; no Python changes needed.
+- **`syllabus.toml`** — defines what to generate (topics, counts, difficulties).
 
 ```bash
-cd tools && pip install -r requirements.txt
-
 # Generate from syllabus (default model: Qwen/Qwen3-Coder-Next)
-python generate_exercises.py syllabus.toml
+uv run tools/generate_exercises.py tools/syllabus.toml
 
 # Custom model
-python generate_exercises.py syllabus.toml --model Qwen/Qwen3-Coder-30B-A3B-Instruct
+uv run tools/generate_exercises.py tools/syllabus.toml --model Qwen/Qwen3-Coder-30B-A3B-Instruct
 
 # Dry run (print JSON, don't insert)
-python generate_exercises.py syllabus.toml --dry-run
+uv run tools/generate_exercises.py tools/syllabus.toml --dry-run
+
+# Use a custom languages config
+uv run tools/generate_exercises.py tools/syllabus.toml --languages my_languages.toml
 ```
 
 Or from Neovim: `:CPGenerate` (prompts for topic, count, difficulty, and language).

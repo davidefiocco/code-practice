@@ -1,0 +1,45 @@
+# Language registry for exercise generation.
+#
+# To add a new language, add a [language_name] section with:
+#   type        – "coding" or "theory"
+#   file_ext    – source file extension (coding only)
+#   run_cmd     – shell command to execute a source file
+#                 placeholders: {file} = source path, {bin} = compiled binary,
+#                               {python} = sys.executable
+#   compile_cmd – (optional) shell command to compile before running
+#   prompt_rules – instructions included in the LLM prompt
+#   requires     – fields the LLM must produce for this language
+#
+# No Python code changes are needed — the LLM generates a self-contained
+# test_harness program that the generic runner executes via run_cmd.
+
+[python]
+type = "coding"
+file_ext = ".py"
+run_cmd = "{python} {file}"
+prompt_rules = [
+    "Include 3-5 test_cases with varied inputs.",
+    "starter_code and solution must define a function called `solution`.",
+]
+requires = ["test_cases", "solution", "starter_code", "test_harness"]
+
+[rust]
+type = "coding"
+file_ext = ".rs"
+compile_cmd = "rustc {file} -o {bin} --edition 2021"
+run_cmd = "{bin}"
+prompt_rules = [
+    "Include 3-5 test_cases with varied inputs.",
+    "starter_code and solution must define a function called `solution`.",
+]
+requires = ["test_cases", "solution", "starter_code", "test_harness"]
+
+[theory]
+type = "theory"
+prompt_rules = [
+    "Include theory_options with exactly 4 options, one correct.",
+    '''The "solution" field MUST contain 2-3 sentences: state which option is correct \
+and explain WHY it is correct (e.g. "Option 2 is correct. Stacks follow LIFO \
+because the most recently pushed element is always removed first.").''',
+]
+requires = ["theory_options", "solution"]
