@@ -1,5 +1,6 @@
 -- Code Practice - Database Module
 local config = require("code-practice.config")
+local utils = require("code-practice.utils")
 
 local ok_sqlite, sqlite = pcall(require, "sqlite")
 if not ok_sqlite then
@@ -39,19 +40,12 @@ local function normalize_single(results)
   return nil
 end
 
-local function escape_sql_string(s)
-  if type(s) ~= "string" then
-    return s
-  end
-  return s:gsub("'", "''")
-end
-
 local function safe_insert(conn, table_name, columns, values)
   local col_list = table.concat(columns, ", ")
   local val_list = {}
   for _, v in ipairs(values) do
     if type(v) == "string" then
-      table.insert(val_list, "'" .. escape_sql_string(v) .. "'")
+      table.insert(val_list, "'" .. utils.escape_sql(v) .. "'")
     elseif type(v) == "boolean" then
       table.insert(val_list, v and 1 or 0)
     elseif v == nil then
@@ -150,7 +144,7 @@ function db.create_tables()
 end
 
 -- Filters are only populated by the browser UI (hardcoded difficulty/engine
--- strings), never from raw user input.  escape_sql_string is a defence-in-depth
+-- strings), never from raw user input.  utils.escape_sql is a defence-in-depth
 -- measure, not a substitute for parameterised queries.
 function db.get_all_exercises(filters)
   local conn = db.connect()
@@ -159,13 +153,13 @@ function db.get_all_exercises(filters)
 
   if filters then
     if filters.difficulty then
-      table.insert(conditions, string.format("difficulty = '%s'", escape_sql_string(filters.difficulty)))
+      table.insert(conditions, string.format("difficulty = '%s'", utils.escape_sql(filters.difficulty)))
     end
     if filters.engine then
-      table.insert(conditions, string.format("engine = '%s'", escape_sql_string(filters.engine)))
+      table.insert(conditions, string.format("engine = '%s'", utils.escape_sql(filters.engine)))
     end
     if filters.search and filters.search ~= "" then
-      local search_term = escape_sql_string(filters.search)
+      local search_term = utils.escape_sql(filters.search)
       table.insert(
         conditions,
         string.format("(title LIKE '%%%s%%' OR description LIKE '%%%s%%')", search_term, search_term)

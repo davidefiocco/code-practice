@@ -40,12 +40,22 @@ M.registry = {
     icon = "🦀",
     filter_key = "r",
     filter_label = "Rust",
-    health_cmd = "cargo",
+    health_cmd = "rustc",
     health_hint = "Install Rust toolchain or disable Rust in config",
     default_config = {
       enabled = false,
       cmd = "rustc",
     },
+    compile_cmd = function(cfg, file, bin)
+      return { cfg.cmd or "rustc", file, "-o", bin, "--edition", "2021" }
+    end,
+    run_cmd = function(_, bin)
+      return { bin }
+    end,
+    wrap_test = function(code, input)
+      local call = (input or ""):match("^%s*$") and "solution()" or ("solution(" .. input .. ")")
+      return code .. '\n\nfn main() {\n    println!("{:?}", ' .. call .. ");\n}"
+    end,
   },
 
   theory = {

@@ -1,14 +1,8 @@
 -- Code Practice - JSON Exercise Importer
 local db = require("code-practice.db")
+local utils = require("code-practice.utils")
 
 local M = {}
-
-local function escape(s)
-  if type(s) ~= "string" then
-    return s
-  end
-  return s:gsub("'", "''")
-end
 
 local function sql_val(v)
   if v == nil then
@@ -20,7 +14,7 @@ local function sql_val(v)
   if type(v) == "number" then
     return tostring(v)
   end
-  return "'" .. escape(tostring(v)) .. "'"
+  return "'" .. utils.escape_sql(tostring(v)) .. "'"
 end
 
 function M.import(json_path, opts)

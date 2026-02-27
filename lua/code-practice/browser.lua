@@ -125,7 +125,8 @@ function browser.render_preview()
     end
   end
 
-  if exercise.engine == "theory" then
+  local eng = engines.get(exercise.engine)
+  if eng and eng.type == "theory" then
     local options = db.get_theory_options(exercise.id)
     if #options > 0 then
       table.insert(lines, "## Options")
