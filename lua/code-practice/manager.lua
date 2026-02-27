@@ -41,18 +41,22 @@ function manager.open_exercise(id)
   local bufname = string.format("code-practice://exercise/%d", id)
   local bufnr = vim.fn.bufnr(bufname)
   local is_new_buf = bufnr == -1
+  local needs_content = is_new_buf
 
   if is_new_buf then
     bufnr = vim.api.nvim_create_buf(true, false)
     vim.api.nvim_buf_set_name(bufnr, bufname)
+  elseif not vim.api.nvim_buf_is_loaded(bufnr) then
+    needs_content = true
   end
 
   local filetype = engines.filetype(exercise.engine)
   vim.bo[bufnr].buftype = "nofile"
+  vim.bo[bufnr].bufhidden = "hide"
   vim.bo[bufnr].filetype = filetype
   vim.bo[bufnr].swapfile = false
 
-  if is_new_buf then
+  if needs_content then
     vim.bo[bufnr].modifiable = true
     vim.bo[bufnr].readonly = false
 

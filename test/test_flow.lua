@@ -777,6 +777,27 @@ test("Importer: only correct theory option has is_correct=1", function()
   end
 end)
 
+-- 39. Reopening an unloaded exercise buffer repopulates content
+test("Reopen unloaded exercise: buffer content is restored", function()
+  local cp = require("code-practice.init")
+
+  local buf1 = cp.open_exercise(1)
+  assert_truthy(buf1, "open exercise 1")
+
+  local lines_before = vim.api.nvim_buf_get_lines(buf1, 0, -1, false)
+  assert_truthy(table.concat(lines_before, "\n"):find("Exercise:"), "buffer should have content")
+
+  cp.open_exercise(2)
+  vim.cmd("bunload " .. buf1)
+  assert_truthy(not vim.api.nvim_buf_is_loaded(buf1), "buffer should be unloaded after bunload")
+
+  local buf1_again = cp.open_exercise(1)
+  assert_truthy(buf1_again, "reopen exercise 1")
+  local lines_after = vim.api.nvim_buf_get_lines(buf1_again, 0, -1, false)
+  local content = table.concat(lines_after, "\n")
+  assert_truthy(content:find("Exercise:"), "unloaded buffer should be repopulated with content")
+end)
+
 -- Summary
 io.write("\n" .. string.rep("=", 44) .. "\n")
 io.write(string.format("  Results: %d passed, %d failed, %d skipped\n", passed, failed, skipped))
