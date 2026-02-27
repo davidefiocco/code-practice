@@ -18,7 +18,9 @@ jobs:
           version: latest
           args: --check lua/ plugin/
 
-      - uses: YoloWingPixie/selene-lint-action@v1
+      - uses: YoloWingPixie/selene-lua-linter-action@v1
+        with:
+          config-path: selene.toml
 
   test:
     runs-on: ubuntu-latest
