@@ -169,8 +169,8 @@ via `keymaps.exercise` in config.
     `Ctrl-t`         Run tests (|:CPRun|)
     `Ctrl-n`         Next exercise (|:CPNext|)
     `Ctrl-p`         Previous exercise (|:CPPrev|)
-    `Ctrl-s`         Skip exercise (|:CPSkip|)
-    `Ctrl-h`         Show hints (|:CPHint|)
+    `Ctrl-k`         Skip exercise (|:CPSkip|)
+    `Ctrl-i`         Show hints (|:CPHint|)
     `Ctrl-l`         View solution (|:CPSolution|)
     `Ctrl-d`         Show description (|:CPDesc|)
     `Ctrl-b`         Open browser (|:CP|)
@@ -230,12 +230,12 @@ Options are merged with |vim.tbl_deep_extend()|.
         },
         exercise = {
           run_tests = "<C-t>",
-          show_hint = "<C-h>",
+          show_hint = "<C-i>",
           view_solution = "<C-l>",
           show_description = "<C-d>",
           next_exercise = "<C-n>",
           prev_exercise = "<C-p>",
-          skip_exercise = "<C-s>",
+          skip_exercise = "<C-k>",
           open_browser = "<C-b>",
         },
       },

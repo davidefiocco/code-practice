@@ -298,6 +298,9 @@ end
 
 function browser.refresh()
   fetch_exercises()
+  if state.selected_index > #state.exercises then
+    state.selected_index = math.max(1, #state.exercises)
+  end
   update_display()
 end
 
@@ -376,8 +379,6 @@ function browser.close()
 end
 
 function browser.open()
-  state.selected_index = 1
-  state.current_filter = { difficulty = nil, engine = nil, search = "" }
   browser.create_popup()
 end
 
