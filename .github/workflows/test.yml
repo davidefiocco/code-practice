@@ -18,14 +18,7 @@ jobs:
           version: latest
           args: --check lua/ plugin/
 
-      - name: Install selene
-        run: |
-          curl -sSL https://github.com/Kampfkarren/selene/releases/latest/download/selene-linux.zip -o selene.zip
-          unzip selene.zip
-          sudo mv selene /usr/local/bin/
-
-      - name: Run selene
-        run: selene lua/ plugin/
+      - uses: YoloWingPixie/selene-lint-action@v1
 
   test:
     runs-on: ubuntu-latest
