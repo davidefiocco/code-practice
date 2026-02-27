@@ -42,6 +42,25 @@ function code_practice.setup(opts)
 
   db.connect()
 
+  local conn = db.connect()
+  local row = conn:eval("SELECT COUNT(*) as count FROM exercises")
+  local count = row and (row.count or (row[1] and row[1].count)) or 0
+
+  if count == 0 then
+    local json_path = config.get("storage.exercises_json")
+    if json_path and json_path ~= "" and vim.fn.filereadable(json_path) == 1 then
+      local importer = require("code-practice.importer")
+      local counts, err = importer.import(json_path)
+      if counts then
+        utils.notify(string.format("Imported %d exercises from %s", counts.exercises, json_path))
+      else
+        utils.notify("Auto-import failed: " .. (err or "unknown error"), "error")
+      end
+    else
+      utils.notify("No exercises found. Run :CPImport <path> to load exercises from a JSON file.", "warn")
+    end
+  end
+
   browser.set_on_open(function(id)
     code_practice.open_exercise(id)
   end)

@@ -30,7 +30,23 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim):
 }
 ```
 
-Then populate the exercise database (requires [uv](https://docs.astral.sh/uv/) and a [Hugging Face token](https://huggingface.co/settings/tokens)):
+Then populate the exercise database. The simplest way is to import a JSON file:
+
+```vim
+:CPImport /path/to/exercises.json
+```
+
+Or set `exercises_json` in your config to auto-import on first run:
+
+```lua
+require("code-practice").setup({
+  storage = {
+    exercises_json = "/path/to/exercises.json",
+  },
+})
+```
+
+You can also generate exercises with an LLM (requires [uv](https://docs.astral.sh/uv/) and a [Hugging Face token](https://huggingface.co/settings/tokens)):
 
 ```bash
 cd ~/.local/share/nvim/lazy/code-practice
@@ -38,7 +54,7 @@ export HF_TOKEN=your_token
 uv run tools/generate_exercises.py tools/syllabus.toml
 ```
 
-Or generate exercises from inside Neovim with `:CPGenerate`.
+Or from Neovim: `:CPGenerate`.
 
 Requirements
 ------------
@@ -70,6 +86,8 @@ Commands
 | `:CPSolution`  | Show reference solution in a split   |
 | `:CPStats`     | Show practice statistics             |
 | `:CPHelp`      | Show the in-editor quick guide       |
+| `:CPImport`    | Import exercises from a JSON file    |
+| `:CPImport!`   | Replace all exercises from JSON       |
 | `:CPGenerate`  | Generate exercises via LLM           |
 
 All commands support tab completion -- type `:CP<Tab>` to explore.
@@ -149,7 +167,9 @@ Or from Neovim: `:CPGenerate` (prompts for topic, count, difficulty, and languag
 
 Data
 ----
-Exercises are stored in the sqlite database under stdpath("data")/code-practice.
+Exercises are stored in an SQLite database at `stdpath("data")/code-practice/exercises.db`.
+Import exercises from a JSON file with `:CPImport <path>`, or use `:CPImport!` to
+replace existing data. The database path is configurable via `storage.db_path`.
 
 Roadmap
 -------
@@ -163,8 +183,20 @@ Roadmap
 
 Development
 -----------
-A minimal Neovim config for testing lives in `dev/init.lua`:
+A minimal Neovim config for local development lives in `dev/init.lua`:
 
 ```bash
 nvim -u dev/init.lua
 ```
+
+### Testing
+
+The test suite runs headless Neovim inside Docker:
+
+```bash
+docker build -t code-practice-test .
+docker run --rm code-practice-test
+```
+
+CI runs both linting (stylua + selene) and the Docker test suite on every push
+and pull request. See `.github/workflows/test.yml`.

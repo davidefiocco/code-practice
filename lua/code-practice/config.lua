@@ -8,6 +8,8 @@ M.defaults = {
     home = vim.fn.stdpath("data") .. "/code-practice",
     -- Database file path
     db_path = vim.fn.stdpath("data") .. "/code-practice/exercises.db",
+    -- Path to exercises JSON file (nil = no auto-import; set to auto-seed on first run)
+    exercises_json = nil,
   },
 
   -- UI settings
