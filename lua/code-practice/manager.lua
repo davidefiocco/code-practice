@@ -129,6 +129,34 @@ function manager.open_exercise(id)
   vim.b[bufnr].code_practice_exercise_id = id
   vim.b[bufnr].code_practice_engine = exercise.engine
 
+  if exercise.engine == "theory" then
+    local opts_by_num = {}
+    for _, opt in ipairs(exercise.options or {}) do
+      opts_by_num[opt.option_number] = opt.option_text
+    end
+
+    for num, text in pairs(opts_by_num) do
+      vim.api.nvim_buf_set_keymap(bufnr, "n", tostring(num), "", {
+        noremap = true,
+        nowait = true,
+        callback = function()
+          local line_count = vim.api.nvim_buf_line_count(bufnr)
+          for i = 0, line_count - 1 do
+            local line = vim.api.nvim_buf_get_lines(bufnr, i, i + 1, false)[1]
+            if line and line:match("^Answer:") then
+              vim.bo[bufnr].modifiable = true
+              vim.api.nvim_buf_set_lines(bufnr, i, i + 1, false, {
+                string.format("Answer: %d  [%s]", num, text),
+              })
+              utils.notify(string.format("Selected option %d: %s", num, text), "info")
+              return
+            end
+          end
+        end,
+      })
+    end
+  end
+
   local current_win = vim.api.nvim_get_current_win()
   local function is_floating(win)
     local ok, cfg = pcall(vim.api.nvim_win_get_config, win)

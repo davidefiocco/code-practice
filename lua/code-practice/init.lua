@@ -162,23 +162,15 @@ function code_practice.run_tests()
 
   if engine_name == "theory" then
     local answer = nil
-    local has_answer_line = false
     for _, line in ipairs(vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)) do
-      if line:match("^[Aa]nswer:") then
-        has_answer_line = true
-        answer = line:match("^[Aa]nswer:%s*(%d+)")
-        if answer then
-          break
-        end
+      answer = line:match("^Answer:%s*(%d+)")
+      if answer then
+        break
       end
     end
 
     if not answer then
-      if has_answer_line then
-        utils.notify("Please set 'Answer: <number>' before running tests", "error")
-      else
-        utils.notify("Missing answer. Add a line like 'Answer: 2'", "error")
-      end
+      utils.notify("Select an answer first (press 1-4)", "error")
       return
     end
 
