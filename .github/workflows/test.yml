@@ -7,6 +7,26 @@ on:
     branches: [main, dev]
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: JohnnyMorganz/stylua-action@v4
+        with:
+          token: ${{ github.token }}
+          version: latest
+          args: --check lua/ plugin/
+
+      - name: Install selene
+        run: |
+          curl -sSL https://github.com/Kampfkarren/selene/releases/latest/download/selene-linux.zip -o selene.zip
+          unzip selene.zip
+          sudo mv selene /usr/local/bin/
+
+      - name: Run selene
+        run: selene lua/ plugin/
+
   test:
     runs-on: ubuntu-latest
     steps:
