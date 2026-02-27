@@ -1,0 +1,1405 @@
+[
+  {
+    "id": 1,
+    "title": "Sum of List Elements",
+    "description": "Write a function that takes a list of integers and returns the sum of all its elements.",
+    "difficulty": "easy",
+    "language": "python",
+    "tags": [
+      "lists",
+      "arithmetic"
+    ],
+    "hints": [
+      "Initialize a variable to 0 to accumulate the sum.",
+      "Iterate through each element in the list and add it to your accumulator."
+    ],
+    "solution": "def solution(lst):\n    total = 0\n    for num in lst:\n        total += num\n    return total",
+    "starter_code": "def solution(lst):\n    # Your code here\n    pass",
+    "created_at": "2026-02-23 14:00:51",
+    "updated_at": "2026-02-23 14:00:51",
+    "test_cases": [
+      {
+        "input": "[-1, -2, -3]",
+        "expected_output": "-6",
+        "description": "Sum of negative integers",
+        "is_hidden": false
+      },
+      {
+        "input": "[0, 0, 0]",
+        "expected_output": "0",
+        "description": "Sum of zeros",
+        "is_hidden": false
+      },
+      {
+        "input": "[1, 2, 3, 4]",
+        "expected_output": "10",
+        "description": "Sum of positive integers",
+        "is_hidden": false
+      },
+      {
+        "input": "[5]",
+        "expected_output": "5",
+        "description": "Single-element list",
+        "is_hidden": false
+      }
+    ],
+    "theory_options": []
+  },
+  {
+    "id": 2,
+    "title": "Find Maximum Element",
+    "description": "Write a function that takes a non-empty list of integers and returns the maximum value in the list.",
+    "difficulty": "easy",
+    "language": "python",
+    "tags": [
+      "lists",
+      "comparison"
+    ],
+    "hints": [
+      "Assume the first element is the maximum initially.",
+      "Iterate through the rest of the list, updating the maximum when you find a larger value."
+    ],
+    "solution": "def solution(lst):\n    max_val = lst[0]\n    for num in lst[1:]:\n        if num > max_val:\n            max_val = num\n    return max_val",
+    "starter_code": "def solution(lst):\n    # Your code here\n    pass",
+    "created_at": "2026-02-23 14:00:51",
+    "updated_at": "2026-02-23 14:00:51",
+    "test_cases": [
+      {
+        "input": "[-5, -2, -10, -1]",
+        "expected_output": "-1",
+        "description": "All negative numbers",
+        "is_hidden": false
+      },
+      {
+        "input": "[10, 10, 10]",
+        "expected_output": "10",
+        "description": "All elements equal",
+        "is_hidden": false
+      },
+      {
+        "input": "[3, 1, 4, 1, 5, 9]",
+        "expected_output": "9",
+        "description": "List with varied values",
+        "is_hidden": false
+      },
+      {
+        "input": "[42]",
+        "expected_output": "42",
+        "description": "Single-element list",
+        "is_hidden": false
+      }
+    ],
+    "theory_options": []
+  },
+  {
+    "id": 3,
+    "title": "Reverse a List",
+    "description": "Write a function that takes a list and returns a new list with the elements in reverse order. Do not use the built-in reverse() or [::-1] slicing.",
+    "difficulty": "easy",
+    "language": "python",
+    "tags": [
+      "lists",
+      "reversal"
+    ],
+    "hints": [
+      "Create a new empty list to store the reversed elements.",
+      "Append elements from the original list starting from the end."
+    ],
+    "solution": "def solution(lst):\n    reversed_list = []\n    for i in range(len(lst) - 1, -1, -1):\n        reversed_list.append(lst[i])\n    return reversed_list",
+    "starter_code": "def solution(lst):\n    # Your code here\n    pass",
+    "created_at": "2026-02-23 14:00:51",
+    "updated_at": "2026-02-23 14:00:51",
+    "test_cases": [
+      {
+        "input": "['a', 'b', 'c']",
+        "expected_output": "['c', 'b', 'a']",
+        "description": "Reverse a list of strings",
+        "is_hidden": false
+      },
+      {
+        "input": "[1, 2, 3, 4, 5]",
+        "expected_output": "[5, 4, 3, 2, 1]",
+        "description": "Reverse a list of integers",
+        "is_hidden": false
+      },
+      {
+        "input": "[1]",
+        "expected_output": "[1]",
+        "description": "Single-element list",
+        "is_hidden": false
+      },
+      {
+        "input": "[]",
+        "expected_output": "[]",
+        "description": "Empty list",
+        "is_hidden": false
+      }
+    ],
+    "theory_options": []
+  },
+  {
+    "id": 4,
+    "title": "Count Occurrences of an Element",
+    "description": "Write a function that takes a list and an element, and returns the number of times the element appears in the list.",
+    "difficulty": "easy",
+    "language": "python",
+    "tags": [
+      "lists",
+      "counting"
+    ],
+    "hints": [
+      "Initialize a counter to 0.",
+      "Loop through the list and increment the counter each time you encounter the target element."
+    ],
+    "solution": "def solution(lst, element):\n    count = 0\n    for item in lst:\n        if item == element:\n            count += 1\n    return count",
+    "starter_code": "def solution(lst, element):\n    # Your code here\n    pass",
+    "created_at": "2026-02-23 14:00:51",
+    "updated_at": "2026-02-23 14:00:51",
+    "test_cases": [
+      {
+        "input": "['apple', 'banana', 'apple'], 'apple'",
+        "expected_output": "2",
+        "description": "Count occurrences of 'apple'",
+        "is_hidden": false
+      },
+      {
+        "input": "[1, 2, 3, 2, 2, 4], 2",
+        "expected_output": "3",
+        "description": "Count occurrences of 2 in a list",
+        "is_hidden": false
+      },
+      {
+        "input": "[1, 2, 3], 5",
+        "expected_output": "0",
+        "description": "Element not present in list",
+        "is_hidden": false
+      },
+      {
+        "input": "[], 'test'",
+        "expected_output": "0",
+        "description": "Empty list",
+        "is_hidden": false
+      }
+    ],
+    "theory_options": []
+  },
+  {
+    "id": 5,
+    "title": "Filter Even Numbers",
+    "description": "Write a function that takes a list of integers and returns a new list containing only the even numbers from the original list.",
+    "difficulty": "easy",
+    "language": "python",
+    "tags": [
+      "lists",
+      "filtering"
+    ],
+    "hints": [
+      "Use the modulo operator (%) to check if a number is even (num % 2 == 0).",
+      "Build a new list with only the even numbers."
+    ],
+    "solution": "def solution(lst):\n    evens = []\n    for num in lst:\n        if num % 2 == 0:\n            evens.append(num)\n    return evens",
+    "starter_code": "def solution(lst):\n    # Your code here\n    pass",
+    "created_at": "2026-02-23 14:00:51",
+    "updated_at": "2026-02-23 14:00:51",
+    "test_cases": [
+      {
+        "input": "[0, -2, 3, -4]",
+        "expected_output": "[0, -2, -4]",
+        "description": "Includes zero and negative evens",
+        "is_hidden": false
+      },
+      {
+        "input": "[1, 2, 3, 4, 5, 6]",
+        "expected_output": "[2, 4, 6]",
+        "description": "Filter even numbers from mixed list",
+        "is_hidden": false
+      },
+      {
+        "input": "[2, 4, 6, 8]",
+        "expected_output": "[2, 4, 6, 8]",
+        "description": "All numbers are even",
+        "is_hidden": false
+      },
+      {
+        "input": "[7, 9, 11]",
+        "expected_output": "[]",
+        "description": "No even numbers in list",
+        "is_hidden": false
+      }
+    ],
+    "theory_options": []
+  },
+  {
+    "id": 6,
+    "title": "Fibonacci with Memoization",
+    "description": "Implement a recursive function to compute the nth Fibonacci number using memoization to avoid redundant calculations. The Fibonacci sequence is defined as: F(0) = 0, F(1) = 1, F(n) = F(n-1) + F(n-2) for n ≥ 2. Your solution should handle n up to at least 30 efficiently.",
+    "difficulty": "medium",
+    "language": "python",
+    "tags": [
+      "recursion",
+      "memoization",
+      "dynamic_programming"
+    ],
+    "hints": [
+      "Use a dictionary to cache already computed Fibonacci values",
+      "Base cases are n=0 and n=1",
+      "Check if the value is already in the cache before computing"
+    ],
+    "solution": "def solution(n):\n    memo = {0: 0, 1: 1}\n    def fib(n):\n        if n in memo:\n            return memo[n]\n        memo[n] = fib(n-1) + fib(n-2)\n        return memo[n]\n    return fib(n)",
+    "starter_code": "def solution(n):\n    # Your code here\n    pass",
+    "created_at": "2026-02-23 14:01:16",
+    "updated_at": "2026-02-23 14:01:16",
+    "test_cases": [
+      {
+        "input": "0",
+        "expected_output": "0",
+        "description": "Base case: F(0)",
+        "is_hidden": false
+      },
+      {
+        "input": "1",
+        "expected_output": "1",
+        "description": "Base case: F(1)",
+        "is_hidden": false
+      },
+      {
+        "input": "10",
+        "expected_output": "55",
+        "description": "F(10) = 55",
+        "is_hidden": false
+      },
+      {
+        "input": "20",
+        "expected_output": "6765",
+        "description": "F(20) = 6765",
+        "is_hidden": false
+      },
+      {
+        "input": "30",
+        "expected_output": "832040",
+        "description": "F(30) = 832040",
+        "is_hidden": false
+      }
+    ],
+    "theory_options": []
+  },
+  {
+    "id": 7,
+    "title": "Count Occurrences in Nested List",
+    "description": "Write a recursive function that counts the number of occurrences of a target value in a nested list structure. The function should handle arbitrarily nested lists (lists containing other lists).",
+    "difficulty": "medium",
+    "language": "python",
+    "tags": [
+      "recursion",
+      "nested_lists",
+      "search"
+    ],
+    "hints": [
+      "Check if an element is a list (use isinstance) and recurse if it is",
+      "Otherwise, check if it equals the target",
+      "Accumulate counts from nested lists and current level"
+    ],
+    "solution": "def solution(nested_list, target):\n    count = 0\n    for element in nested_list:\n        if isinstance(element, list):\n            count += solution(element, target)\n        else:\n            if element == target:\n                count += 1\n    return count",
+    "starter_code": "def solution(nested_list, target):\n    # Your code here\n    pass",
+    "created_at": "2026-02-23 14:01:16",
+    "updated_at": "2026-02-23 14:01:16",
+    "test_cases": [
+      {
+        "input": "[\"a\", [\"b\", [\"a\", \"c\"]], \"a\"], \"a\"",
+        "expected_output": "3",
+        "description": "Count string occurrences",
+        "is_hidden": false
+      },
+      {
+        "input": "[[1, 2], [3, [1, 2]], 1], 1",
+        "expected_output": "3",
+        "description": "Count 1s in nested list",
+        "is_hidden": false
+      },
+      {
+        "input": "[[1, [1, [1]]], 1], 1",
+        "expected_output": "4",
+        "description": "Count all occurrences of 1",
+        "is_hidden": false
+      },
+      {
+        "input": "[[2, 2], [2, [2, 2]]], 2",
+        "expected_output": "5",
+        "description": "Count all 2s in nested structure",
+        "is_hidden": false
+      },
+      {
+        "input": "[[], [[]], [[[]]]], 5",
+        "expected_output": "0",
+        "description": "Target not present in deeply nested empty structure",
+        "is_hidden": false
+      }
+    ],
+    "theory_options": []
+  },
+  {
+    "id": 8,
+    "title": "Subsequence Sum",
+    "description": "Given a list of integers and a target sum, determine if there exists a subsequence (not necessarily contiguous) of the list that sums to the target. Return True if such a subsequence exists, False otherwise. Use recursion to explore all possibilities.",
+    "difficulty": "medium",
+    "language": "python",
+    "tags": [
+      "recursion",
+      "backtracking",
+      "subsequence"
+    ],
+    "hints": [
+      "At each step, decide whether to include or exclude the current element",
+      "Base cases: target = 0 (True), list empty (False if target != 0)",
+      "Recursively check both possibilities"
+    ],
+    "solution": "def solution(nums, target):\n    def backtrack(index, current_sum):\n        if current_sum == target:\n            return True\n        if index >= len(nums):\n            return False\n        # Include current element\n        if backtrack(index + 1, current_sum + nums[index]):\n            return True\n        # Exclude current element\n        if backtrack(index + 1, current_sum):\n            return True\n        return False\n    return backtrack(0, 0)",
+    "starter_code": "def solution(nums, target):\n    # Your code here\n    pass",
+    "created_at": "2026-02-23 14:01:16",
+    "updated_at": "2026-02-23 14:01:16",
+    "test_cases": [
+      {
+        "input": "[1, -1, 2], 0",
+        "expected_output": "True",
+        "description": "1+(-1)=0 exists",
+        "is_hidden": false
+      },
+      {
+        "input": "[1, 2, 3], 5",
+        "expected_output": "True",
+        "description": "2+3=5 exists",
+        "is_hidden": false
+      },
+      {
+        "input": "[1, 2, 4], 8",
+        "expected_output": "False",
+        "description": "No subsequence sums to 8",
+        "is_hidden": false
+      },
+      {
+        "input": "[3, 34, 4, 12, 5, 2], 9",
+        "expected_output": "True",
+        "description": "4+5=9 exists",
+        "is_hidden": false
+      },
+      {
+        "input": "[], 0",
+        "expected_output": "True",
+        "description": "Empty subsequence sums to 0",
+        "is_hidden": false
+      }
+    ],
+    "theory_options": []
+  },
+  {
+    "id": 9,
+    "title": "String Permutations",
+    "description": "Write a recursive function that generates all unique permutations of a given string. The function should return a sorted list of all permutations. Handle duplicate characters by ensuring no duplicate permutations appear in the result.",
+    "difficulty": "medium",
+    "language": "python",
+    "tags": [
+      "recursion",
+      "backtracking",
+      "strings",
+      "permutations"
+    ],
+    "hints": [
+      "For each character in the string, fix it as the first character and recursively permute the rest",
+      "Use a set to avoid duplicates, or sort and skip duplicates",
+      "Base case: string length 0 or 1"
+    ],
+    "solution": "def solution(s):\n    if len(s) <= 1:\n        return [s]\n    result = set()\n    for i, char in enumerate(s):\n        remaining = s[:i] + s[i+1:]\n        for perm in solution(remaining):\n            result.add(char + perm)\n    return sorted(list(result))",
+    "starter_code": "def solution(s):\n    # Your code here\n    pass",
+    "created_at": "2026-02-23 14:01:16",
+    "updated_at": "2026-02-23 14:01:16",
+    "test_cases": [
+      {
+        "input": "\"\"",
+        "expected_output": "['']",
+        "description": "Empty string",
+        "is_hidden": false
+      },
+      {
+        "input": "\"a\"",
+        "expected_output": "['a']",
+        "description": "Single character",
+        "is_hidden": false
+      },
+      {
+        "input": "\"aab\"",
+        "expected_output": "['aab', 'aba', 'baa']",
+        "description": "Permutations with duplicates",
+        "is_hidden": false
+      },
+      {
+        "input": "\"aabb\"",
+        "expected_output": "['aabb', 'abab', 'abba', 'baab', 'baba', 'bbaa']",
+        "description": "Permutations with multiple duplicates",
+        "is_hidden": false
+      },
+      {
+        "input": "\"abc\"",
+        "expected_output": "['abc', 'acb', 'bac', 'bca', 'cab', 'cba']",
+        "description": "Permutations of 'abc'",
+        "is_hidden": false
+      }
+    ],
+    "theory_options": []
+  },
+  {
+    "id": 10,
+    "title": "Binary Tree Diameter",
+    "description": "Given a binary tree represented by a dictionary structure where each node has 'val', 'left', and 'right' keys, compute the diameter of the tree. The diameter is the length of the longest path between any two nodes in the tree. The path may or may not pass through the root. The length is measured in number of edges.",
+    "difficulty": "medium",
+    "language": "python",
+    "tags": [
+      "recursion",
+      "trees",
+      "diameter"
+    ],
+    "hints": [
+      "Use a helper function that returns both the height and the diameter for each subtree",
+      "For each node, the diameter is max(left_diameter, right_diameter, left_height + right_height)",
+      "Height of a node is 1 + max(left_height, right_height)"
+    ],
+    "solution": "def solution(root):\n    def helper(node):\n        if not node:\n            return 0, 0  # height, diameter\n        left_height, left_diameter = helper(node.get('left'))\n        right_height, right_diameter = helper(node.get('right'))\n        current_height = 1 + max(left_height, right_height)\n        current_diameter = max(left_diameter, right_diameter, left_height + right_height)\n        return current_height, current_diameter\n    _, diameter = helper(root)\n    return diameter",
+    "starter_code": "def solution(root):\n    # Your code here\n    pass",
+    "created_at": "2026-02-23 14:01:16",
+    "updated_at": "2026-02-23 14:01:16",
+    "test_cases": [
+      {
+        "input": "{'val': 1, 'left': {'val': 2, 'left': {'val': 3, 'left': {'val': 4}}}, 'right': None}",
+        "expected_output": "3",
+        "description": "Left-skewed tree with diameter 3",
+        "is_hidden": false
+      },
+      {
+        "input": "{'val': 1, 'left': {'val': 2, 'left': {'val': 4, 'left': {'val': 6}}, 'right': {'val': 5}}, 'right': {'val': 3, 'left': {'val': 7}}}",
+        "expected_output": "5",
+        "description": "Tree with diameter 5 (path: 6->4->2->1->3->7)",
+        "is_hidden": false
+      },
+      {
+        "input": "{'val': 1, 'left': {'val': 2, 'left': {'val': 4}, 'right': {'val': 5}}, 'right': {'val': 3}}",
+        "expected_output": "3",
+        "description": "Tree with diameter 3 (path: 4->2->1->3)",
+        "is_hidden": false
+      },
+      {
+        "input": "{'val': 1, 'left': {'val': 2}, 'right': {'val': 3}}",
+        "expected_output": "2",
+        "description": "Simple tree with root having two children",
+        "is_hidden": false
+      },
+      {
+        "input": "{'val': 1}",
+        "expected_output": "0",
+        "description": "Single node tree has diameter 0",
+        "is_hidden": false
+      }
+    ],
+    "theory_options": []
+  },
+  {
+    "id": 11,
+    "title": "Stable Merge Sort Implementation",
+    "description": "Implement a stable merge sort algorithm that sorts a list of (priority, value) tuples by priority while preserving the relative order of elements with equal priority. The function should take a list of tuples and return a new sorted list.",
+    "difficulty": "hard",
+    "language": "python",
+    "tags": [
+      "sorting",
+      "merge-sort",
+      "stability"
+    ],
+    "hints": [
+      "Use recursion to divide the list into halves",
+      "When merging, ensure equal priority elements maintain original order",
+      "Handle empty list and single-element cases"
+    ],
+    "solution": "def solution(arr):\n    if len(arr) <= 1:\n        return arr\n    \n    mid = len(arr) // 2\n    left = solution(arr[:mid])\n    right = solution(arr[mid:])\n    \n    return merge(left, right)\n\ndef merge(left, right):\n    result = []\n    i = j = 0\n    \n    while i < len(left) and j < len(right):\n        # Use <= to maintain stability (equal priorities keep original order)\n        if left[i][0] <= right[j][0]:\n            result.append(left[i])\n            i += 1\n        else:\n            result.append(right[j])\n            j += 1\n    \n    result.extend(left[i:])\n    result.extend(right[j:])\n    return result",
+    "starter_code": "def solution(arr):\n    # Your code here\n    pass",
+    "created_at": "2026-02-23 14:01:37",
+    "updated_at": "2026-02-23 14:01:37",
+    "test_cases": [
+      {
+        "input": "[(1, 'single')]",
+        "expected_output": "[(1, 'single')]",
+        "description": "Single element list",
+        "is_hidden": false
+      },
+      {
+        "input": "[(3, 'c'), (1, 'a'), (2, 'b'), (1, 'd')]",
+        "expected_output": "[(1, 'a'), (1, 'd'), (2, 'b'), (3, 'c')]",
+        "description": "Stable sort with duplicate priorities",
+        "is_hidden": false
+      },
+      {
+        "input": "[(5, 'e'), (5, 'd'), (5, 'c'), (5, 'b'), (5, 'a')]",
+        "expected_output": "[(5, 'e'), (5, 'd'), (5, 'c'), (5, 'b'), (5, 'a')]",
+        "description": "All equal priorities - maintains original order",
+        "is_hidden": false
+      },
+      {
+        "input": "[]",
+        "expected_output": "[]",
+        "description": "Empty list case",
+        "is_hidden": false
+      }
+    ],
+    "theory_options": []
+  },
+  {
+    "id": 12,
+    "title": "In-place Quick Sort with Median-of-Three Pivot",
+    "description": "Implement an in-place quicksort algorithm using the median-of-three pivot selection method (first, middle, last elements). The function should sort a list of integers in ascending order without using additional memory for subarrays.",
+    "difficulty": "hard",
+    "language": "python",
+    "tags": [
+      "sorting",
+      "quick-sort",
+      "in-place",
+      "pivot-selection"
+    ],
+    "hints": [
+      "Implement a partition function that returns the pivot index",
+      "For median-of-three, find the median of first, middle, and last elements",
+      "Use recursion with proper base case handling"
+    ],
+    "solution": "def solution(arr):\n    if not arr:\n        return arr\n    quicksort(arr, 0, len(arr) - 1)\n    return arr\n\ndef quicksort(arr, low, high):\n    if low < high:\n        pi = partition(arr, low, high)\n        quicksort(arr, low, pi - 1)\n        quicksort(arr, pi + 1, high)\n\ndef partition(arr, low, high):\n    # Median-of-three pivot selection\n    mid = (low + high) // 2\n    pivot_indices = [low, mid, high]\n    \n    # Sort the three indices by their values\n    pivot_indices.sort(key=lambda i: arr[i])\n    pivot_index = pivot_indices[1]\n    \n    # Move pivot to end\n    arr[pivot_index], arr[high] = arr[high], arr[pivot_index]\n    pivot = arr[high]\n    \n    i = low - 1\n    for j in range(low, high):\n        if arr[j] <= pivot:\n            i += 1\n            arr[i], arr[j] = arr[j], arr[i]\n    \n    arr[i + 1], arr[high] = arr[high], arr[i + 1]\n    return i + 1",
+    "starter_code": "def solution(arr):\n    # Your code here\n    pass",
+    "created_at": "2026-02-23 14:01:37",
+    "updated_at": "2026-02-23 14:01:37",
+    "test_cases": [
+      {
+        "input": "[1, 2, 3, 4, 5, 6, 7, 8, 9]",
+        "expected_output": "[1, 2, 3, 4, 5, 6, 7, 8, 9]",
+        "description": "Already sorted array",
+        "is_hidden": false
+      },
+      {
+        "input": "[3, 1, 4, 1, 5, 9, 2, 6]",
+        "expected_output": "[1, 1, 2, 3, 4, 5, 6, 9]",
+        "description": "Array with duplicate elements",
+        "is_hidden": false
+      },
+      {
+        "input": "[5]",
+        "expected_output": "[5]",
+        "description": "Single element array",
+        "is_hidden": false
+      },
+      {
+        "input": "[9, 8, 7, 6, 5, 4, 3, 2, 1]",
+        "expected_output": "[1, 2, 3, 4, 5, 6, 7, 8, 9]",
+        "description": "Reverse sorted array",
+        "is_hidden": false
+      }
+    ],
+    "theory_options": []
+  },
+  {
+    "id": 13,
+    "title": "Counting Sort with Large Range Optimization",
+    "description": "Implement a counting sort that efficiently handles large ranges by using a dictionary instead of a fixed-size array. The function should sort a list of integers (including negative numbers) in ascending order.",
+    "difficulty": "hard",
+    "language": "python",
+    "tags": [
+      "sorting",
+      "counting-sort",
+      "optimization",
+      "negative-numbers"
+    ],
+    "hints": [
+      "Use dictionary to store frequency counts instead of array",
+      "Find min and max values to handle negative numbers",
+      "Build result by iterating through sorted keys"
+    ],
+    "solution": "def solution(arr):\n    if not arr:\n        return arr\n    \n    freq = {}\n    for num in arr:\n        freq[num] = freq.get(num, 0) + 1\n    \n    result = []\n    for num in sorted(freq):\n        result.extend([num] * freq[num])\n    \n    return result",
+    "starter_code": "def solution(arr):\n    # Your code here\n    pass",
+    "created_at": "2026-02-23 14:01:37",
+    "updated_at": "2026-02-23 14:01:37",
+    "test_cases": [
+      {
+        "input": "[-3, 5, -1, 0, 2, -3, 5]",
+        "expected_output": "[-3, -3, -1, 0, 2, 5, 5]",
+        "description": "Array with negative numbers",
+        "is_hidden": false
+      },
+      {
+        "input": "[1000000, -1000000, 0]",
+        "expected_output": "[-1000000, 0, 1000000]",
+        "description": "Large range with sparse values",
+        "is_hidden": false
+      },
+      {
+        "input": "[4, 2, 2, 8, 3, 3, 1]",
+        "expected_output": "[1, 2, 2, 3, 3, 4, 8]",
+        "description": "Standard counting sort case",
+        "is_hidden": false
+      },
+      {
+        "input": "[]",
+        "expected_output": "[]",
+        "description": "Empty array",
+        "is_hidden": false
+      }
+    ],
+    "theory_options": []
+  },
+  {
+    "id": 14,
+    "title": "Tournament Sort Implementation",
+    "description": "Implement a tournament sort algorithm that builds a complete binary tournament tree to find the minimum element repeatedly. The function should take a list of integers and return a sorted list in ascending order.",
+    "difficulty": "hard",
+    "language": "python",
+    "tags": [
+      "sorting",
+      "tournament-sort",
+      "tree-based"
+    ],
+    "hints": [
+      "Build a tournament tree where each node stores the minimum of its children",
+      "Extract minimum by traversing from root to leaf and updating the tree",
+      "Use array representation of binary tree for efficiency"
+    ],
+    "solution": "def solution(arr):\n    if not arr:\n        return arr\n    \n    n = len(arr)\n    tree_size = 1\n    while tree_size < n:\n        tree_size *= 2\n    \n    EMPTY = (float('inf'), float('inf'))\n    tree = [EMPTY] * (2 * tree_size)\n    \n    for i in range(n):\n        tree[tree_size + i] = (arr[i], i)\n    \n    for i in range(tree_size - 1, 0, -1):\n        tree[i] = min(tree[2 * i], tree[2 * i + 1])\n    \n    result = []\n    for _ in range(n):\n        val, orig_idx = tree[1]\n        result.append(val)\n        \n        leaf_pos = tree_size + orig_idx\n        tree[leaf_pos] = EMPTY\n        pos = leaf_pos // 2\n        while pos >= 1:\n            tree[pos] = min(tree[2 * pos], tree[2 * pos + 1])\n            pos //= 2\n    \n    return result",
+    "starter_code": "def solution(arr):\n    # Your code here\n    pass",
+    "created_at": "2026-02-23 14:01:37",
+    "updated_at": "2026-02-23 14:01:37",
+    "test_cases": [
+      {
+        "input": "[1, 2, 3, 4, 5]",
+        "expected_output": "[1, 2, 3, 4, 5]",
+        "description": "Already sorted array",
+        "is_hidden": false
+      },
+      {
+        "input": "[3, 3, 3, 3]",
+        "expected_output": "[3, 3, 3, 3]",
+        "description": "All equal elements",
+        "is_hidden": false
+      },
+      {
+        "input": "[5, 4, 3, 2, 1]",
+        "expected_output": "[1, 2, 3, 4, 5]",
+        "description": "Reverse sorted array",
+        "is_hidden": false
+      },
+      {
+        "input": "[64, 25, 12, 22, 11]",
+        "expected_output": "[11, 12, 22, 25, 64]",
+        "description": "Standard tournament sort case",
+        "is_hidden": false
+      }
+    ],
+    "theory_options": []
+  },
+  {
+    "id": 15,
+    "title": "Radix Sort for Mixed Positive and Negative Integers",
+    "description": "Implement a radix sort that handles both positive and negative integers. The function should sort a list of integers in ascending order by processing digits from least significant to most significant, using two passes (one for negatives, one for positives).",
+    "difficulty": "hard",
+    "language": "python",
+    "tags": [
+      "sorting",
+      "radix-sort",
+      "negative-numbers"
+    ],
+    "hints": [
+      "Separate positive and negative numbers",
+      "Sort negatives by absolute value in reverse order",
+      "Combine results with negatives reversed at the end"
+    ],
+    "solution": "def solution(arr):\n    if not arr:\n        return arr\n    \n    # Separate positive and negative numbers\n    negatives = [abs(x) for x in arr if x < 0]\n    positives = [x for x in arr if x >= 0]\n    \n    # Sort negatives by absolute value (will reverse later)\n    if negatives:\n        max_neg = max(negatives)\n        for exp in range(len(str(max_neg))):\n            negatives = counting_sort_by_digit(negatives, exp)\n        # Convert back to negative and reverse to get correct order\n        negatives = [-x for x in negatives[::-1]]\n    \n    # Sort positives\n    if positives:\n        max_pos = max(positives)\n        for exp in range(len(str(max_pos))):\n            positives = counting_sort_by_digit(positives, exp)\n    \n    return negatives + positives\n\ndef counting_sort_by_digit(arr, exp):\n    n = len(arr)\n    output = [0] * n\n    count = [0] * 10\n    \n    for num in arr:\n        count[(num // (10 ** exp)) % 10] += 1\n    \n    for i in range(1, 10):\n        count[i] += count[i - 1]\n    \n    for i in range(n - 1, -1, -1):\n        digit = (arr[i] // (10 ** exp)) % 10\n        output[count[digit] - 1] = arr[i]\n        count[digit] -= 1\n    \n    return output",
+    "starter_code": "def solution(arr):\n    # Your code here\n    pass",
+    "created_at": "2026-02-23 14:01:37",
+    "updated_at": "2026-02-23 14:01:37",
+    "test_cases": [
+      {
+        "input": "[-1000, 1000, -500, 500, 0]",
+        "expected_output": "[-1000, -500, 0, 500, 1000]",
+        "description": "Large magnitude values",
+        "is_hidden": false
+      },
+      {
+        "input": "[0]",
+        "expected_output": "[0]",
+        "description": "Single zero element",
+        "is_hidden": false
+      },
+      {
+        "input": "[170, -45, 75, -90, 802, 24, 2, 66]",
+        "expected_output": "[-90, -45, 2, 24, 66, 75, 170, 802]",
+        "description": "Mixed positive and negative integers",
+        "is_hidden": false
+      },
+      {
+        "input": "[3, -1, 2, -5, 0, 4, -2]",
+        "expected_output": "[-5, -2, -1, 0, 2, 3, 4]",
+        "description": "Small range with zero",
+        "is_hidden": false
+      }
+    ],
+    "theory_options": []
+  },
+  {
+    "id": 16,
+    "title": "Most Frequent Element",
+    "description": "Write a function that returns the most frequent element in a list. If there are multiple elements with the same highest frequency, return the one that appears first in the list.",
+    "difficulty": "medium",
+    "language": "python",
+    "tags": [
+      "hash maps",
+      "dictionaries",
+      "frequency"
+    ],
+    "hints": [
+      "Use a dictionary to count occurrences",
+      "Track the first occurrence index to break ties"
+    ],
+    "solution": "def solution(arr):\n    if not arr:\n        return None\n    \n    count = {}\n    first_index = {}\n    \n    for i, val in enumerate(arr):\n        count[val] = count.get(val, 0) + 1\n        if val not in first_index:\n            first_index[val] = i\n    \n    max_freq = max(count.values())\n    candidates = [val for val, freq in count.items() if freq == max_freq]\n    \n    return min(candidates, key=lambda x: first_index[x])",
+    "starter_code": "def solution(arr):\n    # Your code here\n    pass",
+    "created_at": "2026-02-23 14:01:51",
+    "updated_at": "2026-02-23 14:01:51",
+    "test_cases": [
+      {
+        "input": "[\"apple\", \"banana\", \"apple\", \"orange\", \"banana\", \"apple\"]",
+        "expected_output": "'apple'",
+        "description": "String elements with clear most frequent",
+        "is_hidden": false
+      },
+      {
+        "input": "[1, 3, 1, 3, 2, 1]",
+        "expected_output": "1",
+        "description": "Most frequent element with tie-breaker by first occurrence",
+        "is_hidden": false
+      },
+      {
+        "input": "[4, 4, 5, 5, 6]",
+        "expected_output": "4",
+        "description": "Tie in frequency, first occurrence wins",
+        "is_hidden": false
+      },
+      {
+        "input": "[]",
+        "expected_output": "None",
+        "description": "Empty list edge case",
+        "is_hidden": false
+      }
+    ],
+    "theory_options": []
+  },
+  {
+    "id": 17,
+    "title": "Two Sum with Target",
+    "description": "Given a list of integers and a target sum, return the indices of the two numbers such that they add up to the target. You may assume that each input would have exactly one solution, and you may not use the same element twice. Return the answer as a list of two indices in ascending order.",
+    "difficulty": "medium",
+    "language": "python",
+    "tags": [
+      "hash maps",
+      "two-pointer alternative",
+      "lookup optimization"
+    ],
+    "hints": [
+      "Use a dictionary to store previously seen numbers and their indices",
+      "For each number, check if (target - current number) exists in the dictionary"
+    ],
+    "solution": "def solution(nums, target):\n    seen = {}\n    for i, num in enumerate(nums):\n        complement = target - num\n        if complement in seen:\n            return sorted([i, seen[complement]])\n        seen[num] = i\n    return []",
+    "starter_code": "def solution(nums, target):\n    # Your code here\n    pass",
+    "created_at": "2026-02-23 14:01:51",
+    "updated_at": "2026-02-23 14:01:51",
+    "test_cases": [
+      {
+        "input": "[0, 4, 3, 0], 0",
+        "expected_output": "[0, 3]",
+        "description": "Two zeros sum to 0",
+        "is_hidden": false
+      },
+      {
+        "input": "[1, 1, 1, 8], 9",
+        "expected_output": "[2, 3]",
+        "description": "Last matching 1 and 8 sum to 9",
+        "is_hidden": false
+      },
+      {
+        "input": "[2, 7, 11, 15], 9",
+        "expected_output": "[0, 1]",
+        "description": "Classic two sum example: 2+7=9",
+        "is_hidden": false
+      },
+      {
+        "input": "[3, 2, 4], 6",
+        "expected_output": "[1, 2]",
+        "description": "Indices 1 and 2: 2+4=6",
+        "is_hidden": false
+      }
+    ],
+    "theory_options": []
+  },
+  {
+    "id": 18,
+    "title": "Group Anagrams",
+    "description": "Given a list of strings, group the anagrams together. You can return the answer in any order. Two strings are anagrams if they contain the same characters with the same frequencies.",
+    "difficulty": "medium",
+    "language": "python",
+    "tags": [
+      "hash maps",
+      "string manipulation",
+      "anagram grouping"
+    ],
+    "hints": [
+      "Use a dictionary where keys are sorted strings (canonical form)",
+      "Append each string to the list corresponding to its sorted version"
+    ],
+    "solution": "def solution(strs):\n    groups = {}\n    for s in strs:\n        key = ''.join(sorted(s))\n        if key not in groups:\n            groups[key] = []\n        groups[key].append(s)\n    return list(groups.values())",
+    "starter_code": "def solution(strs):\n    # Your code here\n    pass",
+    "created_at": "2026-02-23 14:01:51",
+    "updated_at": "2026-02-23 14:01:51",
+    "test_cases": [
+      {
+        "input": "[\"\"]",
+        "expected_output": "[['']]",
+        "description": "Single empty string",
+        "is_hidden": false
+      },
+      {
+        "input": "[\"a\"]",
+        "expected_output": "[['a']]",
+        "description": "Single one-character string",
+        "is_hidden": false
+      },
+      {
+        "input": "[\"abc\",\"cba\",\"bca\",\"def\",\"fed\"]",
+        "expected_output": "[['abc', 'cba', 'bca'], ['def', 'fed']]",
+        "description": "Two groups of anagrams",
+        "is_hidden": false
+      },
+      {
+        "input": "[\"eat\",\"tea\",\"tan\",\"ate\",\"nat\",\"bat\"]",
+        "expected_output": "[['eat', 'tea', 'ate'], ['tan', 'nat'], ['bat']]",
+        "description": "Group standard anagram examples",
+        "is_hidden": false
+      }
+    ],
+    "theory_options": []
+  },
+  {
+    "id": 19,
+    "title": "Longest Substring Without Repeating Characters",
+    "description": "Given a string s, find the length of the longest substring without repeating characters.",
+    "difficulty": "medium",
+    "language": "python",
+    "tags": [
+      "hash maps",
+      "sliding window",
+      "string processing"
+    ],
+    "hints": [
+      "Use a dictionary to store the last index of each character",
+      "Use two pointers to track the current window"
+    ],
+    "solution": "def solution(s):\n    char_index = {}\n    max_len = 0\n    start = 0\n    \n    for end, char in enumerate(s):\n        if char in char_index and char_index[char] >= start:\n            start = char_index[char] + 1\n        char_index[char] = end\n        max_len = max(max_len, end - start + 1)\n    \n    return max_len",
+    "starter_code": "def solution(s):\n    # Your code here\n    pass",
+    "created_at": "2026-02-23 14:01:51",
+    "updated_at": "2026-02-23 14:01:51",
+    "test_cases": [
+      {
+        "input": "\"\"",
+        "expected_output": "0",
+        "description": "Empty string edge case",
+        "is_hidden": false
+      },
+      {
+        "input": "\"abcabcbb\"",
+        "expected_output": "3",
+        "description": "Longest substring is 'abc', length 3",
+        "is_hidden": false
+      },
+      {
+        "input": "\"bbbbb\"",
+        "expected_output": "1",
+        "description": "All same characters, longest is any single char",
+        "is_hidden": false
+      },
+      {
+        "input": "\"pwwkew\"",
+        "expected_output": "3",
+        "description": "Longest substring is 'wke', length 3",
+        "is_hidden": false
+      }
+    ],
+    "theory_options": []
+  },
+  {
+    "id": 20,
+    "title": "Word Pattern",
+    "description": "Given a pattern and a string s, determine if s follows the same pattern. Here 'follow' means a one-to-one mapping between characters in the pattern and words in s (i.e., each character maps to exactly one unique word, and vice versa).",
+    "difficulty": "medium",
+    "language": "python",
+    "tags": [
+      "hash maps",
+      "bijective mapping",
+      "string parsing"
+    ],
+    "hints": [
+      "Split the string into words",
+      "Use two dictionaries: one for char->word and one for word->char"
+    ],
+    "solution": "def solution(pattern, s):\n    words = s.split()\n    if len(pattern) != len(words):\n        return False\n    \n    char_to_word = {}\n    word_to_char = {}\n    \n    for char, word in zip(pattern, words):\n        if char in char_to_word and char_to_word[char] != word:\n            return False\n        if word in word_to_char and word_to_char[word] != char:\n            return False\n        char_to_word[char] = word\n        word_to_char[word] = char\n    \n    return True",
+    "starter_code": "def solution(pattern, s):\n    # Your code here\n    pass",
+    "created_at": "2026-02-23 14:01:51",
+    "updated_at": "2026-02-23 14:01:51",
+    "test_cases": [
+      {
+        "input": "\"aaaa\", \"dog cat cat dog\"",
+        "expected_output": "False",
+        "description": "Pattern requires same word for all positions",
+        "is_hidden": false
+      },
+      {
+        "input": "\"abba\", \"dog cat cat dog\"",
+        "expected_output": "True",
+        "description": "Pattern abba matches dog/cat/cat/dog",
+        "is_hidden": false
+      },
+      {
+        "input": "\"abba\", \"dog cat cat fish\"",
+        "expected_output": "False",
+        "description": "Last word doesn't match pattern",
+        "is_hidden": false
+      },
+      {
+        "input": "\"abc\", \"dog cat dog\"",
+        "expected_output": "False",
+        "description": "Bijective mapping violated: a->dog and c->dog",
+        "is_hidden": false
+      }
+    ],
+    "theory_options": []
+  },
+  {
+    "id": 21,
+    "title": "Time Complexity of Nested Loops",
+    "description": "What is the time complexity of the following algorithm? Consider an algorithm that has an outer loop running n times and an inner loop running n/2 times for each iteration of the outer loop.",
+    "difficulty": "medium",
+    "language": "theory",
+    "tags": [
+      "big-o",
+      "time-complexity",
+      "nested-loops"
+    ],
+    "hints": [
+      "Count total iterations of the innermost operation.",
+      "Outer loop runs n times. Inner loop runs n/2 times per outer iteration."
+    ],
+    "solution": "",
+    "starter_code": "",
+    "created_at": "2026-02-23 14:02:15",
+    "updated_at": "2026-02-23 14:02:15",
+    "test_cases": [],
+    "theory_options": [
+      {
+        "option_number": 1,
+        "option_text": "O(n)",
+        "is_correct": 0
+      },
+      {
+        "option_number": 2,
+        "option_text": "O(n log n)",
+        "is_correct": 0
+      },
+      {
+        "option_number": 3,
+        "option_text": "O(n²)",
+        "is_correct": 1
+      },
+      {
+        "option_number": 4,
+        "option_text": "O(n³)",
+        "is_correct": 0
+      }
+    ]
+  },
+  {
+    "id": 22,
+    "title": "Asymptotic Growth Comparison",
+    "description": "Which of the following functions grows asymptotically the fastest as n approaches infinity?",
+    "difficulty": "medium",
+    "language": "theory",
+    "tags": [
+      "big-o",
+      "asymptotic-analysis",
+      "growth-rate"
+    ],
+    "hints": [
+      "Recall the hierarchy: constant < logarithmic < polynomial < exponential < factorial.",
+      "Consider comparing logarithmic, linear, n log n, and exponential functions."
+    ],
+    "solution": "",
+    "starter_code": "",
+    "created_at": "2026-02-23 14:02:15",
+    "updated_at": "2026-02-23 14:02:15",
+    "test_cases": [],
+    "theory_options": [
+      {
+        "option_number": 1,
+        "option_text": "O(log n)",
+        "is_correct": 0
+      },
+      {
+        "option_number": 2,
+        "option_text": "O(n)",
+        "is_correct": 0
+      },
+      {
+        "option_number": 3,
+        "option_text": "O(n log n)",
+        "is_correct": 0
+      },
+      {
+        "option_number": 4,
+        "option_text": "O(2ⁿ)",
+        "is_correct": 1
+      }
+    ]
+  },
+  {
+    "id": 23,
+    "title": "Space Complexity of Recursive Fibonacci",
+    "description": "What is the space complexity of the naive recursive implementation of the Fibonacci sequence (fib(n) = fib(n-1) + fib(n-2))?",
+    "difficulty": "medium",
+    "language": "theory",
+    "tags": [
+      "big-o",
+      "space-complexity",
+      "recursion"
+    ],
+    "hints": [
+      "Consider the maximum depth of the recursion call stack.",
+      "Each recursive call adds a frame to the stack until reaching the base cases."
+    ],
+    "solution": "",
+    "starter_code": "",
+    "created_at": "2026-02-23 14:02:15",
+    "updated_at": "2026-02-23 14:02:15",
+    "test_cases": [],
+    "theory_options": [
+      {
+        "option_number": 1,
+        "option_text": "O(1)",
+        "is_correct": 0
+      },
+      {
+        "option_number": 2,
+        "option_text": "O(n)",
+        "is_correct": 1
+      },
+      {
+        "option_number": 3,
+        "option_text": "O(log n)",
+        "is_correct": 0
+      },
+      {
+        "option_number": 4,
+        "option_text": "O(2ⁿ)",
+        "is_correct": 0
+      }
+    ]
+  },
+  {
+    "id": 24,
+    "title": "Amortized Time Complexity",
+    "description": "What is the amortized time complexity of a single push operation when dynamically resizing an array-based stack (e.g., doubling capacity when full)?",
+    "difficulty": "medium",
+    "language": "theory",
+    "tags": [
+      "big-o",
+      "amortized-analysis",
+      "dynamic-array"
+    ],
+    "hints": [
+      "Although occasional pushes trigger resizing (O(n)), most are O(1).",
+      "Use the accounting method or aggregate analysis to find average cost per operation."
+    ],
+    "solution": "",
+    "starter_code": "",
+    "created_at": "2026-02-23 14:02:15",
+    "updated_at": "2026-02-23 14:02:15",
+    "test_cases": [],
+    "theory_options": [
+      {
+        "option_number": 1,
+        "option_text": "O(1)",
+        "is_correct": 1
+      },
+      {
+        "option_number": 2,
+        "option_text": "O(n)",
+        "is_correct": 0
+      },
+      {
+        "option_number": 3,
+        "option_text": "O(log n)",
+        "is_correct": 0
+      },
+      {
+        "option_number": 4,
+        "option_text": "O(n log n)",
+        "is_correct": 0
+      }
+    ]
+  },
+  {
+    "id": 25,
+    "title": "Big-Theta Characterization",
+    "description": "Which of the following best characterizes the function f(n) = 3n² + 5n + 2 in terms of Big-Theta notation?",
+    "difficulty": "medium",
+    "language": "theory",
+    "tags": [
+      "big-o",
+      "big-theta",
+      "asymptotic-tight-bound"
+    ],
+    "hints": [
+      "Big-Theta requires both upper and lower bounds that match asymptotically.",
+      "Ignore lower-order terms and constant coefficients."
+    ],
+    "solution": "",
+    "starter_code": "",
+    "created_at": "2026-02-23 14:02:15",
+    "updated_at": "2026-02-23 14:02:15",
+    "test_cases": [],
+    "theory_options": [
+      {
+        "option_number": 1,
+        "option_text": "Θ(n)",
+        "is_correct": 0
+      },
+      {
+        "option_number": 2,
+        "option_text": "Θ(n²)",
+        "is_correct": 1
+      },
+      {
+        "option_number": 3,
+        "option_text": "Θ(n³)",
+        "is_correct": 0
+      },
+      {
+        "option_number": 4,
+        "option_text": "Θ(log n)",
+        "is_correct": 0
+      }
+    ]
+  },
+  {
+    "id": 26,
+    "title": "Linear vs Non-linear Data Structures",
+    "description": "Which of the following is a linear data structure?",
+    "difficulty": "easy",
+    "language": "theory",
+    "tags": [
+      "data structures",
+      "fundamentals"
+    ],
+    "hints": [
+      "Linear structures store elements in a sequential manner.",
+      "Arrays and linked lists are examples of linear structures."
+    ],
+    "solution": "",
+    "starter_code": "",
+    "created_at": "2026-02-23 14:02:22",
+    "updated_at": "2026-02-23 14:02:22",
+    "test_cases": [],
+    "theory_options": [
+      {
+        "option_number": 1,
+        "option_text": "Binary Tree",
+        "is_correct": 0
+      },
+      {
+        "option_number": 2,
+        "option_text": "Graph",
+        "is_correct": 0
+      },
+      {
+        "option_number": 3,
+        "option_text": "Stack",
+        "is_correct": 1
+      },
+      {
+        "option_number": 4,
+        "option_text": "Heap",
+        "is_correct": 0
+      }
+    ]
+  },
+  {
+    "id": 27,
+    "title": "Time Complexity of Array Access",
+    "description": "What is the time complexity of accessing an element by index in an array?",
+    "difficulty": "easy",
+    "language": "theory",
+    "tags": [
+      "time complexity",
+      "arrays"
+    ],
+    "hints": [
+      "Arrays store elements in contiguous memory locations.",
+      "Index-based access does not require traversal."
+    ],
+    "solution": "",
+    "starter_code": "",
+    "created_at": "2026-02-23 14:02:22",
+    "updated_at": "2026-02-23 14:02:22",
+    "test_cases": [],
+    "theory_options": [
+      {
+        "option_number": 1,
+        "option_text": "O(1)",
+        "is_correct": 1
+      },
+      {
+        "option_number": 2,
+        "option_text": "O(n)",
+        "is_correct": 0
+      },
+      {
+        "option_number": 3,
+        "option_text": "O(log n)",
+        "is_correct": 0
+      },
+      {
+        "option_number": 4,
+        "option_text": "O(n log n)",
+        "is_correct": 0
+      }
+    ]
+  },
+  {
+    "id": 28,
+    "title": "Stack Operations",
+    "description": "Which principle do stacks follow?",
+    "difficulty": "easy",
+    "language": "theory",
+    "tags": [
+      "stacks",
+      "fundamentals"
+    ],
+    "hints": [
+      "Think about the order in which elements are added and removed.",
+      "It's the same principle as stacking plates."
+    ],
+    "solution": "",
+    "starter_code": "",
+    "created_at": "2026-02-23 14:02:22",
+    "updated_at": "2026-02-23 14:02:22",
+    "test_cases": [],
+    "theory_options": [
+      {
+        "option_number": 1,
+        "option_text": "First In, First Out (FIFO)",
+        "is_correct": 0
+      },
+      {
+        "option_number": 2,
+        "option_text": "Last In, First Out (LIFO)",
+        "is_correct": 1
+      },
+      {
+        "option_number": 3,
+        "option_text": "Priority In, Priority Out (PIPO)",
+        "is_correct": 0
+      },
+      {
+        "option_number": 4,
+        "option_text": "Random Access",
+        "is_correct": 0
+      }
+    ]
+  },
+  {
+    "id": 29,
+    "title": "Hash Table Collision Resolution",
+    "description": "Which of the following is a common method for resolving collisions in hash tables?",
+    "difficulty": "easy",
+    "language": "theory",
+    "tags": [
+      "hash tables",
+      "collision resolution"
+    ],
+    "hints": [
+      "One method stores multiple items in the same bucket.",
+      "Another uses probing to find the next available slot."
+    ],
+    "solution": "",
+    "starter_code": "",
+    "created_at": "2026-02-23 14:02:22",
+    "updated_at": "2026-02-23 14:02:22",
+    "test_cases": [],
+    "theory_options": [
+      {
+        "option_number": 1,
+        "option_text": "Merge Sort",
+        "is_correct": 0
+      },
+      {
+        "option_number": 2,
+        "option_text": "Quadratic Probing",
+        "is_correct": 1
+      },
+      {
+        "option_number": 3,
+        "option_text": "Binary Search",
+        "is_correct": 0
+      },
+      {
+        "option_number": 4,
+        "option_text": "Depth-First Search",
+        "is_correct": 0
+      }
+    ]
+  },
+  {
+    "id": 30,
+    "title": "Linked List Node Structure",
+    "description": "What are the two main components of a node in a singly linked list?",
+    "difficulty": "easy",
+    "language": "theory",
+    "tags": [
+      "linked lists",
+      "node structure"
+    ],
+    "hints": [
+      "One part stores data.",
+      "The other part points to the next element."
+    ],
+    "solution": "",
+    "starter_code": "",
+    "created_at": "2026-02-23 14:02:22",
+    "updated_at": "2026-02-23 14:02:22",
+    "test_cases": [],
+    "theory_options": [
+      {
+        "option_number": 1,
+        "option_text": "Value and Parent Pointer",
+        "is_correct": 0
+      },
+      {
+        "option_number": 2,
+        "option_text": "Key and Value",
+        "is_correct": 0
+      },
+      {
+        "option_number": 3,
+        "option_text": "Data and Next Pointer",
+        "is_correct": 1
+      },
+      {
+        "option_number": 4,
+        "option_text": "Data and Previous Pointer",
+        "is_correct": 0
+      }
+    ]
+  }
+]
