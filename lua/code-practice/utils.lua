@@ -49,15 +49,6 @@ function utils.delete_temp_files()
   end
 end
 
-function utils.filetype_from_language(language)
-  local mapping = {
-    python = "python",
-    rust = "rust",
-    theory = "markdown",
-  }
-  return mapping[language] or "text"
-end
-
 function utils.json_decode(str)
   local ok, result = pcall(vim.fn.json_decode, str)
   return ok and result or nil

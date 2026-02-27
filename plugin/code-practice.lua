@@ -128,8 +128,9 @@ vim.api.nvim_create_user_command("CPGenerate", function()
   count = (count and count ~= "") and count or "5"
   local difficulty = vim.fn.input("Difficulty (easy/medium/hard) [medium]: ")
   difficulty = (difficulty and difficulty ~= "") and difficulty or "medium"
-  local language = vim.fn.input("Language (python/rust/theory) [python]: ")
-  language = (language and language ~= "") and language or "python"
+  local engine_names = table.concat(require("code-practice.engines").list(), "/")
+  local engine = vim.fn.input("Engine (" .. engine_names .. ") [python]: ")
+  engine = (engine and engine ~= "") and engine or "python"
 
   local plugin_dir = vim.fn.fnamemodify(debug.getinfo(1, "S").source:sub(2), ":h:h")
   local script = plugin_dir .. "/tools/generate_exercises.py"
@@ -137,9 +138,9 @@ vim.api.nvim_create_user_command("CPGenerate", function()
 
   local tmp = vim.fn.tempname() .. ".toml"
   local toml = string.format(
-    '[[exercises]]\ntopic = "%s"\nlanguage = "%s"\ndifficulty = "%s"\ncount = %s\n',
+    '[[exercises]]\ntopic = "%s"\nengine = "%s"\ndifficulty = "%s"\ncount = %s\n',
     topic:gsub('"', '\\"'),
-    language,
+    engine,
     difficulty,
     count
   )

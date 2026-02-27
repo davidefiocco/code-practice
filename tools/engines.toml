@@ -1,6 +1,6 @@
-# Language registry for exercise generation.
+# Engine registry for exercise generation.
 #
-# To add a new language, add a [language_name] section with:
+# To add a new engine, add a [engine_name] section with:
 #   type        – "coding" or "theory"
 #   file_ext    – source file extension (coding only)
 #   run_cmd     – shell command to execute a source file
@@ -8,9 +8,9 @@
 #                               {python} = sys.executable
 #   compile_cmd – (optional) shell command to compile before running
 #   prompt_rules – instructions included in the LLM prompt
-#   requires     – fields the LLM must produce for this language
+#   requires     – fields the LLM must produce for this engine
 #
-# No Python code changes are needed — the LLM generates a self-contained
+# No Python code changes are needed -- the LLM generates a self-contained
 # test_harness program that the generic runner executes via run_cmd.
 
 [python]

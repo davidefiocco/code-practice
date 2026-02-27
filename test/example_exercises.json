@@ -4,7 +4,6 @@
     "title": "Sum of List Elements",
     "description": "Write a function that takes a list of integers and returns the sum of all its elements.",
     "difficulty": "easy",
-    "language": "python",
     "tags": [
       "lists",
       "arithmetic"
@@ -43,14 +42,14 @@
         "is_hidden": false
       }
     ],
-    "theory_options": []
+    "theory_options": [],
+    "engine": "python"
   },
   {
     "id": 2,
     "title": "Find Maximum Element",
     "description": "Write a function that takes a non-empty list of integers and returns the maximum value in the list.",
     "difficulty": "easy",
-    "language": "python",
     "tags": [
       "lists",
       "comparison"
@@ -89,14 +88,14 @@
         "is_hidden": false
       }
     ],
-    "theory_options": []
+    "theory_options": [],
+    "engine": "python"
   },
   {
     "id": 3,
     "title": "Reverse a List",
     "description": "Write a function that takes a list and returns a new list with the elements in reverse order. Do not use the built-in reverse() or [::-1] slicing.",
     "difficulty": "easy",
-    "language": "python",
     "tags": [
       "lists",
       "reversal"
@@ -135,14 +134,14 @@
         "is_hidden": false
       }
     ],
-    "theory_options": []
+    "theory_options": [],
+    "engine": "python"
   },
   {
     "id": 4,
     "title": "Count Occurrences of an Element",
     "description": "Write a function that takes a list and an element, and returns the number of times the element appears in the list.",
     "difficulty": "easy",
-    "language": "python",
     "tags": [
       "lists",
       "counting"
@@ -181,14 +180,14 @@
         "is_hidden": false
       }
     ],
-    "theory_options": []
+    "theory_options": [],
+    "engine": "python"
   },
   {
     "id": 5,
     "title": "Filter Even Numbers",
     "description": "Write a function that takes a list of integers and returns a new list containing only the even numbers from the original list.",
     "difficulty": "easy",
-    "language": "python",
     "tags": [
       "lists",
       "filtering"
@@ -227,14 +226,14 @@
         "is_hidden": false
       }
     ],
-    "theory_options": []
+    "theory_options": [],
+    "engine": "python"
   },
   {
     "id": 6,
     "title": "Fibonacci with Memoization",
     "description": "Implement a recursive function to compute the nth Fibonacci number using memoization to avoid redundant calculations. The Fibonacci sequence is defined as: F(0) = 0, F(1) = 1, F(n) = F(n-1) + F(n-2) for n ≥ 2. Your solution should handle n up to at least 30 efficiently.",
     "difficulty": "medium",
-    "language": "python",
     "tags": [
       "recursion",
       "memoization",
@@ -281,14 +280,14 @@
         "is_hidden": false
       }
     ],
-    "theory_options": []
+    "theory_options": [],
+    "engine": "python"
   },
   {
     "id": 7,
     "title": "Count Occurrences in Nested List",
     "description": "Write a recursive function that counts the number of occurrences of a target value in a nested list structure. The function should handle arbitrarily nested lists (lists containing other lists).",
     "difficulty": "medium",
-    "language": "python",
     "tags": [
       "recursion",
       "nested_lists",
@@ -335,14 +334,14 @@
         "is_hidden": false
       }
     ],
-    "theory_options": []
+    "theory_options": [],
+    "engine": "python"
   },
   {
     "id": 8,
     "title": "Subsequence Sum",
     "description": "Given a list of integers and a target sum, determine if there exists a subsequence (not necessarily contiguous) of the list that sums to the target. Return True if such a subsequence exists, False otherwise. Use recursion to explore all possibilities.",
     "difficulty": "medium",
-    "language": "python",
     "tags": [
       "recursion",
       "backtracking",
@@ -389,14 +388,14 @@
         "is_hidden": false
       }
     ],
-    "theory_options": []
+    "theory_options": [],
+    "engine": "python"
   },
   {
     "id": 9,
     "title": "String Permutations",
     "description": "Write a recursive function that generates all unique permutations of a given string. The function should return a sorted list of all permutations. Handle duplicate characters by ensuring no duplicate permutations appear in the result.",
     "difficulty": "medium",
-    "language": "python",
     "tags": [
       "recursion",
       "backtracking",
@@ -444,14 +443,14 @@
         "is_hidden": false
       }
     ],
-    "theory_options": []
+    "theory_options": [],
+    "engine": "python"
   },
   {
     "id": 10,
     "title": "Binary Tree Diameter",
     "description": "Given a binary tree represented by a dictionary structure where each node has 'val', 'left', and 'right' keys, compute the diameter of the tree. The diameter is the length of the longest path between any two nodes in the tree. The path may or may not pass through the root. The length is measured in number of edges.",
     "difficulty": "medium",
-    "language": "python",
     "tags": [
       "recursion",
       "trees",
@@ -498,14 +497,14 @@
         "is_hidden": false
       }
     ],
-    "theory_options": []
+    "theory_options": [],
+    "engine": "python"
   },
   {
     "id": 11,
     "title": "Stable Merge Sort Implementation",
     "description": "Implement a stable merge sort algorithm that sorts a list of (priority, value) tuples by priority while preserving the relative order of elements with equal priority. The function should take a list of tuples and return a new sorted list.",
     "difficulty": "hard",
-    "language": "python",
     "tags": [
       "sorting",
       "merge-sort",
@@ -546,14 +545,14 @@
         "is_hidden": false
       }
     ],
-    "theory_options": []
+    "theory_options": [],
+    "engine": "python"
   },
   {
     "id": 12,
     "title": "In-place Quick Sort with Median-of-Three Pivot",
     "description": "Implement an in-place quicksort algorithm using the median-of-three pivot selection method (first, middle, last elements). The function should sort a list of integers in ascending order without using additional memory for subarrays.",
     "difficulty": "hard",
-    "language": "python",
     "tags": [
       "sorting",
       "quick-sort",
@@ -595,14 +594,14 @@
         "is_hidden": false
       }
     ],
-    "theory_options": []
+    "theory_options": [],
+    "engine": "python"
   },
   {
     "id": 13,
     "title": "Counting Sort with Large Range Optimization",
     "description": "Implement a counting sort that efficiently handles large ranges by using a dictionary instead of a fixed-size array. The function should sort a list of integers (including negative numbers) in ascending order.",
     "difficulty": "hard",
-    "language": "python",
     "tags": [
       "sorting",
       "counting-sort",
@@ -644,14 +643,14 @@
         "is_hidden": false
       }
     ],
-    "theory_options": []
+    "theory_options": [],
+    "engine": "python"
   },
   {
     "id": 14,
     "title": "Tournament Sort Implementation",
     "description": "Implement a tournament sort algorithm that builds a complete binary tournament tree to find the minimum element repeatedly. The function should take a list of integers and return a sorted list in ascending order.",
     "difficulty": "hard",
-    "language": "python",
     "tags": [
       "sorting",
       "tournament-sort",
@@ -692,14 +691,14 @@
         "is_hidden": false
       }
     ],
-    "theory_options": []
+    "theory_options": [],
+    "engine": "python"
   },
   {
     "id": 15,
     "title": "Radix Sort for Mixed Positive and Negative Integers",
     "description": "Implement a radix sort that handles both positive and negative integers. The function should sort a list of integers in ascending order by processing digits from least significant to most significant, using two passes (one for negatives, one for positives).",
     "difficulty": "hard",
-    "language": "python",
     "tags": [
       "sorting",
       "radix-sort",
@@ -740,14 +739,14 @@
         "is_hidden": false
       }
     ],
-    "theory_options": []
+    "theory_options": [],
+    "engine": "python"
   },
   {
     "id": 16,
     "title": "Most Frequent Element",
     "description": "Write a function that returns the most frequent element in a list. If there are multiple elements with the same highest frequency, return the one that appears first in the list.",
     "difficulty": "medium",
-    "language": "python",
     "tags": [
       "hash maps",
       "dictionaries",
@@ -787,14 +786,14 @@
         "is_hidden": false
       }
     ],
-    "theory_options": []
+    "theory_options": [],
+    "engine": "python"
   },
   {
     "id": 17,
     "title": "Two Sum with Target",
     "description": "Given a list of integers and a target sum, return the indices of the two numbers such that they add up to the target. You may assume that each input would have exactly one solution, and you may not use the same element twice. Return the answer as a list of two indices in ascending order.",
     "difficulty": "medium",
-    "language": "python",
     "tags": [
       "hash maps",
       "two-pointer alternative",
@@ -834,14 +833,14 @@
         "is_hidden": false
       }
     ],
-    "theory_options": []
+    "theory_options": [],
+    "engine": "python"
   },
   {
     "id": 18,
     "title": "Group Anagrams",
     "description": "Given a list of strings, group the anagrams together. You can return the answer in any order. Two strings are anagrams if they contain the same characters with the same frequencies.",
     "difficulty": "medium",
-    "language": "python",
     "tags": [
       "hash maps",
       "string manipulation",
@@ -881,14 +880,14 @@
         "is_hidden": false
       }
     ],
-    "theory_options": []
+    "theory_options": [],
+    "engine": "python"
   },
   {
     "id": 19,
     "title": "Longest Substring Without Repeating Characters",
     "description": "Given a string s, find the length of the longest substring without repeating characters.",
     "difficulty": "medium",
-    "language": "python",
     "tags": [
       "hash maps",
       "sliding window",
@@ -928,14 +927,14 @@
         "is_hidden": false
       }
     ],
-    "theory_options": []
+    "theory_options": [],
+    "engine": "python"
   },
   {
     "id": 20,
     "title": "Word Pattern",
     "description": "Given a pattern and a string s, determine if s follows the same pattern. Here 'follow' means a one-to-one mapping between characters in the pattern and words in s (i.e., each character maps to exactly one unique word, and vice versa).",
     "difficulty": "medium",
-    "language": "python",
     "tags": [
       "hash maps",
       "bijective mapping",
@@ -975,14 +974,14 @@
         "is_hidden": false
       }
     ],
-    "theory_options": []
+    "theory_options": [],
+    "engine": "python"
   },
   {
     "id": 21,
     "title": "Time Complexity of Nested Loops",
     "description": "What is the time complexity of the following algorithm? Consider an algorithm that has an outer loop running n times and an inner loop running n/2 times for each iteration of the outer loop.",
     "difficulty": "medium",
-    "language": "theory",
     "tags": [
       "big-o",
       "time-complexity",
@@ -1018,14 +1017,14 @@
         "option_text": "O(n³)",
         "is_correct": 0
       }
-    ]
+    ],
+    "engine": "theory"
   },
   {
     "id": 22,
     "title": "Asymptotic Growth Comparison",
     "description": "Which of the following functions grows asymptotically the fastest as n approaches infinity?",
     "difficulty": "medium",
-    "language": "theory",
     "tags": [
       "big-o",
       "asymptotic-analysis",
@@ -1061,14 +1060,14 @@
         "option_text": "O(2ⁿ)",
         "is_correct": 1
       }
-    ]
+    ],
+    "engine": "theory"
   },
   {
     "id": 23,
     "title": "Space Complexity of Recursive Fibonacci",
     "description": "What is the space complexity of the naive recursive implementation of the Fibonacci sequence (fib(n) = fib(n-1) + fib(n-2))?",
     "difficulty": "medium",
-    "language": "theory",
     "tags": [
       "big-o",
       "space-complexity",
@@ -1104,14 +1103,14 @@
         "option_text": "O(2ⁿ)",
         "is_correct": 0
       }
-    ]
+    ],
+    "engine": "theory"
   },
   {
     "id": 24,
     "title": "Amortized Time Complexity",
     "description": "What is the amortized time complexity of a single push operation when dynamically resizing an array-based stack (e.g., doubling capacity when full)?",
     "difficulty": "medium",
-    "language": "theory",
     "tags": [
       "big-o",
       "amortized-analysis",
@@ -1147,14 +1146,14 @@
         "option_text": "O(n log n)",
         "is_correct": 0
       }
-    ]
+    ],
+    "engine": "theory"
   },
   {
     "id": 25,
     "title": "Big-Theta Characterization",
     "description": "Which of the following best characterizes the function f(n) = 3n² + 5n + 2 in terms of Big-Theta notation?",
     "difficulty": "medium",
-    "language": "theory",
     "tags": [
       "big-o",
       "big-theta",
@@ -1190,14 +1189,14 @@
         "option_text": "Θ(log n)",
         "is_correct": 0
       }
-    ]
+    ],
+    "engine": "theory"
   },
   {
     "id": 26,
     "title": "Linear vs Non-linear Data Structures",
     "description": "Which of the following is a linear data structure?",
     "difficulty": "easy",
-    "language": "theory",
     "tags": [
       "data structures",
       "fundamentals"
@@ -1232,14 +1231,14 @@
         "option_text": "Heap",
         "is_correct": 0
       }
-    ]
+    ],
+    "engine": "theory"
   },
   {
     "id": 27,
     "title": "Time Complexity of Array Access",
     "description": "What is the time complexity of accessing an element by index in an array?",
     "difficulty": "easy",
-    "language": "theory",
     "tags": [
       "time complexity",
       "arrays"
@@ -1274,14 +1273,14 @@
         "option_text": "O(n log n)",
         "is_correct": 0
       }
-    ]
+    ],
+    "engine": "theory"
   },
   {
     "id": 28,
     "title": "Stack Operations",
     "description": "Which principle do stacks follow?",
     "difficulty": "easy",
-    "language": "theory",
     "tags": [
       "stacks",
       "fundamentals"
@@ -1316,14 +1315,14 @@
         "option_text": "Random Access",
         "is_correct": 0
       }
-    ]
+    ],
+    "engine": "theory"
   },
   {
     "id": 29,
     "title": "Hash Table Collision Resolution",
     "description": "Which of the following is a common method for resolving collisions in hash tables?",
     "difficulty": "easy",
-    "language": "theory",
     "tags": [
       "hash tables",
       "collision resolution"
@@ -1358,14 +1357,14 @@
         "option_text": "Depth-First Search",
         "is_correct": 0
       }
-    ]
+    ],
+    "engine": "theory"
   },
   {
     "id": 30,
     "title": "Linked List Node Structure",
     "description": "What are the two main components of a node in a singly linked list?",
     "difficulty": "easy",
-    "language": "theory",
     "tags": [
       "linked lists",
       "node structure"
@@ -1400,6 +1399,7 @@
         "option_text": "Data and Previous Pointer",
         "is_correct": 0
       }
-    ]
+    ],
+    "engine": "theory"
   }
 ]

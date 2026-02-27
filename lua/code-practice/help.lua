@@ -6,6 +6,7 @@ if not ok then
 end
 
 local config = require("code-practice.config")
+local engines = require("code-practice.engines")
 
 local help = {}
 
@@ -63,6 +64,18 @@ function help.show()
 
   local km = config.get("keymaps.exercise") or {}
 
+  -- Build engine filter lines dynamically from registry
+  local filter_lines = {}
+  for _, name in ipairs(engines.list()) do
+    local eng = engines.get(name)
+    if eng.filter_key then
+      table.insert(
+        filter_lines,
+        "  " .. pad(eng.filter_key, 19) .. "Filter by " .. eng.filter_label .. " exercises"
+      )
+    end
+  end
+
   local lines = {
     "",
     "  QUICK START",
@@ -78,9 +91,16 @@ function help.show()
     "  j / k            Move up / down                     Enter / o        Open exercise",
     "  e                Filter by Easy difficulty          m                Filter by Medium",
     "  h                Filter by Hard difficulty          a                Clear all filters",
-    "  p                Filter by Python exercises         r                Filter by Rust",
-    "  t                Filter by Theory questions         q / Esc          Close browser",
-    "  ?                Show this help guide",
+  }
+
+  for _, fl in ipairs(filter_lines) do
+    table.insert(lines, fl)
+  end
+
+  table.insert(lines, "  q / Esc          Close browser")
+  table.insert(lines, "  ?                Show this help guide")
+
+  local exercise_lines = {
     "",
     "  EXERCISE BUFFER KEYMAPS (active inside exercise buffers)",
     "  " .. string.rep("─", width - 4),
@@ -112,21 +132,23 @@ function help.show()
     "  Press q or <Esc> to close this guide",
     "",
   }
+  for _, el in ipairs(exercise_lines) do
+    table.insert(lines, el)
+  end
 
   vim.bo[popup.bufnr].modifiable = true
   vim.api.nvim_buf_set_lines(popup.bufnr, 0, -1, false, lines)
   vim.bo[popup.bufnr].modifiable = false
 
-  -- Add highlights
-  local ns = vim.api.nvim_create_namespace("code_practice_help")
-  vim.api.nvim_buf_add_highlight(popup.bufnr, ns, "Title", 1, 0, -1)
+  local ns_help = vim.api.nvim_create_namespace("code_practice_help")
+  vim.api.nvim_buf_add_highlight(popup.bufnr, ns_help, "Title", 1, 0, -1)
 
   for i, line in ipairs(lines) do
     if line:match("^  [A-Z]") and not line:match("^  TIPS") and not line:match("^  Press") then
-      vim.api.nvim_buf_add_highlight(popup.bufnr, ns, "Underlined", i - 1, 0, -1)
+      vim.api.nvim_buf_add_highlight(popup.bufnr, ns_help, "Underlined", i - 1, 0, -1)
     end
     if line:match("^  %d+%. :CP") then
-      vim.api.nvim_buf_add_highlight(popup.bufnr, ns, "Character", i - 1, 2, 20)
+      vim.api.nvim_buf_add_highlight(popup.bufnr, ns_help, "Character", i - 1, 2, 20)
     end
   end
 

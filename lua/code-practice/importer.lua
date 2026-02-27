@@ -66,14 +66,14 @@ function M.import(json_path, opts)
 
       local sql = string.format(
         [[INSERT OR REPLACE INTO exercises
-          (id, title, description, difficulty, language, tags, hints,
+          (id, title, description, difficulty, engine, tags, hints,
            solution, starter_code, created_at, updated_at)
           VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)]],
         sql_val(ex.id),
         sql_val(ex.title),
         sql_val(ex.description),
         sql_val(ex.difficulty),
-        sql_val(ex.language),
+        sql_val(ex.engine),
         sql_val(tags or "[]"),
         sql_val(hints or "[]"),
         sql_val(ex.solution or ""),

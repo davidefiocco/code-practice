@@ -27,7 +27,7 @@ def main():
             title TEXT NOT NULL,
             description TEXT NOT NULL,
             difficulty TEXT CHECK(difficulty IN ('easy', 'medium', 'hard')),
-            language TEXT CHECK(language IN ('python', 'rust', 'theory')),
+            engine TEXT NOT NULL,
             tags TEXT DEFAULT '[]',
             hints TEXT DEFAULT '[]',
             solution TEXT,
@@ -62,7 +62,7 @@ def main():
             is_correct INTEGER DEFAULT 0,
             FOREIGN KEY (exercise_id) REFERENCES exercises(id) ON DELETE CASCADE
         );
-        CREATE INDEX IF NOT EXISTS idx_exercises_language ON exercises(language);
+        CREATE INDEX IF NOT EXISTS idx_exercises_engine ON exercises(engine);
         CREATE INDEX IF NOT EXISTS idx_exercises_difficulty ON exercises(difficulty);
         CREATE INDEX IF NOT EXISTS idx_test_cases_exercise ON test_cases(exercise_id);
         CREATE INDEX IF NOT EXISTS idx_attempts_exercise ON attempts(exercise_id);
@@ -78,7 +78,7 @@ def main():
 
         conn.execute(
             """INSERT OR REPLACE INTO exercises
-               (id, title, description, difficulty, language, tags, hints,
+               (id, title, description, difficulty, engine, tags, hints,
                 solution, starter_code, created_at, updated_at)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
@@ -86,7 +86,7 @@ def main():
                 ex["title"],
                 ex["description"],
                 ex["difficulty"],
-                ex["language"],
+                ex["engine"],
                 tags,
                 hints,
                 ex.get("solution", ""),

@@ -20,41 +20,41 @@ from pathlib import Path
 from huggingface_hub import InferenceClient
 
 DEFAULT_MODEL = "Qwen/Qwen3-Coder-Next"
-DEFAULT_LANGUAGES_PATH = Path(__file__).parent / "languages.toml"
+DEFAULT_ENGINES_PATH = Path(__file__).parent / "engines.toml"
 
 # ---------------------------------------------------------------------------
-# Language registry -- loaded from languages.toml at startup.
+# Engine registry -- loaded from engines.toml at startup.
 #
-# Populated by load_languages(); every other module-level reference
+# Populated by load_engines(); every other module-level reference
 # (schema prompt, validation, DB) reads from this dict.
 # ---------------------------------------------------------------------------
 
-LANGUAGES: dict[str, dict] = {}
+ENGINES: dict[str, dict] = {}
 
 
-def load_languages(path: str | Path = DEFAULT_LANGUAGES_PATH) -> dict[str, dict]:
-    """Load and validate language definitions from a TOML file."""
+def load_engines(path: str | Path = DEFAULT_ENGINES_PATH) -> dict[str, dict]:
+    """Load and validate engine definitions from a TOML file."""
     with open(path, "rb") as f:
         data = tomllib.load(f)
 
     for name, cfg in data.items():
         if cfg.get("type") not in ("coding", "theory"):
-            print(f"languages.toml [{name}]: type must be 'coding' or 'theory'", file=sys.stderr)
+            print(f"engines.toml [{name}]: type must be 'coding' or 'theory'", file=sys.stderr)
             sys.exit(1)
         if cfg["type"] == "coding":
             for key in ("file_ext", "run_cmd"):
                 if key not in cfg:
-                    print(f"languages.toml [{name}]: missing required key '{key}'", file=sys.stderr)
+                    print(f"engines.toml [{name}]: missing required key '{key}'", file=sys.stderr)
                     sys.exit(1)
         if "requires" not in cfg or "prompt_rules" not in cfg:
-            print(f"languages.toml [{name}]: missing 'requires' or 'prompt_rules'", file=sys.stderr)
+            print(f"engines.toml [{name}]: missing 'requires' or 'prompt_rules'", file=sys.stderr)
             sys.exit(1)
 
     return data
 
 
 # ---------------------------------------------------------------------------
-# Exercise schema prompt -- built from LANGUAGES registry
+# Exercise schema prompt -- built from ENGINES registry
 # ---------------------------------------------------------------------------
 
 _HARNESS_PROTOCOL = (
@@ -72,16 +72,16 @@ _HARNESS_PROTOCOL = (
 
 
 def _build_exercise_schema() -> str:
-    lang_enum = "|".join(LANGUAGES.keys())
+    engine_enum = "|".join(ENGINES.keys())
 
     by_type: dict[str, list[str]] = {}
-    for lang, cfg in LANGUAGES.items():
-        by_type.setdefault(cfg["type"], []).append(lang)
+    for eng, cfg in ENGINES.items():
+        by_type.setdefault(cfg["type"], []).append(eng)
 
     rule_lines = []
-    for langs in by_type.values():
-        label = "/".join(langs)
-        for rule in LANGUAGES[langs[0]]["prompt_rules"]:
+    for engs in by_type.values():
+        label = "/".join(engs)
+        for rule in ENGINES[engs[0]]["prompt_rules"]:
             rule_lines.append(f"- For {label} exercises: {rule}")
 
     return (
@@ -91,7 +91,7 @@ def _build_exercise_schema() -> str:
         '  "title": "Short descriptive title",\n'
         '  "description": "Full problem description with examples",\n'
         f'  "difficulty": "easy|medium|hard",\n'
-        f'  "language": "{lang_enum}",\n'
+        f'  "engine": "{engine_enum}",\n'
         '  "tags": ["tag1", "tag2"],\n'
         '  "hints": ["hint1", "hint2"],\n'
         '  "solution": "Complete reference solution code",\n'
@@ -118,7 +118,7 @@ def _build_exercise_schema() -> str:
     )
 
 
-EXERCISE_SCHEMA: str = ""  # populated by _init_languages()
+EXERCISE_SCHEMA: str = ""  # populated by _init_engines()
 
 
 def default_db_path() -> str:
@@ -212,12 +212,12 @@ def validate_exercise(ex: dict) -> list[str]:
     if ex.get("difficulty") not in ("easy", "medium", "hard"):
         errors.append(f"bad difficulty: {ex.get('difficulty')}")
 
-    lang = ex.get("language")
-    if lang not in LANGUAGES:
-        errors.append(f"unknown language: {lang}")
+    engine = ex.get("engine")
+    if engine not in ENGINES:
+        errors.append(f"unknown engine: {engine}")
         return errors
 
-    for field in LANGUAGES[lang]["requires"]:
+    for field in ENGINES[engine]["requires"]:
         if field == "test_cases":
             if not ex.get("test_cases"):
                 errors.append("no test cases")
@@ -234,7 +234,7 @@ def validate_exercise(ex: dict) -> list[str]:
 
 
 # ---------------------------------------------------------------------------
-# Deep validation -- runs the LLM-generated test harness (language-agnostic)
+# Deep validation -- runs the LLM-generated test harness (engine-agnostic)
 # ---------------------------------------------------------------------------
 
 def run_test_harness(ex: dict, timeout: float = 10.0) -> list[str]:
@@ -247,17 +247,17 @@ def run_test_harness(ex: dict, timeout: float = 10.0) -> list[str]:
 
     Returns a list of error strings (empty = all tests passed).
     """
-    lang_cfg = LANGUAGES.get(ex.get("language", ""))
-    if not lang_cfg or lang_cfg["type"] != "coding":
+    engine_cfg = ENGINES.get(ex.get("engine", ""))
+    if not engine_cfg or engine_cfg["type"] != "coding":
         return []
 
     harness = ex.get("test_harness", "")
     if not harness:
         return []
 
-    file_ext = lang_cfg.get("file_ext", "")
-    compile_tpl = lang_cfg.get("compile_cmd")
-    run_tpl = lang_cfg["run_cmd"]
+    file_ext = engine_cfg.get("file_ext", "")
+    compile_tpl = engine_cfg.get("compile_cmd")
+    run_tpl = engine_cfg["run_cmd"]
 
     with tempfile.TemporaryDirectory() as tmp:
         src = os.path.join(tmp, f"harness{file_ext}")
@@ -347,14 +347,13 @@ def parse_titles(raw: str) -> list[str]:
 # ---------------------------------------------------------------------------
 
 def ensure_tables(conn: sqlite3.Connection):
-    lang_list = ", ".join(f"'{l}'" for l in LANGUAGES)
-    conn.executescript(f"""
+    conn.executescript("""
         CREATE TABLE IF NOT EXISTS exercises (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             title TEXT NOT NULL,
             description TEXT NOT NULL,
             difficulty TEXT CHECK(difficulty IN ('easy', 'medium', 'hard')),
-            language TEXT CHECK(language IN ({lang_list})),
+            engine TEXT NOT NULL,
             tags TEXT DEFAULT '[]',
             hints TEXT DEFAULT '[]',
             solution TEXT,
@@ -392,13 +391,13 @@ def wipe_exercise_tables(conn: sqlite3.Connection):
 def insert_exercise(conn: sqlite3.Connection, ex: dict) -> int:
     """Insert a single exercise and its child rows. Returns the exercise id."""
     cur = conn.execute(
-        """INSERT INTO exercises (title, description, difficulty, language, tags, hints, solution, starter_code)
+        """INSERT INTO exercises (title, description, difficulty, engine, tags, hints, solution, starter_code)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
         (
             ex["title"],
             ex["description"],
             ex["difficulty"],
-            ex["language"],
+            ex["engine"],
             json.dumps(ex.get("tags", [])),
             json.dumps(ex.get("hints", [])),
             ex.get("solution", ""),
@@ -445,13 +444,13 @@ def post_flight_validate(conn: sqlite3.Connection) -> tuple[int, list[str]]:
     Returns (passed_count, list_of_purge_messages).
     """
     rows = conn.execute(
-        "SELECT id, title, language, difficulty, description, solution, starter_code "
+        "SELECT id, title, engine, difficulty, description, solution, starter_code "
         "FROM exercises"
     ).fetchall()
     purged_msgs: list[str] = []
     passed = 0
 
-    for ex_id, title, language, difficulty, description, solution, starter_code in rows:
+    for ex_id, title, engine, difficulty, description, solution, starter_code in rows:
         errors: list[str] = []
 
         if not title:
@@ -461,10 +460,10 @@ def post_flight_validate(conn: sqlite3.Connection) -> tuple[int, list[str]]:
         if difficulty not in ("easy", "medium", "hard"):
             errors.append(f"bad difficulty: {difficulty}")
 
-        if language not in LANGUAGES:
-            errors.append(f"unknown language: {language}")
+        if engine not in ENGINES:
+            errors.append(f"unknown engine: {engine}")
         else:
-            for field in LANGUAGES[language]["requires"]:
+            for field in ENGINES[engine]["requires"]:
                 if field == "test_cases":
                     tc_count = conn.execute(
                         "SELECT COUNT(*) FROM test_cases WHERE exercise_id = ?",
@@ -488,7 +487,7 @@ def post_flight_validate(conn: sqlite3.Connection) -> tuple[int, list[str]]:
 
         if errors:
             conn.execute("DELETE FROM exercises WHERE id = ?", (ex_id,))
-            purged_msgs.append(f'  - "{title}" ({language}): {", ".join(errors)}')
+            purged_msgs.append(f'  - "{title}" ({engine}): {", ".join(errors)}')
         else:
             passed += 1
 
@@ -500,19 +499,19 @@ def post_flight_validate(conn: sqlite3.Connection) -> tuple[int, list[str]]:
 # Prompt building
 # ---------------------------------------------------------------------------
 
-def build_title_prompt(topic: str, count: int, difficulty: str, language: str) -> str:
+def build_title_prompt(topic: str, count: int, difficulty: str, engine: str) -> str:
     return (
-        f"Generate {count} unique exercise titles for {difficulty} {language} "
+        f"Generate {count} unique exercise titles for {difficulty} {engine} "
         f'exercises about: {topic}.\n'
         f"Return ONLY a JSON array of strings. No markdown fences or commentary."
     )
 
 
 def build_single_exercise_prompt(
-    title: str, topic: str, difficulty: str, language: str,
+    title: str, topic: str, difficulty: str, engine: str,
 ) -> str:
     return (
-        f'Generate a single {difficulty} {language} exercise with the title "{title}" '
+        f'Generate a single {difficulty} {engine} exercise with the title "{title}" '
         f'about the topic "{topic}".\n'
         f"Return ONLY a JSON array with one exercise object."
     )
@@ -532,14 +531,14 @@ def load_syllabus(path: str) -> dict:
         sys.exit(1)
 
     for i, entry in enumerate(entries):
-        for key in ("topic", "language", "difficulty", "count"):
+        for key in ("topic", "engine", "difficulty", "count"):
             if key not in entry:
                 print(f"Syllabus entry {i + 1} missing '{key}'", file=sys.stderr)
                 sys.exit(1)
-        if entry["language"] not in LANGUAGES:
-            valid = ", ".join(LANGUAGES.keys())
+        if entry["engine"] not in ENGINES:
+            valid = ", ".join(ENGINES.keys())
             print(
-                f"Syllabus entry {i + 1}: unknown language '{entry['language']}' (valid: {valid})",
+                f"Syllabus entry {i + 1}: unknown engine '{entry['engine']}' (valid: {valid})",
                 file=sys.stderr,
             )
             sys.exit(1)
@@ -555,12 +554,12 @@ def load_syllabus(path: str) -> dict:
 # ---------------------------------------------------------------------------
 
 def _generate_exercise_with_retries(
-    title: str, topic: str, difficulty: str, language: str,
+    title: str, topic: str, difficulty: str, engine: str,
     model: str, max_retries: int,
 ) -> dict | None:
     """Generate a single exercise, retrying with error feedback on validation failure."""
     system_content = "You are a coding exercise generator. " + EXERCISE_SCHEMA
-    user_prompt = build_single_exercise_prompt(title, topic, difficulty, language)
+    user_prompt = build_single_exercise_prompt(title, topic, difficulty, engine)
 
     messages = [
         {"role": "system", "content": system_content},
@@ -596,20 +595,20 @@ def _generate_exercise_with_retries(
     return None
 
 
-def _init_languages(languages_path: str | Path | None = None):
-    """Load languages.toml and build the exercise schema prompt."""
-    global LANGUAGES, EXERCISE_SCHEMA
-    path = languages_path or DEFAULT_LANGUAGES_PATH
-    LANGUAGES.update(load_languages(path))
+def _init_engines(engines_path: str | Path | None = None):
+    """Load engines.toml and build the exercise schema prompt."""
+    global ENGINES, EXERCISE_SCHEMA
+    path = engines_path or DEFAULT_ENGINES_PATH
+    ENGINES.update(load_engines(path))
     EXERCISE_SCHEMA = _build_exercise_schema()
 
 
 def run(
     syllabus_path: str, model: str | None, db_path: str,
     dry_run: bool, max_retries: int = 2,
-    languages_path: str | Path | None = None,
+    engines_path: str | Path | None = None,
 ):
-    _init_languages(languages_path)
+    _init_engines(engines_path)
     data = load_syllabus(syllabus_path)
     effective_model = model or data.get("model") or DEFAULT_MODEL
     entries = data["exercises"]
@@ -626,12 +625,12 @@ def run(
 
     for i, entry in enumerate(entries, 1):
         topic = entry["topic"]
-        lang = entry["language"]
+        eng = entry["engine"]
         diff = entry["difficulty"]
         count = entry["count"]
-        print(f'  [{i}/{len(entries)}] {count} titles for {diff} {lang}: "{topic}"...', end=" ", flush=True)
+        print(f'  [{i}/{len(entries)}] {count} titles for {diff} {eng}: "{topic}"...', end=" ", flush=True)
 
-        prompt = build_title_prompt(topic, count, diff, lang)
+        prompt = build_title_prompt(topic, count, diff, eng)
         try:
             raw = generate_with_hf(
                 prompt,
@@ -651,7 +650,7 @@ def run(
         for title in titles:
             if title.lower() not in seen_titles:
                 seen_titles.add(title.lower())
-                title_entries.append((title, topic, lang, diff))
+                title_entries.append((title, topic, eng, diff))
                 added += 1
         print(f"{added} titles (from {len(titles)} generated)")
 
@@ -662,11 +661,11 @@ def run(
     exercises: list[dict] = []
     failed = 0
 
-    for i, (title, topic, lang, diff) in enumerate(title_entries, 1):
+    for i, (title, topic, eng, diff) in enumerate(title_entries, 1):
         print(f'  [{i}/{len(title_entries)}] "{title}"...', end=" ", flush=True)
         try:
             ex = _generate_exercise_with_retries(
-                title, topic, diff, lang, effective_model, max_retries,
+                title, topic, diff, eng, effective_model, max_retries,
             )
             if ex:
                 exercises.append(ex)
@@ -726,15 +725,15 @@ def main():
         help="Max LLM retries per exercise on validation failure (default: 2)",
     )
     parser.add_argument(
-        "--languages", default=None,
-        help=f"Path to languages TOML file (default: {DEFAULT_LANGUAGES_PATH})",
+        "--engines", default=None,
+        help=f"Path to engines TOML file (default: {DEFAULT_ENGINES_PATH})",
     )
 
     args = parser.parse_args()
     db_path = args.db_path or default_db_path()
     run(
         args.syllabus, args.model, db_path, args.dry_run,
-        args.max_retries, args.languages,
+        args.max_retries, args.engines,
     )
 
 

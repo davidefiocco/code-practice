@@ -68,7 +68,7 @@ function db.create_tables()
             title TEXT NOT NULL,
             description TEXT NOT NULL,
             difficulty TEXT CHECK(difficulty IN ('easy', 'medium', 'hard')),
-            language TEXT CHECK(language IN ('python', 'rust', 'theory')),
+            engine TEXT NOT NULL,
             tags TEXT DEFAULT '[]',
             hints TEXT DEFAULT '[]',
             solution TEXT,
@@ -114,7 +114,7 @@ function db.create_tables()
         )
     ]])
 
-  conn:eval("CREATE INDEX IF NOT EXISTS idx_exercises_language ON exercises(language)")
+  conn:eval("CREATE INDEX IF NOT EXISTS idx_exercises_engine ON exercises(engine)")
   conn:eval("CREATE INDEX IF NOT EXISTS idx_exercises_difficulty ON exercises(difficulty)")
   conn:eval("CREATE INDEX IF NOT EXISTS idx_test_cases_exercise ON test_cases(exercise_id)")
   conn:eval("CREATE INDEX IF NOT EXISTS idx_attempts_exercise ON attempts(exercise_id)")
@@ -129,8 +129,8 @@ function db.get_all_exercises(filters)
     if filters.difficulty then
       table.insert(conditions, string.format("difficulty = '%s'", escape_sql_string(filters.difficulty)))
     end
-    if filters.language then
-      table.insert(conditions, string.format("language = '%s'", escape_sql_string(filters.language)))
+    if filters.engine then
+      table.insert(conditions, string.format("engine = '%s'", escape_sql_string(filters.engine)))
     end
     if filters.search and filters.search ~= "" then
       local search_term = escape_sql_string(filters.search)

@@ -1,71 +1,41 @@
 -- Code Practice - Configuration Module
 local M = {}
 
+local function build_engine_defaults()
+  local engines = require("code-practice.engines")
+  local defaults = {}
+  for _, name in ipairs(engines.list()) do
+    local eng = engines.get(name)
+    if eng.default_config then
+      defaults[name] = vim.deepcopy(eng.default_config)
+    end
+  end
+  return defaults
+end
+
 M.defaults = {
-  -- Storage settings
   storage = {
-    -- Directory for database and related files
     home = vim.fn.stdpath("data") .. "/code-practice",
-    -- Database file path
     db_path = vim.fn.stdpath("data") .. "/code-practice/exercises.db",
-    -- Path to exercises JSON file (nil = no auto-import; set to auto-seed on first run)
     exercises_json = nil,
   },
 
-  -- UI settings
   ui = {
-    -- Window width (0.0-1.0 for percentage, or absolute number)
     width = 0.8,
-    -- Window height (0.0-1.0 for percentage, or absolute number)
     height = 0.8,
-    -- Border style: "rounded", "single", "double", "solid", "shadow"
     border = "rounded",
-    -- Show relative line numbers in browser
     show_numbers = true,
   },
 
-  -- Language settings
-  languages = {
-    python = {
-      enabled = true,
-      -- Command to run Python code
-      cmd = "python3",
-      -- File extension
-      ext = "py",
-      -- Default template for new exercises
-      template = "def solution():\n    pass\n\nif __name__ == '__main__':\n    print(solution())",
-    },
-    rust = {
-      enabled = false,
-      -- Command to compile and run Rust
-      cmd = "rustc",
-      -- File extension
-      ext = "rs",
-      -- Default template
-      template = 'fn solution() {\n    // Your code here\n}\n\nfn main() {\n    println!("{:?}", solution());\n}',
-    },
-    theory = {
-      enabled = true,
-      -- Theory questions don't need compilation
-      ext = "md",
-      -- Default template
-      template = "# Theory Question\n\n## Question\n\nYour question here.\n\n## Options\n1. Option A\n2. Option B\n3. Option C\n4. Option D\n\n## Answer\nCorrect option number (1-4)",
-    },
-  },
+  engines = build_engine_defaults(),
 
-  -- Test runner settings
   runner = {
-    -- Timeout for test execution (seconds)
     timeout = 5,
-    -- Show execution time
     show_time = true,
-    -- Auto-save before running tests
     auto_save = true,
   },
 
-  -- Keymaps
   keymaps = {
-    -- Browser keymaps
     browser = {
       open = "<leader>cp",
       open_item = "<CR>",
@@ -75,7 +45,6 @@ M.defaults = {
       filter_all = "a",
       close = "q",
     },
-    -- Exercise buffer (buffer-local)
     exercise = {
       run_tests = "<leader>r",
       show_hint = "<leader>h",
@@ -89,19 +58,15 @@ M.defaults = {
   },
 }
 
--- Current config (starts as defaults)
 M.config = vim.deepcopy(M.defaults)
 
--- Setup function to merge user config
 function M.setup(user_config)
   user_config = user_config or {}
   M.config = vim.tbl_deep_extend("force", M.defaults, user_config)
 
-  -- Ensure storage directory exists
   vim.fn.mkdir(M.config.storage.home, "p")
 end
 
--- Get config value
 function M.get(key)
   local keys = vim.split(key, ".", { plain = true })
   local value = M.config

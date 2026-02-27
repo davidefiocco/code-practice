@@ -1,23 +1,24 @@
 -- Code Practice - Test Runner Module
 local config = require("code-practice.config")
 local db = require("code-practice.db")
+local engines = require("code-practice.engines")
 local utils = require("code-practice.utils")
 
 local runner = {}
 
--- Run Python tests asynchronously, one test case at a time.
--- callback(result, err) is called once all cases finish or on error.
-local function run_python_async(exercise_id, code, callback)
+-- Generic interpreted-engine runner.  Works for any engine that provides
+-- `wrap_test(code, input)` and `run_cmd(cfg)` in the registry.
+local function run_interpreted_async(eng, eng_name, exercise_id, code, callback)
   local test_cases = db.get_test_cases(exercise_id)
   if #test_cases == 0 then
     return callback(nil, "No test cases found for this exercise")
   end
 
-  local temp_file = utils.create_temp_file("solution", "py")
+  local temp_file = utils.create_temp_file("solution", eng.ext)
   local results = {}
   local all_passed = true
   local timeout_ms = (config.get("runner.timeout") or 5) * 1000
-  local python_cmd = config.get("languages.python.cmd") or "python3"
+  local cmd = eng.run_cmd(config.get("engines." .. eng_name) or {})
 
   local function run_case(i)
     if i > #test_cases then
@@ -27,15 +28,7 @@ local function run_python_async(exercise_id, code, callback)
     end
 
     local test = test_cases[i]
-    local input_str = test.input or ""
-    local test_code = code .. "\n\n"
-
-    if input_str:match("^%s*$") then
-      test_code = test_code .. "result = solution()\n"
-    else
-      test_code = test_code .. "result = solution(" .. input_str .. ")\n"
-    end
-    test_code = test_code .. "print(repr(result))"
+    local test_code = eng.wrap_test(code, test.input or "")
 
     utils.write_file(temp_file, test_code)
 
@@ -81,7 +74,7 @@ local function run_python_async(exercise_id, code, callback)
       end)
     end
 
-    job_id = vim.fn.jobstart({ python_cmd, temp_file }, {
+    job_id = vim.fn.jobstart({ cmd, temp_file }, {
       stdout_buffered = true,
       stderr_buffered = true,
       on_stdout = function(_, data)
@@ -99,7 +92,7 @@ local function run_python_async(exercise_id, code, callback)
 
     if job_id <= 0 then
       vim.fn.delete(temp_file)
-      return callback(nil, "Failed to start Python process")
+      return callback(nil, "Failed to start " .. eng_name .. " process")
     end
 
     vim.defer_fn(function()
@@ -113,7 +106,8 @@ local function run_python_async(exercise_id, code, callback)
   run_case(1)
 end
 
--- Run Rust tests asynchronously. Build once, then run per test case.
+-- Rust runner: compile-then-run is structurally different from interpreted
+-- engines, so it stays as a dedicated function.
 local function run_rust_async(exercise_id, code, callback)
   local test_cases = db.get_test_cases(exercise_id)
   if #test_cases == 0 then
@@ -287,8 +281,7 @@ edition = "2021"
   run_case(1)
 end
 
--- Theory test: purely synchronous comparison; wrapped to call callback for a
--- uniform interface with the other runners.
+-- Theory: synchronous comparison wrapped in callback for uniform interface.
 local function run_theory_async(exercise_id, answer, callback)
   local options = db.get_theory_options(exercise_id)
   if #options == 0 then
@@ -311,9 +304,9 @@ local function run_theory_async(exercise_id, answer, callback)
   })
 end
 
--- Public entry point. Calls callback(result, err) when done.
-function runner.run_test_async(exercise_id, code, language, callback)
-  language = language or "python"
+-- Public entry point.  Calls callback(result, err) when done.
+function runner.run_test_async(exercise_id, code, engine_name, callback)
+  engine_name = engine_name or "python"
 
   local start_ns = vim.uv.hrtime()
 
@@ -326,14 +319,19 @@ function runner.run_test_async(exercise_id, code, language, callback)
     callback(result)
   end
 
-  if language == "python" then
-    run_python_async(exercise_id, code, finish)
-  elseif language == "rust" then
-    run_rust_async(exercise_id, code, finish)
-  elseif language == "theory" then
+  local eng = engines.get(engine_name)
+  if not eng then
+    return callback(nil, "Unsupported engine: " .. engine_name)
+  end
+
+  if eng.type == "theory" then
     run_theory_async(exercise_id, code, finish)
+  elseif eng.wrap_test then
+    run_interpreted_async(eng, engine_name, exercise_id, code, finish)
+  elseif engine_name == "rust" then
+    run_rust_async(exercise_id, code, finish)
   else
-    callback(nil, "Unsupported language: " .. language)
+    callback(nil, "Unsupported engine: " .. engine_name)
   end
 end
 

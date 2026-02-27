@@ -1,6 +1,7 @@
 -- Code Practice - Main Entry Point
 local config = require("code-practice.config")
 local db = require("code-practice.db")
+local engines = require("code-practice.engines")
 local manager = require("code-practice.manager")
 local browser = require("code-practice.browser")
 local runner = require("code-practice.runner")
@@ -146,20 +147,20 @@ end
 function code_practice.run_tests()
   local bufnr = vim.api.nvim_get_current_buf()
   local ok, exercise_id = pcall(vim.api.nvim_buf_get_var, bufnr, "code_practice_exercise_id")
-  local language_ok, language = pcall(vim.api.nvim_buf_get_var, bufnr, "code_practice_language")
+  local engine_ok, engine_name = pcall(vim.api.nvim_buf_get_var, bufnr, "code_practice_engine")
 
   if not ok or not exercise_id then
     utils.notify("No exercise associated with this buffer", "error")
     return
   end
 
-  if not language_ok then
-    language = "python"
+  if not engine_ok then
+    engine_name = "python"
   end
 
   local code = utils.get_buffer_content(bufnr)
 
-  if language == "theory" then
+  if engine_name == "theory" then
     local answer = nil
     local has_answer_line = false
     for _, line in ipairs(vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)) do
@@ -186,7 +187,7 @@ function code_practice.run_tests()
 
   utils.notify("Running tests...", "info")
 
-  runner.run_test_async(exercise_id, code, language or "python", function(result, err)
+  runner.run_test_async(exercise_id, code, engine_name or "python", function(result, err)
     if err then
       utils.notify("Test failed: " .. err, "error")
       return
@@ -314,12 +315,7 @@ function code_practice.show_solution()
 
   close_solution_window()
 
-  local comment_prefix = "#"
-  if exercise.language == "rust" then
-    comment_prefix = "//"
-  elseif exercise.language == "theory" then
-    comment_prefix = ""
-  end
+  local comment_prefix = engines.comment_prefix(exercise.engine)
 
   local lines = {}
   local function add_meta(line)
@@ -335,7 +331,7 @@ function code_practice.show_solution()
   end
 
   add_meta("Solution: " .. exercise.title)
-  add_meta("Difficulty: " .. exercise.difficulty .. " | Language: " .. exercise.language)
+  add_meta("Difficulty: " .. exercise.difficulty .. " | Engine: " .. exercise.engine)
   add_meta("")
   if exercise.description and exercise.description ~= "" then
     for _, desc_line in ipairs(utils.split_lines(exercise.description)) do
@@ -355,7 +351,7 @@ function code_practice.show_solution()
   vim.bo[bufnr].buftype = "nofile"
   vim.bo[bufnr].bufhidden = "wipe"
   vim.bo[bufnr].swapfile = false
-  vim.bo[bufnr].filetype = utils.filetype_from_language(exercise.language)
+  vim.bo[bufnr].filetype = engines.filetype(exercise.engine)
   vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
   vim.bo[bufnr].modifiable = false
   vim.bo[bufnr].readonly = true
@@ -394,7 +390,7 @@ function code_practice.show_description()
   local lines = {}
   table.insert(lines, "# " .. exercise.title)
   table.insert(lines, "")
-  table.insert(lines, string.format("Difficulty: %s | Language: %s", exercise.difficulty, exercise.language))
+  table.insert(lines, string.format("Difficulty: %s | Engine: %s", exercise.difficulty, exercise.engine))
   table.insert(lines, "")
 
   for _, line in ipairs(utils.split_lines(exercise.description)) do
@@ -402,7 +398,7 @@ function code_practice.show_description()
   end
   table.insert(lines, "")
 
-  if exercise.language == "theory" then
+  if exercise.engine == "theory" then
     local options = exercise.options or {}
     if #options > 0 then
       table.insert(lines, "## Options")

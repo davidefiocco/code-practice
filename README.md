@@ -140,14 +140,14 @@ Tools
 ### Exercise Generator
 
 Generate exercises from a syllabus using Hugging Face models. The generator is
-fully language-agnostic: the LLM produces a self-contained test harness alongside
-each exercise, so adding a new language is just a run command — no Python glue code needed.
+engine-agnostic: the LLM produces a self-contained test harness alongside
+each exercise, so adding a new engine is just a run command — no Python glue code needed.
 
 Requires [uv](https://docs.astral.sh/uv/) and a HF token (set via `HF_TOKEN` env var, or `huggingface-cli login`).
 
 Configuration lives in two TOML files under `tools/`:
-- **`languages.toml`** — defines supported languages (run commands, prompt rules,
-  required fields). Add a new language here; no Python changes needed.
+- **`engines.toml`** — defines supported engines (run commands, prompt rules,
+  required fields). Add a new engine here; no Python changes needed.
 - **`syllabus.toml`** — defines what to generate (topics, counts, difficulties).
 
 ```bash
@@ -160,11 +160,11 @@ uv run tools/generate_exercises.py tools/syllabus.toml --model Qwen/Qwen3-Coder-
 # Dry run (print JSON, don't insert)
 uv run tools/generate_exercises.py tools/syllabus.toml --dry-run
 
-# Use a custom languages config
-uv run tools/generate_exercises.py tools/syllabus.toml --languages my_languages.toml
+# Use a custom engines config
+uv run tools/generate_exercises.py tools/syllabus.toml --engines my_engines.toml
 ```
 
-Or from Neovim: `:CPGenerate` (prompts for topic, count, difficulty, and language).
+Or from Neovim: `:CPGenerate` (prompts for topic, count, difficulty, and engine).
 
 Data
 ----
@@ -180,7 +180,7 @@ Roadmap
 - [ ] Context-aware LLM hint based on current buffer code
 - [ ] Live timer with opt-out config
 - [ ] Git theory questions
-- [ ] Haskell runner
+- [ ] Haskell engine
 
 Development
 -----------
