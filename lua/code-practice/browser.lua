@@ -1,5 +1,6 @@
 -- Code Practice - Browser Module (Floating Window UI)
 local db = require("code-practice.db")
+local engines = require("code-practice.engines")
 local manager = require("code-practice.manager")
 local config = require("code-practice.config")
 local utils = require("code-practice.utils")
@@ -21,9 +22,10 @@ function browser.set_on_open(fn)
 end
 
 local state = {
-  current_filter = { difficulty = nil, language = nil, search = "" },
+  current_filter = { difficulty = nil, engine = nil, search = "" },
   selected_index = 1,
   exercises = {},
+  solved_ids = {},
   preview_cache = {},
   popup = nil,
   layout = nil,
@@ -35,6 +37,7 @@ local function fetch_exercises()
     exercises = {}
   end
   state.exercises = exercises
+  state.solved_ids = db.get_solved_ids()
   state.preview_cache = {}
 end
 
@@ -56,14 +59,10 @@ function browser.render_exercise_list()
       diff_icon = "○"
     end
 
-    local lang_icon = "📝"
-    if ex.language == "rust" then
-      lang_icon = "🦀"
-    elseif ex.language == "theory" then
-      lang_icon = "📚"
-    end
+    local engine_icon = engines.icon(ex.engine)
+    local solved_icon = state.solved_ids[ex.id] and "✓ " or "  "
 
-    local line = string.format("%s%s %s %s", prefix, diff_icon, lang_icon, ex.title)
+    local line = string.format("%s%s %s %s%s", prefix, diff_icon, engine_icon, solved_icon, ex.title)
     table.insert(lines, line)
   end
 
@@ -97,7 +96,7 @@ function browser.render_preview()
   table.insert(lines, string.format("# %s", exercise.title))
   table.insert(lines, "")
 
-  table.insert(lines, string.format("Difficulty: %s | Language: %s", exercise.difficulty, exercise.language))
+  table.insert(lines, string.format("Difficulty: %s | Engine: %s", exercise.difficulty, exercise.engine))
   table.insert(lines, "")
 
   table.insert(lines, "## Description")
@@ -126,7 +125,8 @@ function browser.render_preview()
     end
   end
 
-  if exercise.language == "theory" then
+  local eng = engines.get(exercise.engine)
+  if eng and eng.type == "theory" then
     local options = db.get_theory_options(exercise.id)
     if #options > 0 then
       table.insert(lines, "## Options")
@@ -226,13 +226,10 @@ function browser.setup_keymaps()
   local preview_buf = state.popup.preview.bufnr
   local keymaps = config.get("keymaps.browser")
 
-  local function map_for_buf(bufnr, key, action)
-    vim.api.nvim_buf_set_keymap(bufnr, "n", key, action, { noremap = true, silent = true })
-  end
-
   local function map(key, action)
-    map_for_buf(list_buf, key, action)
-    map_for_buf(preview_buf, key, action)
+    local opts = { noremap = true, silent = true }
+    vim.keymap.set("n", key, action, vim.tbl_extend("force", opts, { buffer = list_buf }))
+    vim.keymap.set("n", key, action, vim.tbl_extend("force", opts, { buffer = preview_buf }))
   end
 
   map("j", "<cmd>lua require('code-practice.browser').move_selection(1)<CR>")
@@ -251,9 +248,14 @@ function browser.setup_keymaps()
   map("m", "<cmd>lua require('code-practice.browser').filter_by_difficulty('medium')<CR>")
   map("h", "<cmd>lua require('code-practice.browser').filter_by_difficulty('hard')<CR>")
   map("a", "<cmd>lua require('code-practice.browser').clear_filters()<CR>")
-  map("p", "<cmd>lua require('code-practice.browser').filter_by_language('python')<CR>")
-  map("r", "<cmd>lua require('code-practice.browser').filter_by_language('rust')<CR>")
-  map("t", "<cmd>lua require('code-practice.browser').filter_by_language('theory')<CR>")
+
+  for _, name in ipairs(engines.list()) do
+    local eng = engines.get(name)
+    if eng.filter_key then
+      map(eng.filter_key, "<cmd>lua require('code-practice.browser').filter_by_engine('" .. name .. "')<CR>")
+    end
+  end
+
   map("q", "<cmd>lua require('code-practice.browser').close()<CR>")
   map("<esc>", "<cmd>lua require('code-practice.browser').close()<CR>")
   map("?", "<cmd>lua require('code-practice.help').show()<CR>")
@@ -279,6 +281,11 @@ local function update_display()
   vim.api.nvim_buf_set_lines(preview_buf, 0, -1, false, preview_lines)
 
   vim.api.nvim_buf_clear_namespace(list_buf, ns, 0, -1)
+  for i, ex in ipairs(state.exercises) do
+    if state.solved_ids[ex.id] and i ~= state.selected_index then
+      vim.api.nvim_buf_add_highlight(list_buf, ns, "Comment", i - 1, 0, -1)
+    end
+  end
   if state.selected_index > 0 and state.selected_index <= #state.exercises then
     vim.api.nvim_buf_add_highlight(list_buf, ns, "Visual", state.selected_index - 1, 0, -1)
   end
@@ -344,18 +351,18 @@ function browser.filter_by_difficulty(difficulty)
   browser.refresh()
 end
 
-function browser.filter_by_language(language)
-  if state.current_filter.language == language then
-    state.current_filter.language = nil
+function browser.filter_by_engine(engine_name)
+  if state.current_filter.engine == engine_name then
+    state.current_filter.engine = nil
   else
-    state.current_filter.language = language
+    state.current_filter.engine = engine_name
   end
   state.selected_index = 1
   browser.refresh()
 end
 
 function browser.clear_filters()
-  state.current_filter = { difficulty = nil, language = nil, search = "" }
+  state.current_filter = { difficulty = nil, engine = nil, search = "" }
   state.selected_index = 1
   browser.refresh()
 end
@@ -370,7 +377,7 @@ end
 
 function browser.open()
   state.selected_index = 1
-  state.current_filter = { difficulty = nil, language = nil, search = "" }
+  state.current_filter = { difficulty = nil, engine = nil, search = "" }
   browser.create_popup()
 end
 

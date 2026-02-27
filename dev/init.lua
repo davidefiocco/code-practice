@@ -33,20 +33,16 @@ require("code-practice").setup({
     height = 0.8,
     border = "rounded",
   },
-  languages = {
+  engines = {
     python = {
       enabled = true,
       cmd = "python3",
-      ext = "py",
     },
     rust = {
       enabled = false,
-      cmd = "rustc",
-      ext = "rs",
     },
     theory = {
       enabled = true,
-      ext = "md",
     },
   },
   keymaps = {

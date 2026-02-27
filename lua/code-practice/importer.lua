@@ -1,14 +1,8 @@
 -- Code Practice - JSON Exercise Importer
 local db = require("code-practice.db")
+local utils = require("code-practice.utils")
 
 local M = {}
-
-local function escape(s)
-  if type(s) ~= "string" then
-    return s
-  end
-  return s:gsub("'", "''")
-end
 
 local function sql_val(v)
   if v == nil then
@@ -20,7 +14,7 @@ local function sql_val(v)
   if type(v) == "number" then
     return tostring(v)
   end
-  return "'" .. escape(tostring(v)) .. "'"
+  return "'" .. utils.escape_sql(tostring(v)) .. "'"
 end
 
 function M.import(json_path, opts)
@@ -44,7 +38,7 @@ function M.import(json_path, opts)
 
   conn:eval("BEGIN TRANSACTION")
 
-  local tx_ok, tx_err = pcall(function()
+  local tx_ok, tx_result = pcall(function()
     if opts.replace then
       conn:eval("DELETE FROM theory_options")
       conn:eval("DELETE FROM test_cases")
@@ -66,14 +60,14 @@ function M.import(json_path, opts)
 
       local sql = string.format(
         [[INSERT OR REPLACE INTO exercises
-          (id, title, description, difficulty, language, tags, hints,
+          (id, title, description, difficulty, engine, tags, hints,
            solution, starter_code, created_at, updated_at)
           VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)]],
         sql_val(ex.id),
         sql_val(ex.title),
         sql_val(ex.description),
         sql_val(ex.difficulty),
-        sql_val(ex.language),
+        sql_val(ex.engine),
         sql_val(tags or "[]"),
         sql_val(hints or "[]"),
         sql_val(ex.solution or ""),
@@ -126,10 +120,10 @@ function M.import(json_path, opts)
 
   if not tx_ok then
     conn:eval("ROLLBACK")
-    return nil, tostring(tx_err)
+    return nil, tostring(tx_result)
   end
 
-  return tx_err, nil
+  return tx_result, nil
 end
 
 return M

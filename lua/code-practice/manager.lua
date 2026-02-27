@@ -1,5 +1,6 @@
 -- Code Practice - Exercise Manager Module
 local db = require("code-practice.db")
+local engines = require("code-practice.engines")
 local utils = require("code-practice.utils")
 
 local manager = {}
@@ -10,7 +11,7 @@ function manager.get_exercise(id)
     return nil
   end
 
-  if exercise.language ~= "theory" then
+  if exercise.engine ~= "theory" then
     exercise.test_cases = db.get_test_cases(id)
   else
     exercise.options = db.get_theory_options(id)
@@ -46,7 +47,7 @@ function manager.open_exercise(id)
     vim.api.nvim_buf_set_name(bufnr, bufname)
   end
 
-  local filetype = utils.filetype_from_language(exercise.language)
+  local filetype = engines.filetype(exercise.engine)
   vim.bo[bufnr].buftype = "nofile"
   vim.bo[bufnr].filetype = filetype
   vim.bo[bufnr].swapfile = false
@@ -55,12 +56,7 @@ function manager.open_exercise(id)
     vim.bo[bufnr].modifiable = true
     vim.bo[bufnr].readonly = false
 
-    local comment_prefix = "#"
-    if exercise.language == "rust" then
-      comment_prefix = "//"
-    elseif exercise.language == "theory" then
-      comment_prefix = ""
-    end
+    local comment_prefix = engines.comment_prefix(exercise.engine)
 
     local lines = {}
     local function add_meta(line)
@@ -76,7 +72,7 @@ function manager.open_exercise(id)
     end
 
     add_meta("Exercise: " .. exercise.title)
-    add_meta("Difficulty: " .. exercise.difficulty .. " | Language: " .. exercise.language)
+    add_meta("Difficulty: " .. exercise.difficulty .. " | Engine: " .. exercise.engine)
     add_meta("")
     if exercise.description and exercise.description ~= "" then
       for _, desc_line in ipairs(utils.split_lines(exercise.description)) do
@@ -86,7 +82,7 @@ function manager.open_exercise(id)
     end
 
     local theory_options = nil
-    if exercise.language == "theory" then
+    if exercise.engine == "theory" then
       theory_options = exercise.options or db.get_theory_options(exercise.id)
       if theory_options and #theory_options > 0 then
         add_meta("Options:")
@@ -101,10 +97,10 @@ function manager.open_exercise(id)
     add_meta("")
 
     local starter = exercise.starter_code or ""
-    if exercise.language == "theory" and theory_options and #theory_options > 0 then
+    if exercise.engine == "theory" and theory_options and #theory_options > 0 then
       starter = ""
     end
-    if exercise.language == "theory" then
+    if exercise.engine == "theory" then
       if starter ~= "" then
         for _, line in ipairs(utils.split_lines(starter)) do
           table.insert(lines, line)
@@ -130,8 +126,8 @@ function manager.open_exercise(id)
     utils.set_buffer_content(bufnr, content)
   end
 
-  vim.api.nvim_buf_set_var(bufnr, "code_practice_exercise_id", id)
-  vim.api.nvim_buf_set_var(bufnr, "code_practice_language", exercise.language)
+  vim.b[bufnr].code_practice_exercise_id = id
+  vim.b[bufnr].code_practice_engine = exercise.engine
 
   local current_win = vim.api.nvim_get_current_win()
   local function is_floating(win)

@@ -1,10 +1,12 @@
 -- Code Practice - Main Entry Point
 local config = require("code-practice.config")
 local db = require("code-practice.db")
+local engines = require("code-practice.engines")
 local manager = require("code-practice.manager")
 local browser = require("code-practice.browser")
 local runner = require("code-practice.runner")
 local utils = require("code-practice.utils")
+local popup = require("code-practice.popup")
 
 local code_practice = {}
 
@@ -92,11 +94,10 @@ function code_practice.refresh_browser()
 end
 
 local function setup_exercise_keymaps(bufnr)
-  local ok, _ = pcall(vim.api.nvim_buf_get_var, bufnr, "code_practice_keymaps_set")
-  if ok then
+  if vim.b[bufnr].code_practice_keymaps_set then
     return
   end
-  vim.api.nvim_buf_set_var(bufnr, "code_practice_keymaps_set", true)
+  vim.b[bufnr].code_practice_keymaps_set = true
 
   local km = config.get("keymaps.exercise") or {}
   local function bmap(key, fn, desc)
@@ -145,21 +146,21 @@ end
 
 function code_practice.run_tests()
   local bufnr = vim.api.nvim_get_current_buf()
-  local ok, exercise_id = pcall(vim.api.nvim_buf_get_var, bufnr, "code_practice_exercise_id")
-  local language_ok, language = pcall(vim.api.nvim_buf_get_var, bufnr, "code_practice_language")
+  local exercise_id = vim.b[bufnr].code_practice_exercise_id
+  local engine_name = vim.b[bufnr].code_practice_engine
 
-  if not ok or not exercise_id then
+  if not exercise_id then
     utils.notify("No exercise associated with this buffer", "error")
     return
   end
 
-  if not language_ok then
-    language = "python"
+  if not engine_name then
+    engine_name = "python"
   end
 
   local code = utils.get_buffer_content(bufnr)
 
-  if language == "theory" then
+  if engine_name == "theory" then
     local answer = nil
     local has_answer_line = false
     for _, line in ipairs(vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)) do
@@ -186,7 +187,7 @@ function code_practice.run_tests()
 
   utils.notify("Running tests...", "info")
 
-  runner.run_test_async(exercise_id, code, language or "python", function(result, err)
+  runner.run_test_async(exercise_id, code, engine_name or "python", function(result, err)
     if err then
       utils.notify("Test failed: " .. err, "error")
       return
@@ -266,11 +267,7 @@ end
 
 function code_practice.get_current_exercise_id()
   local bufnr = vim.api.nvim_get_current_buf()
-  local ok, exercise_id = pcall(vim.api.nvim_buf_get_var, bufnr, "code_practice_exercise_id")
-  if ok then
-    return exercise_id
-  end
-  return nil
+  return vim.b[bufnr].code_practice_exercise_id
 end
 
 function code_practice.show_hints()
@@ -314,12 +311,7 @@ function code_practice.show_solution()
 
   close_solution_window()
 
-  local comment_prefix = "#"
-  if exercise.language == "rust" then
-    comment_prefix = "//"
-  elseif exercise.language == "theory" then
-    comment_prefix = ""
-  end
+  local comment_prefix = engines.comment_prefix(exercise.engine)
 
   local lines = {}
   local function add_meta(line)
@@ -335,7 +327,7 @@ function code_practice.show_solution()
   end
 
   add_meta("Solution: " .. exercise.title)
-  add_meta("Difficulty: " .. exercise.difficulty .. " | Language: " .. exercise.language)
+  add_meta("Difficulty: " .. exercise.difficulty .. " | Engine: " .. exercise.engine)
   add_meta("")
   if exercise.description and exercise.description ~= "" then
     for _, desc_line in ipairs(utils.split_lines(exercise.description)) do
@@ -351,29 +343,16 @@ function code_practice.show_solution()
     table.insert(lines, line)
   end
 
-  local bufnr = vim.api.nvim_create_buf(false, true)
-  vim.bo[bufnr].buftype = "nofile"
-  vim.bo[bufnr].bufhidden = "wipe"
-  vim.bo[bufnr].swapfile = false
-  vim.bo[bufnr].filetype = utils.filetype_from_language(exercise.language)
-  vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
-  vim.bo[bufnr].modifiable = false
-  vim.bo[bufnr].readonly = true
+  local bufnr = popup.create_scratch_buf({ filetype = engines.filetype(exercise.engine) })
+  popup.set_lines(bufnr, lines)
 
   vim.api.nvim_command("rightbelow vsplit")
   vim.api.nvim_command("buffer " .. bufnr)
 
-  local winid = vim.api.nvim_get_current_win()
-  solution_window.winid = winid
+  solution_window.winid = vim.api.nvim_get_current_win()
   solution_window.bufnr = bufnr
 
-  local function close_solution()
-    close_solution_window()
-  end
-
-  vim.keymap.set({ "n", "i" }, "q", close_solution, { buffer = bufnr, silent = true, nowait = true })
-  vim.keymap.set({ "n", "i" }, "<Esc>", close_solution, { buffer = bufnr, silent = true, nowait = true })
-  vim.keymap.set({ "n", "i" }, "<CR>", close_solution, { buffer = bufnr, silent = true, nowait = true })
+  popup.map_close(bufnr, close_solution_window)
 
   utils.notify("Solution opened in a split (q/<Esc>/<Enter> to close)", "info")
 end
@@ -394,7 +373,7 @@ function code_practice.show_description()
   local lines = {}
   table.insert(lines, "# " .. exercise.title)
   table.insert(lines, "")
-  table.insert(lines, string.format("Difficulty: %s | Language: %s", exercise.difficulty, exercise.language))
+  table.insert(lines, string.format("Difficulty: %s | Engine: %s", exercise.difficulty, exercise.engine))
   table.insert(lines, "")
 
   for _, line in ipairs(utils.split_lines(exercise.description)) do
@@ -402,7 +381,7 @@ function code_practice.show_description()
   end
   table.insert(lines, "")
 
-  if exercise.language == "theory" then
+  if exercise.engine == "theory" then
     local options = exercise.options or {}
     if #options > 0 then
       table.insert(lines, "## Options")
@@ -447,42 +426,13 @@ function code_practice.show_description()
   table.insert(lines, "")
   table.insert(lines, "Press q, <Esc>, or <Enter> to close")
 
-  local width = math.floor(vim.o.columns * 0.6)
-  local height = math.floor(vim.o.lines * 0.6)
-  local row = math.floor((vim.o.lines - height) / 2)
-  local col = math.floor((vim.o.columns - width) / 2)
-
-  local bufnr = vim.api.nvim_create_buf(false, true)
-  vim.bo[bufnr].buftype = "nofile"
-  vim.bo[bufnr].bufhidden = "wipe"
-  vim.bo[bufnr].swapfile = false
-  vim.bo[bufnr].filetype = "markdown"
-
-  local winid = vim.api.nvim_open_win(bufnr, true, {
-    relative = "editor",
-    row = row,
-    col = col,
-    width = width,
-    height = height,
-    border = "rounded",
-    style = "minimal",
-    title = " Description ",
-    title_pos = "center",
-  })
-
-  vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
-  vim.bo[bufnr].modifiable = false
-  vim.bo[bufnr].readonly = true
-
-  local function close()
+  local bufnr, winid = popup.open_float({ filetype = "markdown", title = " Description " })
+  popup.set_lines(bufnr, lines)
+  popup.map_close(bufnr, function()
     if winid and vim.api.nvim_win_is_valid(winid) then
       vim.api.nvim_win_close(winid, true)
     end
-  end
-
-  vim.keymap.set({ "n", "i" }, "q", close, { buffer = bufnr, silent = true, nowait = true })
-  vim.keymap.set({ "n", "i" }, "<Esc>", close, { buffer = bufnr, silent = true, nowait = true })
-  vim.keymap.set({ "n", "i" }, "<CR>", close, { buffer = bufnr, silent = true, nowait = true })
+  end)
 end
 
 function code_practice.show_help()

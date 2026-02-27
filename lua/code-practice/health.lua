@@ -1,16 +1,16 @@
+local engines = require("code-practice.engines")
+
 local M = {}
 
 function M.check()
   vim.health.start("code-practice")
 
-  -- Check Neovim version
   if vim.fn.has("nvim-0.10") == 1 then
     vim.health.ok("Neovim >= 0.10")
   else
     vim.health.error("Neovim 0.10+ is required")
   end
 
-  -- Check nui.nvim
   local ok_nui = pcall(require, "nui.popup")
   if ok_nui then
     vim.health.ok("nui.nvim found")
@@ -18,7 +18,6 @@ function M.check()
     vim.health.error("nui.nvim not found", { "Install MunifTanjim/nui.nvim" })
   end
 
-  -- Check sqlite.lua
   local ok_sqlite = pcall(require, "sqlite")
   if ok_sqlite then
     vim.health.ok("sqlite.lua found")
@@ -26,26 +25,39 @@ function M.check()
     vim.health.error("sqlite.lua not found", { "Install kkharji/sqlite.lua" })
   end
 
-  -- Check python3
-  if vim.fn.executable("python3") == 1 then
-    vim.health.ok("python3 found")
-  else
-    vim.health.warn("python3 not found", { "Python 3 is needed for Python exercises and the exercise generator" })
-  end
-
-  -- Check cargo (optional)
   local config = require("code-practice.config")
-  if config.get("languages.rust.enabled") then
-    if vim.fn.executable("cargo") == 1 then
-      vim.health.ok("cargo found (Rust enabled)")
-    else
-      vim.health.warn("cargo not found but Rust is enabled", { "Install Rust toolchain or disable Rust in config" })
+
+  for _, name in ipairs(engines.list()) do
+    local eng = engines.get(name)
+    if eng.health_cmd then
+      local enabled = config.get("engines." .. name .. ".enabled")
+      if enabled == false then
+        vim.health.ok(name .. " disabled (" .. eng.health_cmd .. " not required)")
+      elseif vim.fn.executable(eng.health_cmd) == 1 then
+        vim.health.ok(eng.health_cmd .. " found (" .. name .. " enabled)")
+      else
+        local advice = eng.health_hint and { eng.health_hint } or {}
+        vim.health.warn(eng.health_cmd .. " not found but " .. name .. " is enabled", advice)
+      end
     end
-  else
-    vim.health.ok("Rust disabled (cargo not required)")
   end
 
-  -- Check database
+  -- :CPGenerate dependencies
+  if vim.fn.executable("uv") == 1 then
+    vim.health.ok("uv found (needed for :CPGenerate)")
+  else
+    vim.health.warn("uv not found", { "Install uv (https://github.com/astral-sh/uv) to use :CPGenerate" })
+  end
+
+  if vim.env.HF_TOKEN and vim.env.HF_TOKEN ~= "" then
+    vim.health.ok("HF_TOKEN is set")
+  else
+    vim.health.warn(
+      "HF_TOKEN not set",
+      { "Set the HF_TOKEN environment variable to use :CPGenerate with Hugging Face models" }
+    )
+  end
+
   local db_path = config.get("storage.db_path")
   if db_path and vim.fn.filereadable(db_path) == 1 then
     vim.health.ok("Database found: " .. db_path)

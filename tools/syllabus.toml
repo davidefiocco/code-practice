@@ -2,36 +2,36 @@
 
 [[exercises]]
 topic = "lists"
-language = "python"
+engine = "python"
 difficulty = "easy"
 count = 5
 
 [[exercises]]
 topic = "recursion"
-language = "python"
+engine = "python"
 difficulty = "medium"
 count = 5
 
 [[exercises]]
 topic = "sorting algorithms"
-language = "python"
+engine = "python"
 difficulty = "hard"
 count = 5
 
 [[exercises]]
 topic = "hash maps and dictionaries"
-language = "python"
+engine = "python"
 difficulty = "medium"
 count = 5
 
 [[exercises]]
 topic = "Big-O notation"
-language = "theory"
+engine = "theory"
 difficulty = "medium"
 count = 5
 
 [[exercises]]
 topic = "data structures fundamentals"
-language = "theory"
+engine = "theory"
 difficulty = "easy"
 count = 5

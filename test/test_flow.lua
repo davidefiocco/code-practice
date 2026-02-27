@@ -67,8 +67,8 @@ end)
 test("Config has expected defaults", function()
   local config = require("code-practice.config")
   assert_truthy(config.get("storage.db_path"), "db_path nil")
-  assert_eq(config.get("languages.python.enabled"), true, "python enabled")
-  assert_eq(config.get("languages.python.cmd"), "python3", "python cmd")
+  assert_eq(config.get("engines.python.enabled"), true, "python enabled")
+  assert_eq(config.get("engines.python.cmd"), "python3", "python cmd")
 end)
 
 -- 3. DB connection
@@ -86,7 +86,7 @@ test("Retrieve exercise by ID", function()
   local ex = mgr.get_exercise(1)
   assert_truthy(ex, "exercise 1 nil")
   assert_truthy(ex.title and ex.title ~= "", "title empty")
-  assert_eq(ex.language, "python", "language")
+  assert_eq(ex.engine, "python", "engine")
   assert_truthy(ex.test_cases and #ex.test_cases > 0, "no test cases")
 end)
 
@@ -141,20 +141,20 @@ test("Filter exercises by difficulty", function()
   end
 end)
 
--- 11. Filter by language
-test("Filter exercises by language", function()
+-- 11. Filter by engine
+test("Filter exercises by engine", function()
   local db = require("code-practice.db")
-  local py = db.get_all_exercises({ language = "python" })
+  local py = db.get_all_exercises({ engine = "python" })
   assert_truthy(type(py) == "table", "result not table")
   for _, ex in ipairs(py) do
-    assert_eq(ex.language, "python", "language mismatch")
+    assert_eq(ex.engine, "python", "engine mismatch")
   end
 end)
 
 -- 12. Theory options
 test("Theory exercises have options", function()
   local db = require("code-practice.db")
-  local theory = db.get_all_exercises({ language = "theory" })
+  local theory = db.get_all_exercises({ engine = "theory" })
   if #theory == 0 then
     skip("no theory exercises in seed data")
   end
@@ -167,9 +167,10 @@ test("Utility functions", function()
   local u = require("code-practice.utils")
   assert_eq(u.trim("  hello  "), "hello", "trim")
   assert_eq(#u.split_lines("a\nb\nc"), 3, "split_lines")
-  assert_eq(u.filetype_from_language("python"), "python", "ft python")
-  assert_eq(u.filetype_from_language("rust"), "rust", "ft rust")
-  assert_eq(u.filetype_from_language("theory"), "markdown", "ft theory")
+  local engines = require("code-practice.engines")
+  assert_eq(engines.filetype("python"), "python", "ft python")
+  assert_eq(engines.filetype("rust"), "rust", "ft rust")
+  assert_eq(engines.filetype("theory"), "markdown", "ft theory")
 end)
 
 -- 14. Python runner – correct solution
@@ -221,7 +222,7 @@ end)
 -- 16. Theory runner – correct answer
 test("Theory runner: correct answer passes", function()
   local db = require("code-practice.db")
-  local theory = db.get_all_exercises({ language = "theory" })
+  local theory = db.get_all_exercises({ engine = "theory" })
   if #theory == 0 then
     skip("no theory exercises in seed data")
   end
@@ -270,7 +271,7 @@ test("Attempt is recorded after runner", function()
   local before = before_rows and (before_rows.count or (before_rows[1] and before_rows[1].count)) or 0
 
   local done = false
-  runner.run_test_async(1, ex.solution, ex.language, function()
+  runner.run_test_async(1, ex.solution, ex.engine, function()
     done = true
   end)
   vim.wait(30000, function()
@@ -292,15 +293,15 @@ test("Exercise buffer has correct variables", function()
   assert_truthy(ok_id, "exercise_id var missing")
   assert_eq(eid, 2, "exercise_id value")
 
-  local ok_lang, lang = pcall(vim.api.nvim_buf_get_var, bufnr, "code_practice_language")
-  assert_truthy(ok_lang, "language var missing")
-  assert_truthy(lang ~= nil and lang ~= "", "language empty")
+  local ok_eng, eng = pcall(vim.api.nvim_buf_get_var, bufnr, "code_practice_engine")
+  assert_truthy(ok_eng, "engine var missing")
+  assert_truthy(eng ~= nil and eng ~= "", "engine empty")
 end)
 
 -- 19. Theory runner – wrong answer
 test("Theory runner: wrong answer fails", function()
   local db = require("code-practice.db")
-  local theory = db.get_all_exercises({ language = "theory" })
+  local theory = db.get_all_exercises({ engine = "theory" })
   if #theory == 0 then
     skip("no theory exercises in seed data")
   end
@@ -415,7 +416,7 @@ end)
 -- 25. Python runner: exercise with empty-string input
 test("Python runner: empty-string input handled", function()
   local db = require("code-practice.db")
-  local all = db.get_all_exercises({ language = "python" })
+  local all = db.get_all_exercises({ engine = "python" })
 
   local target_id
   for _, ex in ipairs(all) do
@@ -468,7 +469,7 @@ test("Python runner: sampled solutions pass (2 easy, 2 medium, 2 hard)", functio
 
   local sample = {}
   for _, diff in ipairs({ "easy", "medium", "hard" }) do
-    local exs = db.get_all_exercises({ language = "python", difficulty = diff })
+    local exs = db.get_all_exercises({ engine = "python", difficulty = diff })
     local count = 0
     for _, ex_row in ipairs(exs) do
       if count >= 2 then
@@ -514,8 +515,8 @@ test("Python runner: sampled solutions pass (2 easy, 2 medium, 2 hard)", functio
   end
 end)
 
--- 27. Unsupported language returns error
-test("Runner: unsupported language returns error", function()
+-- 27. Unsupported engine returns error
+test("Runner: unsupported engine returns error", function()
   local runner = require("code-practice.runner")
   local done = false
   local result, run_err
@@ -530,7 +531,7 @@ test("Runner: unsupported language returns error", function()
     return done
   end, 50)
 
-  assert_truthy(run_err, "should return error for unsupported language")
+  assert_truthy(run_err, "should return error for unsupported engine")
   assert_contains(run_err, "Unsupported", "error message")
   assert_eq(result, nil, "result should be nil on error")
 end)
@@ -600,6 +601,44 @@ test("Importer: empty path returns error", function()
   local counts, err = importer.import("")
   assert_eq(counts, nil, "should return nil for empty path")
   assert_contains(err, "No JSON path", "error message")
+end)
+
+-- 33. Engine registry: list includes known engines
+test("Engine registry: list includes python, rust, theory", function()
+  local engines = require("code-practice.engines")
+  local list = engines.list()
+  assert_truthy(#list >= 3, "expected at least 3 engines, got " .. #list)
+
+  local found = {}
+  for _, name in ipairs(list) do
+    found[name] = true
+  end
+  assert_truthy(found.python, "python missing from engines.list()")
+  assert_truthy(found.rust, "rust missing from engines.list()")
+  assert_truthy(found.theory, "theory missing from engines.list()")
+end)
+
+-- 34. Engine registry: every entry has required fields
+test("Engine registry: all entries have required fields", function()
+  local engines = require("code-practice.engines")
+  local required = { "type", "filetype", "ext", "comment_prefix", "icon" }
+
+  for _, name in ipairs(engines.list()) do
+    local eng = engines.get(name)
+    assert_truthy(eng, name .. " missing from registry")
+    for _, field in ipairs(required) do
+      assert_truthy(eng[field] ~= nil, name .. " missing field: " .. field)
+    end
+  end
+end)
+
+-- 35. Engine registry: helpers return defaults for unknown engines
+test("Engine registry: helpers return defaults for unknown engine", function()
+  local engines = require("code-practice.engines")
+  assert_eq(engines.filetype("nonexistent"), "text", "filetype default")
+  assert_eq(engines.comment_prefix("nonexistent"), "#", "comment_prefix default")
+  assert_eq(engines.icon("nonexistent"), "📝", "icon default")
+  assert_eq(engines.get("nonexistent"), nil, "get returns nil")
 end)
 
 -- Summary

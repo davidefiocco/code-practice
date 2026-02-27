@@ -1,0 +1,356 @@
+*code-practice.txt*  Practice coding exercises inside Neovim
+
+Author:  Davide Fiocco
+License: MIT
+
+==============================================================================
+CONTENTS                                            *code-practice-contents*
+
+    1. Introduction ........................ |code-practice-intro|
+    2. Installation ........................ |code-practice-install|
+    3. Quick start ......................... |code-practice-quickstart|
+    4. Commands ............................ |code-practice-commands|
+    5. Keymaps ............................. |code-practice-keymaps|
+    6. Configuration ....................... |code-practice-config|
+    7. Engines ............................. |code-practice-engines|
+    8. Exercise generation ................. |code-practice-generate|
+    9. Data and storage .................... |code-practice-data|
+   10. Health check ........................ |code-practice-health|
+
+==============================================================================
+1. INTRODUCTION                                        *code-practice-intro*
+
+Code Practice is a Neovim plugin for browsing coding exercises, solving them,
+and running tests -- all without leaving the editor.
+
+Features:
+
+- Floating browser UI with split preview pane
+- Deterministic navigation: next, skip, previous with session history
+- Extensible engine registry: interpreted and compiled runners
+- Theory (multiple-choice) questions with answer checking
+- Results window with per-test pass/fail detail
+- Reference solution viewer
+- Solved/unsolved status indicators in the browser
+- LLM-powered exercise generation from a configurable syllabus
+
+==============================================================================
+2. INSTALLATION                                      *code-practice-install*
+
+Using lazy.nvim: >lua
+
+    {
+      "davidefiocco/code-practice",
+      dependencies = {
+        "MunifTanjim/nui.nvim",
+        "kkharji/sqlite.lua",
+      },
+      config = function()
+        require("code-practice").setup()
+      end,
+    }
+<
+Requirements:
+
+- Neovim 0.10+
+- MunifTanjim/nui.nvim (floating window UI)
+- kkharji/sqlite.lua (database persistence)
+- Engine executables for each enabled engine (see |code-practice-engines|)
+
+Run |:checkhealth| |code-practice| to verify all dependencies.
+
+After installing, populate the exercise database with |:CPImport| or
+|:CPGenerate|.
+
+==============================================================================
+3. QUICK START                                    *code-practice-quickstart*
+
+1. Open the browser          |:CP| or `<leader>cp`
+2. Navigate with `j`/`k`     Press `Enter` to open an exercise
+3. Write your solution        Edit the buffer
+4. Run tests                  |:CPRun| or `<leader>r`
+5. Move on                    |:CPNext| or `<leader>n`
+
+==============================================================================
+4. COMMANDS                                        *code-practice-commands*
+
+All commands support tab completion. Type `:CP<Tab>` to explore.
+
+                                                                        *:CP*
+:CP [action]            Open, close, or refresh the browser, or show stats.
+                        Actions: `open` (default), `close`, `refresh`, `stats`.
+
+                                                                *:CodePractice*
+:CodePractice [action]  Long form of |:CP|.
+
+                                                                     *:CPRun*
+:CPRun                  Run tests for the current exercise. For theory
+                        exercises, expects a line like `Answer: 2` in the
+                        buffer.
+
+                                                                    *:CPNext*
+:CPNext                 Open the next unsolved exercise. Skips exercises
+                        marked with |:CPSkip| in the current session.
+
+                                                                    *:CPPrev*
+:CPPrev                 Go back to the previous exercise in the session
+                        history.
+
+                                                                    *:CPSkip*
+:CPSkip                 Skip the current exercise and advance to the next
+                        unsolved one. Skipped exercises are remembered for
+                        the current session only.
+
+                                                                    *:CPDesc*
+:CPDesc                 Show the exercise description in a floating popup.
+
+                                                                    *:CPHint*
+:CPHint                 Show hints for the current exercise (if available).
+
+                                                                *:CPSolution*
+:CPSolution             Show the reference solution in a vertical split.
+
+                                                                   *:CPStats*
+:CPStats                Show practice statistics (total, solved, by
+                        difficulty).
+
+                                                                    *:CPHelp*
+:CPHelp                 Show an in-editor keymap cheat-sheet reflecting your
+                        current configuration. For full documentation, see
+                        this help file.
+
+                                                                  *:CPImport*
+:CPImport {path}        Import exercises from a JSON file. The expected
+                        schema matches `test/example_exercises.json` in the
+                        plugin source.
+
+:CPImport! {path}       Replace all existing exercises, test cases, attempts,
+                        and theory options with the contents of {path}.
+
+                                                                *:CPGenerate*
+:CPGenerate             Interactively generate exercises via Hugging Face
+                        LLM. Prompts for topic, count, difficulty, and
+                        engine. See |code-practice-generate| for setup.
+
+==============================================================================
+5. KEYMAPS                                          *code-practice-keymaps*
+
+All keymaps are configurable via |code-practice-config|. The defaults are
+listed below.
+
+BROWSER KEYMAPS ~
+                                                 *code-practice-keymaps-browser*
+
+Active inside the browser window opened by |:CP|.
+
+    Key            Action ~
+    `j` / `k`        Move selection down / up
+    `<Down>` / `<Up>`  Move selection down / up
+    `Enter` / `o`    Open selected exercise
+    `e`              Toggle filter: easy difficulty
+    `m`              Toggle filter: medium difficulty
+    `h`              Toggle filter: hard difficulty
+    `a`              Clear all filters
+    `{filter_key}`   Toggle filter by engine (each engine defines its
+                     own key in the registry; see |code-practice-engines|)
+    `gg`             Go to top of list
+    `G`              Go to bottom of list
+    `q` / `Esc`      Close browser
+    `?`              Show keymap cheat-sheet (|:CPHelp|)
+
+EXERCISE BUFFER KEYMAPS ~
+                                                *code-practice-keymaps-exercise*
+
+Active inside exercise buffers (set via `keymaps.exercise` in config).
+
+    Key            Action ~
+    `<leader>r`      Run tests (|:CPRun|)
+    `<leader>h`      Show hints (|:CPHint|)
+    `<leader>s`      View solution (|:CPSolution|)
+    `<leader>d`      Show description (|:CPDesc|)
+    `<leader>n`      Next exercise (|:CPNext|)
+    `<leader>p`      Previous exercise (|:CPPrev|)
+    `<leader>k`      Skip exercise (|:CPSkip|)
+    `<leader>m`      Open browser (|:CP|)
+
+GLOBAL KEYMAPS ~
+                                                  *code-practice-keymaps-global*
+
+Set during |code-practice.setup()|.
+
+    Key            Action ~
+    `<leader>cp`     Open exercise browser
+    `<leader>cps`    Show statistics
+
+==============================================================================
+6. CONFIGURATION                                     *code-practice-config*
+
+Pass a table to `require("code-practice").setup()` to override defaults.
+Options are merged with |vim.tbl_deep_extend()|.
+
+>lua
+    require("code-practice").setup({
+      storage = {
+        home = vim.fn.stdpath("data") .. "/code-practice",
+        db_path = vim.fn.stdpath("data") .. "/code-practice/exercises.db",
+        exercises_json = nil,   -- auto-import this file if DB is empty
+      },
+
+      ui = {
+        width = 0.8,            -- fraction of editor width
+        height = 0.8,           -- fraction of editor height
+        border = "rounded",
+        show_numbers = true,
+      },
+
+      -- Engine defaults are built from the registry (see |code-practice-engines|).
+      -- Override any engine by name:
+      engines = {
+        python = { enabled = true, cmd = "python3" },
+        rust   = { enabled = false },
+      },
+
+      runner = {
+        timeout = 5,            -- seconds per test case
+        show_time = true,
+        auto_save = true,
+      },
+
+      keymaps = {
+        browser = {
+          open = "<leader>cp",
+          open_item = "<CR>",
+          filter_easy = "e",
+          filter_medium = "m",
+          filter_hard = "h",
+          filter_all = "a",
+          close = "q",
+        },
+        exercise = {
+          run_tests = "<leader>r",
+          show_hint = "<leader>h",
+          view_solution = "<leader>s",
+          show_description = "<leader>d",
+          next_exercise = "<leader>n",
+          prev_exercise = "<leader>p",
+          skip_exercise = "<leader>k",
+          open_browser = "<leader>m",
+        },
+      },
+    })
+<
+
+==============================================================================
+7. ENGINES                                          *code-practice-engines*
+
+Code Practice uses an engine registry (`lua/code-practice/engines.lua`) as
+the single source of truth for per-engine metadata. Every other module
+reads from this registry instead of hard-coding language specifics.
+
+Each engine entry defines: file type, extension, icon, browser filter key
+and label, health-check command, default config, and runner capabilities.
+
+BUILT-IN ENGINES ~
+
+    Engine   Type    Ext   Filter  Runner ~
+    python   coding  .py   p       interpreted (wrap_test + run_cmd)
+    rust     coding  .rs   r       compiled (wrap_test + compile_cmd + run_cmd)
+    theory   theory  .md   t       answer checker
+
+RUNNER DISPATCH ~
+
+The runner selects a path based on engine capabilities, not names:
+
+- `compile_cmd` present  ->  compile-then-run (e.g. rustc)
+- `wrap_test` present    ->  interpreted run (e.g. python3)
+- `type == "theory"`     ->  multiple-choice checker
+
+ADDING A NEW ENGINE ~
+
+1. Add a registry entry in `lua/code-practice/engines.lua` with the
+   required fields (see existing entries for reference).
+2. For exercise generation, add a matching section in `tools/engines.toml`.
+3. No other files need to change.
+
+==============================================================================
+8. EXERCISE GENERATION                             *code-practice-generate*
+
+Generate exercises from a syllabus using Hugging Face Inference API models.
+The generator is engine-agnostic: the LLM produces a self-contained test
+harness alongside each exercise.
+
+REQUIREMENTS ~
+
+- uv (https://github.com/astral-sh/uv)
+- HF_TOKEN environment variable (or `huggingface-cli login`)
+
+Run |:checkhealth| |code-practice| to verify both are available.
+
+FROM NEOVIM ~
+
+Use |:CPGenerate|. It will prompt for topic, count, difficulty, and engine.
+
+FROM THE COMMAND LINE ~
+
+>bash
+    cd ~/.local/share/nvim/lazy/code-practice
+    export HF_TOKEN=your_token
+
+    # Generate from syllabus
+    uv run tools/generate_exercises.py tools/syllabus.toml
+
+    # Custom model
+    uv run tools/generate_exercises.py tools/syllabus.toml \
+        --model Qwen/Qwen3-Coder-30B-A3B-Instruct
+
+    # Dry run (print JSON, don't insert into DB)
+    uv run tools/generate_exercises.py tools/syllabus.toml --dry-run
+
+    # Custom engines config
+    uv run tools/generate_exercises.py tools/syllabus.toml \
+        --engines my_engines.toml
+<
+CONFIGURATION FILES ~
+
+- `tools/engines.toml`  Engine definitions (run commands, prompt rules,
+                        required fields). Add a new engine here.
+- `tools/syllabus.toml` What to generate (topics, counts, difficulties).
+
+==============================================================================
+9. DATA AND STORAGE                                    *code-practice-data*
+
+Exercises are stored in an SQLite database at the path configured by
+`storage.db_path` (default: `stdpath("data")/code-practice/exercises.db`).
+
+The database contains four tables: exercises, test_cases, attempts, and
+theory_options. Foreign keys are enabled; deleting an exercise cascades to
+its test cases, attempts, and options.
+
+IMPORTING ~
+
+Use |:CPImport| to load exercises from a JSON file: >vim
+    :CPImport /path/to/exercises.json
+<
+Use the bang form to wipe all existing data and replace: >vim
+    :CPImport! /path/to/exercises.json
+<
+Set `storage.exercises_json` in your config to auto-import on first run
+when the database is empty.
+
+The expected JSON schema matches `test/example_exercises.json` in the
+plugin source.
+
+==============================================================================
+10. HEALTH CHECK                                     *code-practice-health*
+
+Run `:checkhealth code-practice` to verify:
+
+- Neovim version (0.10+ required)
+- nui.nvim and sqlite.lua plugins
+- Engine executables based on enabled config (iterates the registry)
+- uv executable (needed for |:CPGenerate|)
+- HF_TOKEN environment variable (needed for |:CPGenerate|)
+- Database file existence
+
+==============================================================================
+ vim:tw=78:ft=help:norl:
