@@ -69,10 +69,7 @@ function help.show()
   for _, name in ipairs(engines.list()) do
     local eng = engines.get(name)
     if eng.filter_key then
-      table.insert(
-        filter_lines,
-        "  " .. pad(eng.filter_key, 19) .. "Filter by " .. eng.filter_label .. " exercises"
-      )
+      table.insert(filter_lines, "  " .. pad(eng.filter_key, 19) .. "Filter by " .. eng.filter_label .. " exercises")
     end
   end
 

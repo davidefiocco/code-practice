@@ -29,24 +29,17 @@ function M.check()
 
   for _, name in ipairs(engines.list()) do
     local eng = engines.get(name)
-    if not eng.health_cmd then
-      goto continue
+    if eng.health_cmd then
+      local enabled = config.get("engines." .. name .. ".enabled")
+      if enabled == false then
+        vim.health.ok(name .. " disabled (" .. eng.health_cmd .. " not required)")
+      elseif vim.fn.executable(eng.health_cmd) == 1 then
+        vim.health.ok(eng.health_cmd .. " found (" .. name .. " enabled)")
+      else
+        local advice = eng.health_hint and { eng.health_hint } or {}
+        vim.health.warn(eng.health_cmd .. " not found but " .. name .. " is enabled", advice)
+      end
     end
-
-    local enabled = config.get("engines." .. name .. ".enabled")
-    if enabled == false then
-      vim.health.ok(name .. " disabled (" .. eng.health_cmd .. " not required)")
-      goto continue
-    end
-
-    if vim.fn.executable(eng.health_cmd) == 1 then
-      vim.health.ok(eng.health_cmd .. " found (" .. name .. " enabled)")
-    else
-      local advice = eng.health_hint and { eng.health_hint } or {}
-      vim.health.warn(eng.health_cmd .. " not found but " .. name .. " is enabled", advice)
-    end
-
-    ::continue::
   end
 
   local db_path = config.get("storage.db_path")

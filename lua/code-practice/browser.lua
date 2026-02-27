@@ -251,10 +251,7 @@ function browser.setup_keymaps()
   for _, name in ipairs(engines.list()) do
     local eng = engines.get(name)
     if eng.filter_key then
-      map(
-        eng.filter_key,
-        "<cmd>lua require('code-practice.browser').filter_by_engine('" .. name .. "')<CR>"
-      )
+      map(eng.filter_key, "<cmd>lua require('code-practice.browser').filter_by_engine('" .. name .. "')<CR>")
     end
   end
 
