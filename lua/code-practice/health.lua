@@ -42,6 +42,22 @@ function M.check()
     end
   end
 
+  -- :CPGenerate dependencies
+  if vim.fn.executable("uv") == 1 then
+    vim.health.ok("uv found (needed for :CPGenerate)")
+  else
+    vim.health.warn("uv not found", { "Install uv (https://github.com/astral-sh/uv) to use :CPGenerate" })
+  end
+
+  if vim.env.HF_TOKEN and vim.env.HF_TOKEN ~= "" then
+    vim.health.ok("HF_TOKEN is set")
+  else
+    vim.health.warn(
+      "HF_TOKEN not set",
+      { "Set the HF_TOKEN environment variable to use :CPGenerate with Hugging Face models" }
+    )
+  end
+
   local db_path = config.get("storage.db_path")
   if db_path and vim.fn.filereadable(db_path) == 1 then
     vim.health.ok("Database found: " .. db_path)

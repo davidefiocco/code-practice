@@ -10,6 +10,35 @@ end
 local db = {}
 local db_connection = nil
 
+-- sqlite.lua returns a single flat table (not wrapped in an array) when the
+-- query yields exactly one row.  These helpers normalise that inconsistency.
+-- Heuristic: an unwrapped row has string keys but no [1] entry.
+local function normalize_rows(results)
+  if not results or type(results) ~= "table" then
+    return {}
+  end
+  if results[1] then
+    return results
+  end
+  if next(results) ~= nil then
+    return { results }
+  end
+  return {}
+end
+
+local function normalize_single(results)
+  if not results or type(results) ~= "table" then
+    return nil
+  end
+  if results[1] then
+    return results[1]
+  end
+  if next(results) ~= nil then
+    return results
+  end
+  return nil
+end
+
 local function escape_sql_string(s)
   if type(s) ~= "string" then
     return s
@@ -120,6 +149,9 @@ function db.create_tables()
   conn:eval("CREATE INDEX IF NOT EXISTS idx_attempts_exercise ON attempts(exercise_id)")
 end
 
+-- Filters are only populated by the browser UI (hardcoded difficulty/engine
+-- strings), never from raw user input.  escape_sql_string is a defence-in-depth
+-- measure, not a substitute for parameterised queries.
 function db.get_all_exercises(filters)
   local conn = db.connect()
   local query = "SELECT * FROM exercises"
@@ -147,51 +179,19 @@ function db.get_all_exercises(filters)
 
   query = query .. " ORDER BY difficulty, title"
 
-  local results = conn:eval(query)
-
-  if not results or type(results) ~= "table" then
-    return {}
-  end
-
-  if type(results) == "table" and results.id then
-    return { results }
-  end
-
-  return results or {}
+  return normalize_rows(conn:eval(query))
 end
 
 function db.get_exercise_by_id(id)
   local conn = db.connect()
-  local results = conn:eval(string.format("SELECT * FROM exercises WHERE id = %d", id))
-
-  if not results then
-    return nil
-  end
-
-  if type(results) == "table" and results.id then
-    return results
-  end
-
-  if type(results) == "table" and #results > 0 then
-    return results[1]
-  end
-
-  return nil
+  return normalize_single(conn:eval(string.format("SELECT * FROM exercises WHERE id = %d", id)))
 end
 
 function db.get_test_cases(exercise_id)
   local conn = db.connect()
-  local results = conn:eval(string.format("SELECT * FROM test_cases WHERE exercise_id = %d ORDER BY id", exercise_id))
-
-  if not results or type(results) ~= "table" then
-    return {}
-  end
-
-  if type(results) == "table" and results.id then
-    return { results }
-  end
-
-  return results or {}
+  return normalize_rows(
+    conn:eval(string.format("SELECT * FROM test_cases WHERE exercise_id = %d ORDER BY id", exercise_id))
+  )
 end
 
 function db.record_attempt(exercise_id, code, passed, output, duration_ms)
@@ -212,16 +212,8 @@ function db.record_attempt(exercise_id, code, passed, output, duration_ms)
 end
 
 local function extract_count(result)
-  if not result then
-    return 0
-  end
-  if result.count ~= nil then
-    return result.count
-  end
-  if type(result) == "table" and result[1] and result[1].count ~= nil then
-    return result[1].count
-  end
-  return 0
+  local row = normalize_single(result)
+  return row and row.count or 0
 end
 
 function db.get_stats()
@@ -231,15 +223,10 @@ function db.get_stats()
   stats.total = extract_count(conn:eval("SELECT COUNT(*) as count FROM exercises"))
 
   stats.by_difficulty = {}
-  local results = conn:eval("SELECT difficulty, COUNT(*) as count FROM exercises GROUP BY difficulty")
-  if results then
-    if results.difficulty then
-      stats.by_difficulty[results.difficulty] = results.count
-    elseif type(results) == "table" then
-      for _, row in ipairs(results) do
-        stats.by_difficulty[row.difficulty] = row.count
-      end
-    end
+  for _, row in
+    ipairs(normalize_rows(conn:eval("SELECT difficulty, COUNT(*) as count FROM exercises GROUP BY difficulty")))
+  do
+    stats.by_difficulty[row.difficulty] = row.count
   end
 
   stats.solved = extract_count(conn:eval("SELECT COUNT(DISTINCT exercise_id) as count FROM attempts WHERE passed = 1"))
@@ -249,40 +236,31 @@ end
 
 function db.get_unsolved_exercises()
   local conn = db.connect()
-  local results = conn:eval([[
+  return normalize_rows(conn:eval([[
         SELECT e.*
         FROM exercises e
         LEFT JOIN attempts a
             ON a.exercise_id = e.id AND a.passed = 1
         WHERE a.id IS NULL
         ORDER BY e.id ASC
-    ]])
+    ]]))
+end
 
-  if not results or type(results) ~= "table" then
-    return {}
+function db.get_solved_ids()
+  local conn = db.connect()
+  local rows = normalize_rows(conn:eval("SELECT DISTINCT exercise_id FROM attempts WHERE passed = 1"))
+  local set = {}
+  for _, row in ipairs(rows) do
+    set[row.exercise_id] = true
   end
-
-  if type(results) == "table" and results.id then
-    return { results }
-  end
-
-  return results or {}
+  return set
 end
 
 function db.get_theory_options(exercise_id)
   local conn = db.connect()
-  local results =
+  return normalize_rows(
     conn:eval(string.format("SELECT * FROM theory_options WHERE exercise_id = %d ORDER BY option_number", exercise_id))
-
-  if not results or type(results) ~= "table" then
-    return {}
-  end
-
-  if type(results) == "table" and results.id then
-    return { results }
-  end
-
-  return results or {}
+  )
 end
 
 return db

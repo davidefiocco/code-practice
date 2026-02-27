@@ -108,6 +108,8 @@ end
 
 -- Rust runner: compile-then-run is structurally different from interpreted
 -- engines, so it stays as a dedicated function.
+-- NOTE: timeout_ms is applied independently to the build and the run phases,
+-- so an exercise may take up to 2x the configured runner.timeout in total.
 local function run_rust_async(exercise_id, code, callback)
   local test_cases = db.get_test_cases(exercise_id)
   if #test_cases == 0 then

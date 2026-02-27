@@ -25,6 +25,7 @@ local state = {
   current_filter = { difficulty = nil, engine = nil, search = "" },
   selected_index = 1,
   exercises = {},
+  solved_ids = {},
   preview_cache = {},
   popup = nil,
   layout = nil,
@@ -36,6 +37,7 @@ local function fetch_exercises()
     exercises = {}
   end
   state.exercises = exercises
+  state.solved_ids = db.get_solved_ids()
   state.preview_cache = {}
 end
 
@@ -58,8 +60,9 @@ function browser.render_exercise_list()
     end
 
     local engine_icon = engines.icon(ex.engine)
+    local solved_icon = state.solved_ids[ex.id] and "✓ " or "  "
 
-    local line = string.format("%s%s %s %s", prefix, diff_icon, engine_icon, ex.title)
+    local line = string.format("%s%s %s %s%s", prefix, diff_icon, engine_icon, solved_icon, ex.title)
     table.insert(lines, line)
   end
 
@@ -280,6 +283,11 @@ local function update_display()
   vim.api.nvim_buf_set_lines(preview_buf, 0, -1, false, preview_lines)
 
   vim.api.nvim_buf_clear_namespace(list_buf, ns, 0, -1)
+  for i, ex in ipairs(state.exercises) do
+    if state.solved_ids[ex.id] and i ~= state.selected_index then
+      vim.api.nvim_buf_add_highlight(list_buf, ns, "Comment", i - 1, 0, -1)
+    end
+  end
   if state.selected_index > 0 and state.selected_index <= #state.exercises then
     vim.api.nvim_buf_add_highlight(list_buf, ns, "Visual", state.selected_index - 1, 0, -1)
   end

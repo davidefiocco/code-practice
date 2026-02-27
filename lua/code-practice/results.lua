@@ -1,4 +1,6 @@
 -- Code Practice - Results Display Module
+local popup = require("code-practice.popup")
+
 local results = {}
 results._winid = nil
 results._bufnr = nil
@@ -11,37 +13,13 @@ function results.close()
   results._bufnr = nil
 end
 
-local function create_results_window()
-  local width = math.floor(vim.o.columns * 0.6)
-  local height = math.floor(vim.o.lines * 0.6)
-  local row = math.floor((vim.o.lines - height) / 2)
-  local col = math.floor((vim.o.columns - width) / 2)
-
-  local bufnr = vim.api.nvim_create_buf(false, true)
-  vim.bo[bufnr].buftype = "nofile"
-  vim.bo[bufnr].bufhidden = "wipe"
-  vim.bo[bufnr].swapfile = false
-
-  local winid = vim.api.nvim_open_win(bufnr, true, {
-    relative = "editor",
-    row = row,
-    col = col,
-    width = width,
-    height = height,
-    border = "rounded",
-    style = "minimal",
-  })
-
-  return bufnr, winid
-end
-
 function results.show(result, on_next)
   if not result then
     vim.notify("No results to display", vim.log.levels.WARN)
     return
   end
 
-  local bufnr, winid = create_results_window()
+  local bufnr, winid = popup.open_float()
   results._bufnr = bufnr
   results._winid = winid
   if winid then
@@ -114,15 +92,8 @@ function results.show(result, on_next)
   if #lines == 0 then
     lines = { "No results available." }
   end
-  vim.bo[bufnr].modifiable = true
-  vim.bo[bufnr].readonly = false
-  vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
-  vim.bo[bufnr].modifiable = false
-  vim.bo[bufnr].readonly = true
-
-  vim.keymap.set({ "n", "i" }, "q", results.close, { buffer = bufnr, silent = true, nowait = true })
-  vim.keymap.set({ "n", "i" }, "<Esc>", results.close, { buffer = bufnr, silent = true, nowait = true })
-  vim.keymap.set({ "n", "i" }, "<CR>", results.close, { buffer = bufnr, silent = true, nowait = true })
+  popup.set_lines(bufnr, lines)
+  popup.map_close(bufnr, results.close)
 
   if on_next then
     vim.keymap.set("n", "n", on_next, { buffer = bufnr, silent = true, nowait = true })

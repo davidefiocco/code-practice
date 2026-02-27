@@ -6,6 +6,7 @@ local manager = require("code-practice.manager")
 local browser = require("code-practice.browser")
 local runner = require("code-practice.runner")
 local utils = require("code-practice.utils")
+local popup = require("code-practice.popup")
 
 local code_practice = {}
 
@@ -347,29 +348,16 @@ function code_practice.show_solution()
     table.insert(lines, line)
   end
 
-  local bufnr = vim.api.nvim_create_buf(false, true)
-  vim.bo[bufnr].buftype = "nofile"
-  vim.bo[bufnr].bufhidden = "wipe"
-  vim.bo[bufnr].swapfile = false
-  vim.bo[bufnr].filetype = engines.filetype(exercise.engine)
-  vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
-  vim.bo[bufnr].modifiable = false
-  vim.bo[bufnr].readonly = true
+  local bufnr = popup.create_scratch_buf({ filetype = engines.filetype(exercise.engine) })
+  popup.set_lines(bufnr, lines)
 
   vim.api.nvim_command("rightbelow vsplit")
   vim.api.nvim_command("buffer " .. bufnr)
 
-  local winid = vim.api.nvim_get_current_win()
-  solution_window.winid = winid
+  solution_window.winid = vim.api.nvim_get_current_win()
   solution_window.bufnr = bufnr
 
-  local function close_solution()
-    close_solution_window()
-  end
-
-  vim.keymap.set({ "n", "i" }, "q", close_solution, { buffer = bufnr, silent = true, nowait = true })
-  vim.keymap.set({ "n", "i" }, "<Esc>", close_solution, { buffer = bufnr, silent = true, nowait = true })
-  vim.keymap.set({ "n", "i" }, "<CR>", close_solution, { buffer = bufnr, silent = true, nowait = true })
+  popup.map_close(bufnr, close_solution_window)
 
   utils.notify("Solution opened in a split (q/<Esc>/<Enter> to close)", "info")
 end
@@ -443,42 +431,13 @@ function code_practice.show_description()
   table.insert(lines, "")
   table.insert(lines, "Press q, <Esc>, or <Enter> to close")
 
-  local width = math.floor(vim.o.columns * 0.6)
-  local height = math.floor(vim.o.lines * 0.6)
-  local row = math.floor((vim.o.lines - height) / 2)
-  local col = math.floor((vim.o.columns - width) / 2)
-
-  local bufnr = vim.api.nvim_create_buf(false, true)
-  vim.bo[bufnr].buftype = "nofile"
-  vim.bo[bufnr].bufhidden = "wipe"
-  vim.bo[bufnr].swapfile = false
-  vim.bo[bufnr].filetype = "markdown"
-
-  local winid = vim.api.nvim_open_win(bufnr, true, {
-    relative = "editor",
-    row = row,
-    col = col,
-    width = width,
-    height = height,
-    border = "rounded",
-    style = "minimal",
-    title = " Description ",
-    title_pos = "center",
-  })
-
-  vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
-  vim.bo[bufnr].modifiable = false
-  vim.bo[bufnr].readonly = true
-
-  local function close()
+  local bufnr, winid = popup.open_float({ filetype = "markdown", title = " Description " })
+  popup.set_lines(bufnr, lines)
+  popup.map_close(bufnr, function()
     if winid and vim.api.nvim_win_is_valid(winid) then
       vim.api.nvim_win_close(winid, true)
     end
-  end
-
-  vim.keymap.set({ "n", "i" }, "q", close, { buffer = bufnr, silent = true, nowait = true })
-  vim.keymap.set({ "n", "i" }, "<Esc>", close, { buffer = bufnr, silent = true, nowait = true })
-  vim.keymap.set({ "n", "i" }, "<CR>", close, { buffer = bufnr, silent = true, nowait = true })
+  end)
 end
 
 function code_practice.show_help()

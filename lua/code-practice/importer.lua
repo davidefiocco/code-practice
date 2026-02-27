@@ -44,7 +44,7 @@ function M.import(json_path, opts)
 
   conn:eval("BEGIN TRANSACTION")
 
-  local tx_ok, tx_err = pcall(function()
+  local tx_ok, tx_result = pcall(function()
     if opts.replace then
       conn:eval("DELETE FROM theory_options")
       conn:eval("DELETE FROM test_cases")
@@ -126,10 +126,10 @@ function M.import(json_path, opts)
 
   if not tx_ok then
     conn:eval("ROLLBACK")
-    return nil, tostring(tx_err)
+    return nil, tostring(tx_result)
   end
 
-  return tx_err, nil
+  return tx_result, nil
 end
 
 return M
