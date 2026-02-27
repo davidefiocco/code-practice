@@ -104,9 +104,7 @@ Browser Keymaps
 | `m`       | Toggle filter: medium difficulty|
 | `h`       | Toggle filter: hard difficulty  |
 | `a`       | Clear all filters               |
-| `p`       | Toggle filter: Python           |
-| `r`       | Toggle filter: Rust             |
-| `t`       | Toggle filter: Theory           |
+| per-engine key | Toggle filter by engine (defaults: `p` Python, `r` Rust, `t` Theory) |
 | `gg`      | Go to top of list               |
 | `G`       | Go to bottom of list            |
 | `q`       | Close browser                   |
