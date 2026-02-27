@@ -7,6 +7,7 @@ local skipped = 0
 local errors = {}
 
 local function skip(reason)
+  -- selene: allow(incorrect_standard_library_use)
   error({ __skip = true, reason = reason })
 end
 
@@ -46,8 +47,7 @@ end
 
 local function assert_contains(haystack, needle, msg)
   if type(haystack) ~= "string" or not haystack:find(needle, 1, true) then
-    error(string.format("%s: expected string containing %q, got %s",
-      msg or "assertion", needle, vim.inspect(haystack)))
+    error(string.format("%s: expected string containing %q, got %s", msg or "assertion", needle, vim.inspect(haystack)))
   end
 end
 
@@ -273,7 +273,9 @@ test("Attempt is recorded after runner", function()
   runner.run_test_async(1, ex.solution, ex.language, function()
     done = true
   end)
-  vim.wait(30000, function() return done end, 50)
+  vim.wait(30000, function()
+    return done
+  end, 50)
 
   local after_rows = conn:eval("SELECT COUNT(*) as count FROM attempts WHERE exercise_id = 1")
   local after = after_rows and (after_rows.count or (after_rows[1] and after_rows[1].count)) or 0
@@ -469,7 +471,9 @@ test("Python runner: sampled solutions pass (2 easy, 2 medium, 2 hard)", functio
     local exs = db.get_all_exercises({ language = "python", difficulty = diff })
     local count = 0
     for _, ex_row in ipairs(exs) do
-      if count >= 2 then break end
+      if count >= 2 then
+        break
+      end
       local ex = mgr.get_exercise(ex_row.id)
       if ex and ex.solution and ex.solution ~= "" then
         table.insert(sample, ex)
