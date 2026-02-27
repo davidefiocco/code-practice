@@ -8,7 +8,7 @@ Features
 --------
 - Browser UI with preview for exercises
 - Deterministic navigation: next, skip, previous
-- Code runners for Python (and Rust if enabled)
+- Extensible engine registry: interpreted and compiled runners
 - Theory questions with answer checking
 - Results window and solution viewer
 - LLM-powered exercise generation (see Tools below)
@@ -62,8 +62,7 @@ Requirements
 - Neovim 0.10+
 - MunifTanjim/nui.nvim
 - kkharji/sqlite.lua
-- python3 (for Python exercises)
-- cargo (optional, for Rust exercises)
+- Engine executables for each enabled engine (run `:checkhealth code-practice`)
 
 Quick Start
 -----------
@@ -128,8 +127,8 @@ single-chord access (configurable via `keymaps.exercise`):
 | `Ctrl-t`  | Run tests                       |
 | `Ctrl-n`  | Next exercise                   |
 | `Ctrl-p`  | Previous exercise               |
-| `Ctrl-s`  | Skip exercise                   |
-| `Ctrl-h`  | Show hints                      |
+| `Ctrl-k`  | Skip exercise                   |
+| `Ctrl-i`  | Show hints                      |
 | `Ctrl-l`  | View solution (split)           |
 | `Ctrl-d`  | Show description                |
 | `Ctrl-b`  | Open browser                    |
