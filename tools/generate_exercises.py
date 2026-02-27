@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11"
+# dependencies = ["huggingface_hub"]
+# ///
 """Generate coding exercises via Hugging Face models and insert them into the code-practice SQLite database."""
 
 import argparse
@@ -6,7 +10,9 @@ import json
 import os
 import re
 import sqlite3
+import subprocess
 import sys
+import tempfile
 import time
 import tomllib
 from pathlib import Path
@@ -14,45 +20,56 @@ from pathlib import Path
 from huggingface_hub import InferenceClient
 
 DEFAULT_MODEL = "Qwen/Qwen3-Coder-Next"
+DEFAULT_LANGUAGES_PATH = Path(__file__).parent / "languages.toml"
 
 # ---------------------------------------------------------------------------
-# Language registry -- single source of truth for supported languages.
-# To add a new language, add an entry here; everything else adapts.
+# Language registry -- loaded from languages.toml at startup.
+#
+# Populated by load_languages(); every other module-level reference
+# (schema prompt, validation, DB) reads from this dict.
 # ---------------------------------------------------------------------------
 
-LANGUAGES = {
-    "python": {
-        "type": "coding",
-        "prompt_rules": [
-            "Include 3-5 test_cases with varied inputs.",
-            "starter_code and solution must define a function called `solution`.",
-        ],
-        "requires": ["test_cases", "solution", "starter_code"],
-    },
-    "rust": {
-        "type": "coding",
-        "prompt_rules": [
-            "Include 3-5 test_cases with varied inputs.",
-            "starter_code and solution must define a function called `solution`.",
-        ],
-        "requires": ["test_cases", "solution", "starter_code"],
-    },
-    "theory": {
-        "type": "theory",
-        "prompt_rules": [
-            "Include theory_options with exactly 4 options, one correct.",
-            'The "solution" field MUST contain 2-3 sentences: state which option is correct'
-            ' and explain WHY it is correct (e.g. "Option 2 is correct. Stacks follow LIFO'
-            ' because the most recently pushed element is always removed first.").',
-        ],
-        "requires": ["theory_options", "solution"],
-    },
-}
+LANGUAGES: dict[str, dict] = {}
+
+
+def load_languages(path: str | Path = DEFAULT_LANGUAGES_PATH) -> dict[str, dict]:
+    """Load and validate language definitions from a TOML file."""
+    with open(path, "rb") as f:
+        data = tomllib.load(f)
+
+    for name, cfg in data.items():
+        if cfg.get("type") not in ("coding", "theory"):
+            print(f"languages.toml [{name}]: type must be 'coding' or 'theory'", file=sys.stderr)
+            sys.exit(1)
+        if cfg["type"] == "coding":
+            for key in ("file_ext", "run_cmd"):
+                if key not in cfg:
+                    print(f"languages.toml [{name}]: missing required key '{key}'", file=sys.stderr)
+                    sys.exit(1)
+        if "requires" not in cfg or "prompt_rules" not in cfg:
+            print(f"languages.toml [{name}]: missing 'requires' or 'prompt_rules'", file=sys.stderr)
+            sys.exit(1)
+
+    return data
 
 
 # ---------------------------------------------------------------------------
 # Exercise schema prompt -- built from LANGUAGES registry
 # ---------------------------------------------------------------------------
+
+_HARNESS_PROTOCOL = (
+    "For coding exercises, also include a \"test_harness\" field: a complete, "
+    "self-contained, runnable program in the exercise's language that:\n"
+    "1. Contains the solution code inline (copy it verbatim).\n"
+    "2. Calls the solution function with each test_case's input.\n"
+    "3. Prints exactly one JSON object per line (JSONL) to stdout for each test case:\n"
+    '   {"index": 0, "passed": true, "expected": "10", "actual": "10"}\n'
+    '   On error: {"index": 0, "passed": false, "error": "division by zero"}\n'
+    "4. Uses ONLY the language's standard library — no external dependencies.\n"
+    "5. Always exits with code 0; failures are reported in the JSON output, not via exit code.\n"
+    "6. Prints NOTHING else to stdout (no banners, no summaries).\n"
+)
+
 
 def _build_exercise_schema() -> str:
     lang_enum = "|".join(LANGUAGES.keys())
@@ -83,6 +100,7 @@ def _build_exercise_schema() -> str:
         '    {"input": "arg1, arg2", "expected_output": "repr of expected return value",'
         ' "description": "what this tests", "is_hidden": false}\n'
         "  ],\n"
+        '  "test_harness": "Complete runnable program (see protocol below)",\n'
         '  "theory_options": [\n'
         '    {"option_number": 1, "option_text": "Option A", "is_correct": false},\n'
         '    {"option_number": 2, "option_text": "Option B", "is_correct": true}\n'
@@ -95,11 +113,12 @@ def _build_exercise_schema() -> str:
         "- test_cases.input is the literal argument string passed to solution()."
         " Empty string for no-arg calls.\n"
         "- test_cases.expected_output is the repr() output of the expected return value.\n"
-        "- Return ONLY the JSON array, no markdown fences or commentary.\n"
+        + _HARNESS_PROTOCOL
+        + "- Return ONLY the JSON array, no markdown fences or commentary.\n"
     )
 
 
-EXERCISE_SCHEMA = _build_exercise_schema()
+EXERCISE_SCHEMA: str = ""  # populated by _init_languages()
 
 
 def default_db_path() -> str:
@@ -117,28 +136,49 @@ _hf_client_model: str | None = None
 REQUEST_DELAY_SECS = 1.0
 
 
+def _ensure_client(model: str) -> InferenceClient:
+    global _hf_client, _hf_client_model
+    if _hf_client is None or _hf_client_model != model:
+        token = os.environ.get("HF_TOKEN")
+        _hf_client = InferenceClient(model=model, token=token)
+        _hf_client_model = model
+    return _hf_client
+
+
 def generate_with_hf(
     prompt: str,
     model: str,
     system_content: str | None = None,
     max_tokens: int = 4096,
 ) -> str:
-    global _hf_client, _hf_client_model
-    if _hf_client is None or _hf_client_model != model:
-        token = os.environ.get("HF_TOKEN")
-        _hf_client = InferenceClient(model=model, token=token)
-        _hf_client_model = model
+    client = _ensure_client(model)
 
     if system_content is None:
         system_content = "You are a coding exercise generator. " + EXERCISE_SCHEMA
 
     time.sleep(REQUEST_DELAY_SECS)
 
-    response = _hf_client.chat_completion(
+    response = client.chat_completion(
         messages=[
             {"role": "system", "content": system_content},
             {"role": "user", "content": prompt},
         ],
+        max_tokens=max_tokens,
+        temperature=0.7,
+    )
+    return response.choices[0].message.content
+
+
+def chat_with_hf(
+    messages: list[dict],
+    model: str,
+    max_tokens: int = 4096,
+) -> str:
+    """Multi-turn variant for retry conversations."""
+    client = _ensure_client(model)
+    time.sleep(REQUEST_DELAY_SECS)
+    response = client.chat_completion(
+        messages=messages,
         max_tokens=max_tokens,
         temperature=0.7,
     )
@@ -193,8 +233,88 @@ def validate_exercise(ex: dict) -> list[str]:
     return errors
 
 
-def parse_exercises(raw: str) -> list[dict]:
-    """Parse and validate exercise JSON from LLM response."""
+# ---------------------------------------------------------------------------
+# Deep validation -- runs the LLM-generated test harness (language-agnostic)
+# ---------------------------------------------------------------------------
+
+def run_test_harness(ex: dict, timeout: float = 10.0) -> list[str]:
+    """Execute the exercise's test_harness program and parse JSONL results.
+
+    The harness is a self-contained program generated by the LLM alongside the
+    exercise.  It runs the solution against every test case and prints one JSON
+    object per line.  This function writes it to a temp file, optionally
+    compiles it, runs it, and interprets the output.
+
+    Returns a list of error strings (empty = all tests passed).
+    """
+    lang_cfg = LANGUAGES.get(ex.get("language", ""))
+    if not lang_cfg or lang_cfg["type"] != "coding":
+        return []
+
+    harness = ex.get("test_harness", "")
+    if not harness:
+        return []
+
+    file_ext = lang_cfg.get("file_ext", "")
+    compile_tpl = lang_cfg.get("compile_cmd")
+    run_tpl = lang_cfg["run_cmd"]
+
+    with tempfile.TemporaryDirectory() as tmp:
+        src = os.path.join(tmp, f"harness{file_ext}")
+        bin_path = os.path.join(tmp, "harness")
+        with open(src, "w") as f:
+            f.write(harness)
+
+        fmt = {"file": src, "bin": bin_path, "python": sys.executable}
+
+        if compile_tpl:
+            try:
+                proc = subprocess.run(
+                    compile_tpl.format(**fmt), shell=True,
+                    capture_output=True, text=True, timeout=timeout,
+                )
+            except subprocess.TimeoutExpired:
+                return ["test_harness: compilation timed out"]
+            if proc.returncode != 0:
+                last = proc.stderr.strip().split("\n")[-1]
+                return [f"test_harness: compilation failed: {last}"]
+
+        try:
+            proc = subprocess.run(
+                run_tpl.format(**fmt), shell=True,
+                capture_output=True, text=True, timeout=timeout,
+            )
+        except subprocess.TimeoutExpired:
+            return ["test_harness: execution timed out"]
+
+        if proc.returncode != 0:
+            last = proc.stderr.strip().split("\n")[-1]
+            return [f"test_harness: crashed: {last}"]
+
+        errors: list[str] = []
+        for line in proc.stdout.strip().split("\n"):
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                r = json.loads(line)
+            except json.JSONDecodeError:
+                errors.append(f"test_harness: invalid output line: {line[:120]}")
+                continue
+            if not r.get("passed"):
+                idx = r.get("index", "?")
+                if "error" in r:
+                    errors.append(f"test_case[{idx}] error: {r['error']}")
+                else:
+                    errors.append(
+                        f"test_case[{idx}] expected {r.get('expected', '?')!r} "
+                        f"but got {r.get('actual', '?')!r}"
+                    )
+        return errors
+
+
+def parse_exercises(raw: str, deep: bool = True) -> list[dict]:
+    """Parse, validate, and (optionally) execute-test exercise JSON from LLM response."""
     text = clean_llm_response(raw)
     exercises = json.loads(text)
     if isinstance(exercises, dict):
@@ -202,6 +322,8 @@ def parse_exercises(raw: str) -> list[dict]:
 
     for ex in exercises:
         errors = validate_exercise(ex)
+        if deep:
+            errors += run_test_harness(ex)
         if errors:
             title = ex.get("title", "<unknown>")
             raise ValueError(f"Exercise '{title}': {', '.join(errors)}")
@@ -225,13 +347,14 @@ def parse_titles(raw: str) -> list[str]:
 # ---------------------------------------------------------------------------
 
 def ensure_tables(conn: sqlite3.Connection):
-    conn.executescript("""
+    lang_list = ", ".join(f"'{l}'" for l in LANGUAGES)
+    conn.executescript(f"""
         CREATE TABLE IF NOT EXISTS exercises (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             title TEXT NOT NULL,
             description TEXT NOT NULL,
             difficulty TEXT CHECK(difficulty IN ('easy', 'medium', 'hard')),
-            language TEXT CHECK(language IN ('python', 'rust', 'theory')),
+            language TEXT CHECK(language IN ({lang_list})),
             tags TEXT DEFAULT '[]',
             hints TEXT DEFAULT '[]',
             solution TEXT,
@@ -431,14 +554,70 @@ def load_syllabus(path: str) -> dict:
 # Generation pipeline
 # ---------------------------------------------------------------------------
 
-def run(syllabus_path: str, model: str | None, db_path: str, dry_run: bool):
+def _generate_exercise_with_retries(
+    title: str, topic: str, difficulty: str, language: str,
+    model: str, max_retries: int,
+) -> dict | None:
+    """Generate a single exercise, retrying with error feedback on validation failure."""
+    system_content = "You are a coding exercise generator. " + EXERCISE_SCHEMA
+    user_prompt = build_single_exercise_prompt(title, topic, difficulty, language)
+
+    messages = [
+        {"role": "system", "content": system_content},
+        {"role": "user", "content": user_prompt},
+    ]
+
+    for attempt in range(1 + max_retries):
+        if attempt == 0:
+            raw = generate_with_hf(user_prompt, model, max_tokens=2048)
+        else:
+            raw = chat_with_hf(messages, model, max_tokens=2048)
+
+        try:
+            parsed = parse_exercises(raw)
+            if parsed:
+                return parsed[0]
+            return None
+        except ValueError as e:
+            if attempt < max_retries:
+                messages.append({"role": "assistant", "content": raw})
+                messages.append({
+                    "role": "user",
+                    "content": (
+                        f"The exercise you generated has validation errors:\n{e}\n\n"
+                        "Please fix these issues and regenerate. "
+                        "Return ONLY the corrected JSON array."
+                    ),
+                })
+                print(f"retry {attempt + 1}...", end=" ", flush=True)
+            else:
+                raise
+
+    return None
+
+
+def _init_languages(languages_path: str | Path | None = None):
+    """Load languages.toml and build the exercise schema prompt."""
+    global LANGUAGES, EXERCISE_SCHEMA
+    path = languages_path or DEFAULT_LANGUAGES_PATH
+    LANGUAGES.update(load_languages(path))
+    EXERCISE_SCHEMA = _build_exercise_schema()
+
+
+def run(
+    syllabus_path: str, model: str | None, db_path: str,
+    dry_run: bool, max_retries: int = 2,
+    languages_path: str | Path | None = None,
+):
+    _init_languages(languages_path)
     data = load_syllabus(syllabus_path)
     effective_model = model or data.get("model") or DEFAULT_MODEL
     entries = data["exercises"]
 
     total_requested = sum(e["count"] for e in entries)
     print(f"Model: {effective_model}")
-    print(f"Syllabus: {len(entries)} entries, {total_requested} exercises requested\n")
+    print(f"Syllabus: {len(entries)} entries, {total_requested} exercises requested")
+    print(f"Max retries per exercise: {max_retries}\n")
 
     # Phase 1: title generation
     print("=== Phase 1: Title generation ===")
@@ -478,19 +657,19 @@ def run(syllabus_path: str, model: str | None, db_path: str, dry_run: bool):
 
     print(f"\nTotal unique titles: {len(title_entries)}\n")
 
-    # Phase 2: full exercise generation
+    # Phase 2: full exercise generation (with validation + retries)
     print("=== Phase 2: Exercise generation ===")
     exercises: list[dict] = []
     failed = 0
 
     for i, (title, topic, lang, diff) in enumerate(title_entries, 1):
         print(f'  [{i}/{len(title_entries)}] "{title}"...', end=" ", flush=True)
-        prompt = build_single_exercise_prompt(title, topic, diff, lang)
         try:
-            raw = generate_with_hf(prompt, effective_model, max_tokens=2048)
-            parsed = parse_exercises(raw)
-            if parsed:
-                exercises.append(parsed[0])
+            ex = _generate_exercise_with_retries(
+                title, topic, diff, lang, effective_model, max_retries,
+            )
+            if ex:
+                exercises.append(ex)
                 print("OK")
             else:
                 print("EMPTY")
@@ -542,10 +721,21 @@ def main():
     )
     parser.add_argument("--db-path", default=None, help="Path to exercises.db")
     parser.add_argument("--dry-run", action="store_true", help="Print generated JSON without inserting")
+    parser.add_argument(
+        "--max-retries", type=int, default=2,
+        help="Max LLM retries per exercise on validation failure (default: 2)",
+    )
+    parser.add_argument(
+        "--languages", default=None,
+        help=f"Path to languages TOML file (default: {DEFAULT_LANGUAGES_PATH})",
+    )
 
     args = parser.parse_args()
     db_path = args.db_path or default_db_path()
-    run(args.syllabus, args.model, db_path, args.dry_run)
+    run(
+        args.syllabus, args.model, db_path, args.dry_run,
+        args.max_retries, args.languages,
+    )
 
 
 if __name__ == "__main__":
