@@ -8,7 +8,7 @@ COPY . .
 RUN mkdir -p /root/.local/share/nvim/code-practice
 
 RUN nvim --headless -u test/install_deps.lua \
-    -c "Lazy sync" -c "sleep 15" -c "qa!" 2>&1
+    -c "Lazy! sync" -c "qa!" 2>&1
 
 RUN python3 test/seed_db.py \
     /root/.local/share/nvim/code-practice/exercises.db \

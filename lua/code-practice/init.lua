@@ -40,8 +40,6 @@ end
 function code_practice.setup(opts)
   config.setup(opts or {})
 
-  db.connect()
-
   local conn = db.connect()
   local row = conn:eval("SELECT COUNT(*) as count FROM exercises")
   local count = row and (row.count or (row[1] and row[1].count)) or 0
