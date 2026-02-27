@@ -603,6 +603,44 @@ test("Importer: empty path returns error", function()
   assert_contains(err, "No JSON path", "error message")
 end)
 
+-- 33. Engine registry: list includes known engines
+test("Engine registry: list includes python, rust, theory", function()
+  local engines = require("code-practice.engines")
+  local list = engines.list()
+  assert_truthy(#list >= 3, "expected at least 3 engines, got " .. #list)
+
+  local found = {}
+  for _, name in ipairs(list) do
+    found[name] = true
+  end
+  assert_truthy(found.python, "python missing from engines.list()")
+  assert_truthy(found.rust, "rust missing from engines.list()")
+  assert_truthy(found.theory, "theory missing from engines.list()")
+end)
+
+-- 34. Engine registry: every entry has required fields
+test("Engine registry: all entries have required fields", function()
+  local engines = require("code-practice.engines")
+  local required = { "type", "filetype", "ext", "comment_prefix", "icon" }
+
+  for _, name in ipairs(engines.list()) do
+    local eng = engines.get(name)
+    assert_truthy(eng, name .. " missing from registry")
+    for _, field in ipairs(required) do
+      assert_truthy(eng[field] ~= nil, name .. " missing field: " .. field)
+    end
+  end
+end)
+
+-- 35. Engine registry: helpers return defaults for unknown engines
+test("Engine registry: helpers return defaults for unknown engine", function()
+  local engines = require("code-practice.engines")
+  assert_eq(engines.filetype("nonexistent"), "text", "filetype default")
+  assert_eq(engines.comment_prefix("nonexistent"), "#", "comment_prefix default")
+  assert_eq(engines.icon("nonexistent"), "📝", "icon default")
+  assert_eq(engines.get("nonexistent"), nil, "get returns nil")
+end)
+
 -- Summary
 io.write("\n" .. string.rep("=", 44) .. "\n")
 io.write(string.format("  Results: %d passed, %d failed, %d skipped\n", passed, failed, skipped))
