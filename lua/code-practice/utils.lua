@@ -28,6 +28,9 @@ function utils.set_buffer_content(bufnr, content)
 end
 
 function utils.trim(s)
+  if type(s) ~= "string" then
+    return ""
+  end
   return s:match("^%s*(.-)%s*$")
 end
 
@@ -50,7 +53,7 @@ function utils.delete_temp_files()
 end
 
 function utils.json_decode(str)
-  local ok, result = pcall(vim.fn.json_decode, str)
+  local ok, result = pcall(vim.json.decode, str)
   return ok and result or nil
 end
 

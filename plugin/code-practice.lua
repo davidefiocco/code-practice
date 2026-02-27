@@ -146,7 +146,7 @@ vim.api.nvim_create_user_command("CPGenerate", function()
   )
   vim.fn.writefile(vim.split(toml, "\n"), tmp)
 
-  local cmd = { "python3", script, tmp, "--db-path", db_path }
+  local cmd = { "uv", "run", script, tmp, "--db-path", db_path }
 
   vim.notify("[code-practice] Generating exercises...", vim.log.levels.INFO)
 

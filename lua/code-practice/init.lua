@@ -94,11 +94,10 @@ function code_practice.refresh_browser()
 end
 
 local function setup_exercise_keymaps(bufnr)
-  local ok, _ = pcall(vim.api.nvim_buf_get_var, bufnr, "code_practice_keymaps_set")
-  if ok then
+  if vim.b[bufnr].code_practice_keymaps_set then
     return
   end
-  vim.api.nvim_buf_set_var(bufnr, "code_practice_keymaps_set", true)
+  vim.b[bufnr].code_practice_keymaps_set = true
 
   local km = config.get("keymaps.exercise") or {}
   local function bmap(key, fn, desc)
@@ -147,15 +146,15 @@ end
 
 function code_practice.run_tests()
   local bufnr = vim.api.nvim_get_current_buf()
-  local ok, exercise_id = pcall(vim.api.nvim_buf_get_var, bufnr, "code_practice_exercise_id")
-  local engine_ok, engine_name = pcall(vim.api.nvim_buf_get_var, bufnr, "code_practice_engine")
+  local exercise_id = vim.b[bufnr].code_practice_exercise_id
+  local engine_name = vim.b[bufnr].code_practice_engine
 
-  if not ok or not exercise_id then
+  if not exercise_id then
     utils.notify("No exercise associated with this buffer", "error")
     return
   end
 
-  if not engine_ok then
+  if not engine_name then
     engine_name = "python"
   end
 
@@ -268,11 +267,7 @@ end
 
 function code_practice.get_current_exercise_id()
   local bufnr = vim.api.nvim_get_current_buf()
-  local ok, exercise_id = pcall(vim.api.nvim_buf_get_var, bufnr, "code_practice_exercise_id")
-  if ok then
-    return exercise_id
-  end
-  return nil
+  return vim.b[bufnr].code_practice_exercise_id
 end
 
 function code_practice.show_hints()

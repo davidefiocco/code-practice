@@ -126,8 +126,8 @@ function manager.open_exercise(id)
     utils.set_buffer_content(bufnr, content)
   end
 
-  vim.api.nvim_buf_set_var(bufnr, "code_practice_exercise_id", id)
-  vim.api.nvim_buf_set_var(bufnr, "code_practice_engine", exercise.engine)
+  vim.b[bufnr].code_practice_exercise_id = id
+  vim.b[bufnr].code_practice_engine = exercise.engine
 
   local current_win = vim.api.nvim_get_current_win()
   local function is_floating(win)

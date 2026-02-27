@@ -226,13 +226,10 @@ function browser.setup_keymaps()
   local preview_buf = state.popup.preview.bufnr
   local keymaps = config.get("keymaps.browser")
 
-  local function map_for_buf(bufnr, key, action)
-    vim.api.nvim_buf_set_keymap(bufnr, "n", key, action, { noremap = true, silent = true })
-  end
-
   local function map(key, action)
-    map_for_buf(list_buf, key, action)
-    map_for_buf(preview_buf, key, action)
+    local opts = { noremap = true, silent = true }
+    vim.keymap.set("n", key, action, vim.tbl_extend("force", opts, { buffer = list_buf }))
+    vim.keymap.set("n", key, action, vim.tbl_extend("force", opts, { buffer = preview_buf }))
   end
 
   map("j", "<cmd>lua require('code-practice.browser').move_selection(1)<CR>")
