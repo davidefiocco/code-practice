@@ -89,7 +89,7 @@ function M.import(json_path, opts)
           sql_val(ex.id),
           sql_val(tc.input or ""),
           sql_val(tc.expected_output),
-          sql_val(tc.is_hidden and true or false),
+          sql_val(tc.is_hidden == true or tc.is_hidden == 1),
           sql_val(tc.description or "")
         )
         local tc_ok = pcall(conn.eval, conn, tc_sql)
@@ -105,7 +105,7 @@ function M.import(json_path, opts)
           sql_val(ex.id),
           sql_val(opt.option_number),
           sql_val(opt.option_text),
-          sql_val(opt.is_correct and true or false)
+          sql_val(opt.is_correct == 1)
         )
         local opt_ok = pcall(conn.eval, conn, opt_sql)
         if opt_ok then
