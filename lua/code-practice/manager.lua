@@ -89,6 +89,8 @@ function manager.open_exercise(id)
         for _, opt in ipairs(theory_options) do
           add_meta(string.format("%d. %s", opt.option_number, opt.option_text))
         end
+        add_meta("")
+        add_meta("Press 1-" .. #theory_options .. " to select your answer, then run tests.")
       end
     end
 
