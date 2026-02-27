@@ -90,7 +90,7 @@ function manager.open_exercise(id)
           add_meta(string.format("%d. %s", opt.option_number, opt.option_text))
         end
         add_meta("")
-        add_meta("Press 1-" .. #theory_options .. " to select your answer, then run tests.")
+        add_meta("Press 1-" .. #theory_options .. " to select your answer, then Ctrl-t to run tests.")
       end
     end
 

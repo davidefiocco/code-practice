@@ -70,8 +70,8 @@ Quick Start
 1. Open browser: `:CP` (or `<leader>cp`)
 2. Navigate with `j`/`k`, open with `Enter`
 3. Write your solution in the buffer
-4. Run tests: `<leader>r` (or `:CPRun`)
-5. Move on: `<leader>n` (or `:CPNext`)
+4. Run tests: `Ctrl-t` (or `:CPRun`)
+5. Move on: `Ctrl-n` (or `:CPNext`)
 
 Commands
 --------
@@ -120,18 +120,19 @@ Global Keymaps
 
 Exercise Buffer Keymaps
 -----------------------
-These are active only inside exercise buffers (set via `keymaps.exercise` config):
+Active in normal mode inside exercise buffers. All use Ctrl shortcuts for
+single-chord access (configurable via `keymaps.exercise`):
 
-| Key            | Action                          |
-|----------------|---------------------------------|
-| `<leader>r`    | Run tests                       |
-| `<leader>h`    | Show hints                      |
-| `<leader>s`    | View solution (split)           |
-| `<leader>d`    | Show description                |
-| `<leader>n`    | Next exercise                   |
-| `<leader>p`    | Previous exercise               |
-| `<leader>k`    | Skip exercise                   |
-| `<leader>m`    | Open browser (menu)             |
+| Key       | Action                          |
+|-----------|---------------------------------|
+| `Ctrl-t`  | Run tests                       |
+| `Ctrl-n`  | Next exercise                   |
+| `Ctrl-p`  | Previous exercise               |
+| `Ctrl-s`  | Skip exercise                   |
+| `Ctrl-h`  | Show hints                      |
+| `Ctrl-l`  | View solution (split)           |
+| `Ctrl-d`  | Show description                |
+| `Ctrl-b`  | Open browser                    |
 
 Tools
 -----
