@@ -1,8 +1,8 @@
 Code Practice (Neovim)
 ======================
 
-A local, Neovim-native practice plugin for browsing exercises, solving them in
-buffer, and running tests from the editor.
+A Neovim plugin for browsing coding exercises, solving them, and running tests
+— all without leaving the editor.
 
 Features
 --------
@@ -30,7 +30,8 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim):
 }
 ```
 
-Then populate the exercise database. The simplest way is to import a JSON file:
+Then populate the exercise database. The simplest way is to import a JSON file
+(see [`test/example_exercises.json`](test/example_exercises.json) for the expected schema):
 
 ```vim
 :CPImport /path/to/exercises.json
