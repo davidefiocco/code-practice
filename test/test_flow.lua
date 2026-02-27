@@ -1,0 +1,546 @@
+-- Headless test suite for code-practice plugin.
+-- Run with: nvim --headless -u dev/init.lua -l test/test_flow.lua
+
+local passed = 0
+local failed = 0
+local skipped = 0
+local errors = {}
+
+local function skip(reason)
+  error({ __skip = true, reason = reason })
+end
+
+local function test(name, fn)
+  local ok, err = pcall(fn)
+  if ok then
+    passed = passed + 1
+    io.write("  ✓ " .. name .. "\n")
+  elseif type(err) == "table" and err.__skip then
+    skipped = skipped + 1
+    io.write("  ⊘ " .. name .. " (skipped: " .. err.reason .. ")\n")
+  else
+    failed = failed + 1
+    table.insert(errors, { name = name, error = tostring(err) })
+    io.write("  ✗ " .. name .. ": " .. tostring(err) .. "\n")
+  end
+  io.flush()
+end
+
+local function assert_eq(actual, expected, msg)
+  if actual ~= expected then
+    error(string.format("%s: expected %s, got %s", msg or "assertion", vim.inspect(expected), vim.inspect(actual)))
+  end
+end
+
+local function assert_gt(actual, threshold, msg)
+  if not (actual > threshold) then
+    error(string.format("%s: expected > %s, got %s", msg or "assertion", tostring(threshold), tostring(actual)))
+  end
+end
+
+local function assert_truthy(val, msg)
+  if not val then
+    error(msg or "expected truthy value")
+  end
+end
+
+local function assert_contains(haystack, needle, msg)
+  if type(haystack) ~= "string" or not haystack:find(needle, 1, true) then
+    error(string.format("%s: expected string containing %q, got %s",
+      msg or "assertion", needle, vim.inspect(haystack)))
+  end
+end
+
+io.write("\n== Code Practice – Headless Flow Tests ==\n\n")
+io.flush()
+
+-- 1. Plugin loads
+test("Plugin module loads", function()
+  local cp = require("code-practice.init")
+  assert_truthy(cp, "module is nil")
+  assert_truthy(cp.setup, "setup missing")
+  assert_truthy(cp.open_browser, "open_browser missing")
+  assert_truthy(cp.run_tests, "run_tests missing")
+end)
+
+-- 2. Config
+test("Config has expected defaults", function()
+  local config = require("code-practice.config")
+  assert_truthy(config.get("storage.db_path"), "db_path nil")
+  assert_eq(config.get("languages.python.enabled"), true, "python enabled")
+  assert_eq(config.get("languages.python.cmd"), "python3", "python cmd")
+end)
+
+-- 3. DB connection
+test("DB connects and has exercises", function()
+  local db = require("code-practice.db")
+  local conn = db.connect()
+  assert_truthy(conn, "connection nil")
+  local exercises = db.get_all_exercises()
+  assert_gt(#exercises, 0, "exercise count")
+end)
+
+-- 4. Exercise retrieval
+test("Retrieve exercise by ID", function()
+  local mgr = require("code-practice.manager")
+  local ex = mgr.get_exercise(1)
+  assert_truthy(ex, "exercise 1 nil")
+  assert_truthy(ex.title and ex.title ~= "", "title empty")
+  assert_eq(ex.language, "python", "language")
+  assert_truthy(ex.test_cases and #ex.test_cases > 0, "no test cases")
+end)
+
+-- 5. Test cases
+test("Test cases load for exercise 1", function()
+  local db = require("code-practice.db")
+  local tcs = db.get_test_cases(1)
+  assert_gt(#tcs, 0, "test case count")
+  assert_truthy(tcs[1].expected_output, "missing expected_output")
+end)
+
+-- 6. Stats
+test("Stats returns valid data", function()
+  local stats = require("code-practice.manager").get_stats()
+  assert_truthy(stats, "stats nil")
+  assert_gt(stats.total, 0, "total")
+  assert_truthy(stats.by_difficulty, "by_difficulty nil")
+end)
+
+-- 7. Unsolved exercises
+test("Unsolved exercises list is non-empty", function()
+  local db = require("code-practice.db")
+  local unsolved = db.get_unsolved_exercises()
+  assert_gt(#unsolved, 0, "unsolved count")
+end)
+
+-- 8. Next exercise
+test("Get next exercise ID", function()
+  local mgr = require("code-practice.manager")
+  local next_id = mgr.get_next_exercise_id(nil, {})
+  assert_truthy(next_id, "next_id nil")
+end)
+
+-- 9. Open exercise -> buffer
+test("Open exercise creates buffer with content", function()
+  local mgr = require("code-practice.manager")
+  local bufnr = mgr.open_exercise(1)
+  assert_truthy(bufnr, "bufnr nil")
+  local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+  assert_gt(#lines, 1, "buffer line count")
+  local content = table.concat(lines, "\n")
+  assert_truthy(content:find("Exercise:"), "missing Exercise: header")
+end)
+
+-- 10. Filter by difficulty
+test("Filter exercises by difficulty", function()
+  local db = require("code-practice.db")
+  local easy = db.get_all_exercises({ difficulty = "easy" })
+  assert_truthy(type(easy) == "table", "result not table")
+  for _, ex in ipairs(easy) do
+    assert_eq(ex.difficulty, "easy", "difficulty mismatch")
+  end
+end)
+
+-- 11. Filter by language
+test("Filter exercises by language", function()
+  local db = require("code-practice.db")
+  local py = db.get_all_exercises({ language = "python" })
+  assert_truthy(type(py) == "table", "result not table")
+  for _, ex in ipairs(py) do
+    assert_eq(ex.language, "python", "language mismatch")
+  end
+end)
+
+-- 12. Theory options
+test("Theory exercises have options", function()
+  local db = require("code-practice.db")
+  local theory = db.get_all_exercises({ language = "theory" })
+  if #theory == 0 then
+    skip("no theory exercises in seed data")
+  end
+  local opts = db.get_theory_options(theory[1].id)
+  assert_gt(#opts, 0, "theory option count")
+end)
+
+-- 13. Utils
+test("Utility functions", function()
+  local u = require("code-practice.utils")
+  assert_eq(u.trim("  hello  "), "hello", "trim")
+  assert_eq(#u.split_lines("a\nb\nc"), 3, "split_lines")
+  assert_eq(u.filetype_from_language("python"), "python", "ft python")
+  assert_eq(u.filetype_from_language("rust"), "rust", "ft rust")
+  assert_eq(u.filetype_from_language("theory"), "markdown", "ft theory")
+end)
+
+-- 14. Python runner – correct solution
+test("Python runner: correct solution passes", function()
+  local mgr = require("code-practice.manager")
+  local ex = mgr.get_exercise(1)
+  assert_truthy(ex and ex.solution, "no solution")
+
+  local runner = require("code-practice.runner")
+  local done = false
+  local result, run_err
+
+  runner.run_test_async(1, ex.solution, "python", function(r, e)
+    result = r
+    run_err = e
+    done = true
+  end)
+
+  vim.wait(30000, function()
+    return done
+  end, 50)
+
+  if run_err then
+    error("runner error: " .. tostring(run_err))
+  end
+  assert_truthy(result, "result nil")
+  assert_truthy(result.passed, "correct solution should pass:\n" .. vim.inspect(result))
+end)
+
+-- 15. Python runner – wrong solution
+test("Python runner: wrong solution fails", function()
+  local runner = require("code-practice.runner")
+  local done = false
+  local result
+
+  runner.run_test_async(1, "def solution(lst):\n    return 0", "python", function(r, _)
+    result = r
+    done = true
+  end)
+
+  vim.wait(30000, function()
+    return done
+  end, 50)
+
+  assert_truthy(result, "result nil")
+  assert_truthy(not result.passed, "wrong solution should fail")
+end)
+
+-- 16. Theory runner – correct answer
+test("Theory runner: correct answer passes", function()
+  local db = require("code-practice.db")
+  local theory = db.get_all_exercises({ language = "theory" })
+  if #theory == 0 then
+    skip("no theory exercises in seed data")
+  end
+
+  local ex_id = theory[1].id
+  local opts = db.get_theory_options(ex_id)
+  local correct_num
+  for _, o in ipairs(opts) do
+    if o.is_correct == 1 then
+      correct_num = o.option_number
+      break
+    end
+  end
+  if not correct_num then
+    skip("no correct option marked for theory exercise " .. ex_id)
+  end
+
+  local runner = require("code-practice.runner")
+  local done = false
+  local result
+
+  runner.run_test_async(ex_id, tostring(correct_num), "theory", function(r, _)
+    result = r
+    done = true
+  end)
+
+  vim.wait(5000, function()
+    return done
+  end, 50)
+
+  assert_truthy(result, "result nil")
+  assert_truthy(result.passed, "correct theory answer should pass")
+end)
+
+-- 17. Record and query attempt (self-contained: run a solution, then verify)
+test("Attempt is recorded after runner", function()
+  local db = require("code-practice.db")
+  local mgr = require("code-practice.manager")
+  local runner = require("code-practice.runner")
+
+  local ex = mgr.get_exercise(1)
+  assert_truthy(ex and ex.solution, "exercise 1 missing or has no solution")
+
+  local conn = db.connect()
+  local before_rows = conn:eval("SELECT COUNT(*) as count FROM attempts WHERE exercise_id = 1")
+  local before = before_rows and (before_rows.count or (before_rows[1] and before_rows[1].count)) or 0
+
+  local done = false
+  runner.run_test_async(1, ex.solution, ex.language, function()
+    done = true
+  end)
+  vim.wait(30000, function() return done end, 50)
+
+  local after_rows = conn:eval("SELECT COUNT(*) as count FROM attempts WHERE exercise_id = 1")
+  local after = after_rows and (after_rows.count or (after_rows[1] and after_rows[1].count)) or 0
+  assert_gt(after, before, "attempt count should increase after run")
+end)
+
+-- 18. Exercise buffer variables
+test("Exercise buffer has correct variables", function()
+  local mgr = require("code-practice.manager")
+  local bufnr = mgr.open_exercise(2)
+  assert_truthy(bufnr, "bufnr nil")
+
+  local ok_id, eid = pcall(vim.api.nvim_buf_get_var, bufnr, "code_practice_exercise_id")
+  assert_truthy(ok_id, "exercise_id var missing")
+  assert_eq(eid, 2, "exercise_id value")
+
+  local ok_lang, lang = pcall(vim.api.nvim_buf_get_var, bufnr, "code_practice_language")
+  assert_truthy(ok_lang, "language var missing")
+  assert_truthy(lang ~= nil and lang ~= "", "language empty")
+end)
+
+-- 19. Theory runner – wrong answer
+test("Theory runner: wrong answer fails", function()
+  local db = require("code-practice.db")
+  local theory = db.get_all_exercises({ language = "theory" })
+  if #theory == 0 then
+    skip("no theory exercises in seed data")
+  end
+
+  local ex_id = theory[1].id
+  local opts = db.get_theory_options(ex_id)
+  local correct_num
+  for _, o in ipairs(opts) do
+    if o.is_correct == 1 then
+      correct_num = o.option_number
+      break
+    end
+  end
+  if not correct_num then
+    skip("no correct option marked for theory exercise " .. ex_id)
+  end
+
+  local wrong = correct_num == 1 and 2 or 1
+  local runner = require("code-practice.runner")
+  local done = false
+  local result
+
+  runner.run_test_async(ex_id, tostring(wrong), "theory", function(r, _)
+    result = r
+    done = true
+  end)
+
+  vim.wait(5000, function()
+    return done
+  end, 50)
+
+  assert_truthy(result, "result nil")
+  assert_truthy(not result.passed, "wrong theory answer should fail")
+  assert_eq(result.answer, wrong, "answer echoed back")
+  assert_eq(result.correct_option, correct_num, "correct_option reported")
+end)
+
+-- 20. Session navigation: next/prev/skip
+test("Session: open -> next -> prev navigates correctly", function()
+  local cp = require("code-practice.init")
+
+  local buf1 = cp.open_exercise(1)
+  assert_truthy(buf1, "open ex 1")
+
+  local buf2 = cp.next_exercise()
+  assert_truthy(buf2, "next from 1")
+
+  local ok2, id2 = pcall(vim.api.nvim_buf_get_var, buf2, "code_practice_exercise_id")
+  assert_truthy(ok2 and id2 ~= 1, "next should differ from 1, got " .. tostring(id2))
+
+  local buf_prev = cp.prev_exercise()
+  assert_truthy(buf_prev, "prev after next")
+  local _, id_prev = pcall(vim.api.nvim_buf_get_var, buf_prev, "code_practice_exercise_id")
+  assert_eq(id_prev, 1, "prev should return to exercise 1")
+end)
+
+-- 21. Session: skip marks exercise and moves on
+test("Session: skip advances past current exercise", function()
+  local cp = require("code-practice.init")
+
+  cp.open_exercise(1)
+  local buf_skip = cp.skip_exercise()
+  assert_truthy(buf_skip, "skip returned nil")
+
+  local _, id_skip = pcall(vim.api.nvim_buf_get_var, buf_skip, "code_practice_exercise_id")
+  assert_truthy(id_skip ~= 1, "skip should not return exercise 1, got " .. tostring(id_skip))
+end)
+
+-- 22. Session: repeated prev eventually bottoms out
+test("Session: prev bottoms out and returns nil", function()
+  local cp = require("code-practice.init")
+  cp.open_exercise(1)
+  local hit_nil = false
+  for _ = 1, 100 do
+    if cp.prev_exercise() == nil then
+      hit_nil = true
+      break
+    end
+  end
+  assert_truthy(hit_nil, "prev should eventually return nil")
+end)
+
+-- 23. get_next_exercise_id: all skipped wraps around
+test("Next exercise: all-skipped returns nil", function()
+  local db = require("code-practice.db")
+  local mgr = require("code-practice.manager")
+  local unsolved = db.get_unsolved_exercises()
+
+  local skip_all = {}
+  for _, ex in ipairs(unsolved) do
+    skip_all[ex.id] = true
+  end
+
+  local next_id = mgr.get_next_exercise_id(nil, skip_all)
+  assert_eq(next_id, nil, "all skipped should return nil")
+end)
+
+-- 24. get_next_exercise_id: wrap-around from last to first
+test("Next exercise: wraps from last unsolved to first", function()
+  local db = require("code-practice.db")
+  local mgr = require("code-practice.manager")
+  local unsolved = db.get_unsolved_exercises()
+  if #unsolved < 2 then
+    skip("need at least 2 unsolved exercises for wrap-around test")
+  end
+
+  local last_id = unsolved[#unsolved].id
+  local next_id = mgr.get_next_exercise_id(last_id, {})
+  assert_eq(next_id, unsolved[1].id, "should wrap to first unsolved")
+end)
+
+-- 25. Python runner: exercise with empty-string input
+test("Python runner: empty-string input handled", function()
+  local db = require("code-practice.db")
+  local all = db.get_all_exercises({ language = "python" })
+
+  local target_id
+  for _, ex in ipairs(all) do
+    local tcs = db.get_test_cases(ex.id)
+    for _, tc in ipairs(tcs) do
+      if tc.input and tc.input:match('^%s*""') then
+        target_id = ex.id
+        break
+      end
+    end
+    if target_id then
+      break
+    end
+  end
+
+  if not target_id then
+    skip("no exercise with empty-string input in seed data")
+  end
+
+  local mgr = require("code-practice.manager")
+  local ex = mgr.get_exercise(target_id)
+  assert_truthy(ex and ex.solution, "no solution for empty-input exercise")
+
+  local runner = require("code-practice.runner")
+  local done = false
+  local result, run_err
+
+  runner.run_test_async(target_id, ex.solution, "python", function(r, e)
+    result = r
+    run_err = e
+    done = true
+  end)
+
+  vim.wait(30000, function()
+    return done
+  end, 50)
+
+  if run_err then
+    error("runner error: " .. tostring(run_err))
+  end
+  assert_truthy(result, "result nil")
+  assert_truthy(result.passed, "solution with empty-string input should pass:\n" .. vim.inspect(result))
+end)
+
+-- 26. Sample 2 exercises per difficulty and verify their solutions pass
+test("Python runner: sampled solutions pass (2 easy, 2 medium, 2 hard)", function()
+  local db = require("code-practice.db")
+  local mgr = require("code-practice.manager")
+  local runner = require("code-practice.runner")
+
+  local sample = {}
+  for _, diff in ipairs({ "easy", "medium", "hard" }) do
+    local exs = db.get_all_exercises({ language = "python", difficulty = diff })
+    local count = 0
+    for _, ex_row in ipairs(exs) do
+      if count >= 2 then break end
+      local ex = mgr.get_exercise(ex_row.id)
+      if ex and ex.solution and ex.solution ~= "" then
+        table.insert(sample, ex)
+        count = count + 1
+      end
+    end
+  end
+
+  if #sample == 0 then
+    skip("no Python exercises with solutions in seed data")
+  end
+
+  local failures = {}
+  for _, ex in ipairs(sample) do
+    local done = false
+    local result, run_err
+
+    runner.run_test_async(ex.id, ex.solution, "python", function(r, e)
+      result = r
+      run_err = e
+      done = true
+    end)
+
+    vim.wait(30000, function()
+      return done
+    end, 50)
+
+    if run_err then
+      table.insert(failures, string.format("#%d %s [%s]: %s", ex.id, ex.title, ex.difficulty, run_err))
+    elseif not result or not result.passed then
+      local detail = result and vim.inspect(result.results) or "nil"
+      table.insert(failures, string.format("#%d %s [%s]: %s", ex.id, ex.title, ex.difficulty, detail))
+    end
+  end
+
+  if #failures > 0 then
+    error("Failed exercises:\n  " .. table.concat(failures, "\n  "))
+  end
+end)
+
+-- 27. Unsupported language returns error
+test("Runner: unsupported language returns error", function()
+  local runner = require("code-practice.runner")
+  local done = false
+  local result, run_err
+
+  runner.run_test_async(1, "print(1)", "haskell", function(r, e)
+    result = r
+    run_err = e
+    done = true
+  end)
+
+  vim.wait(5000, function()
+    return done
+  end, 50)
+
+  assert_truthy(run_err, "should return error for unsupported language")
+  assert_contains(run_err, "Unsupported", "error message")
+  assert_eq(result, nil, "result should be nil on error")
+end)
+
+-- Summary
+io.write("\n" .. string.rep("=", 44) .. "\n")
+io.write(string.format("  Results: %d passed, %d failed, %d skipped\n", passed, failed, skipped))
+if #errors > 0 then
+  io.write("\n  Failures:\n")
+  for _, e in ipairs(errors) do
+    io.write(string.format("    - %s: %s\n", e.name, e.error))
+  end
+end
+io.write(string.rep("=", 44) .. "\n\n")
+io.flush()
+
+os.exit(failed > 0 and 1 or 0)
