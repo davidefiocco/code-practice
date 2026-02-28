@@ -96,8 +96,11 @@ function manager.open_exercise(id)
         end
         add_meta("")
         local run_key = (config.get("keymaps.exercise") or {}).run_tests or "<C-t>"
-        add_meta("Press 1-" .. #theory_options .. " to select your answer, then " .. run_key .. " to run tests.")
+        add_meta("Press 1-" .. #theory_options .. " to select your answer, then " .. run_key .. " to check.")
       end
+    else
+      local run_key = (config.get("keymaps.exercise") or {}).run_tests or "<C-t>"
+      add_meta("Modify the code below, then " .. run_key .. " to run tests.")
     end
 
     add_meta("")
