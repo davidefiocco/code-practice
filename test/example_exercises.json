@@ -991,7 +991,7 @@
       "Count total iterations of the innermost operation.",
       "Outer loop runs n times. Inner loop runs n/2 times per outer iteration."
     ],
-    "solution": "",
+    "solution": "The algorithm has an outer loop running n times and an inner loop running n/2 times per outer iteration, resulting in n × (n/2) = n²/2 total operations. Since constant factors are ignored in Big O notation, this simplifies to O(n²). Option 1 (O(n)) is too fast, as the nested loops cause quadratic growth. Option 2 (O(n log n)) would require the inner loop to scale logarithmically, which it does not. Option 4 (O(n³)) overestimates the complexity, as there are only two nested loops, not three.",
     "starter_code": "",
     "created_at": "2026-02-23 14:02:15",
     "updated_at": "2026-02-23 14:02:15",
@@ -1034,7 +1034,7 @@
       "Recall the hierarchy: constant < logarithmic < polynomial < exponential < factorial.",
       "Consider comparing logarithmic, linear, n log n, and exponential functions."
     ],
-    "solution": "",
+    "solution": "Option 4, O(2ⁿ), grows asymptotically the fastest because exponential functions like 2ⁿ dominate polynomial and logarithmic functions as n → ∞. O(log n) grows slower than any polynomial, O(n) is linear, and O(n log n) is slightly faster than linear but still polynomial—none of which can keep up with the rapid growth of an exponential function.",
     "starter_code": "",
     "created_at": "2026-02-23 14:02:15",
     "updated_at": "2026-02-23 14:02:15",
@@ -1077,7 +1077,7 @@
       "Consider the maximum depth of the recursion call stack.",
       "Each recursive call adds a frame to the stack until reaching the base cases."
     ],
-    "solution": "",
+    "solution": "The space complexity is O(n) because the recursion depth reaches n in the worst case (e.g., when computing fib(n), the call stack grows linearly as it goes down to fib(0)), and each recursive call adds a frame to the call stack. Although the time complexity is O(2ⁿ), space complexity depends on maximum stack depth, not total calls. O(1) is incorrect because space usage isn’t constant—it grows with input size. O(log n) would apply to some optimized or tail-recursive versions, but not the naive recursive version.",
     "starter_code": "",
     "created_at": "2026-02-23 14:02:15",
     "updated_at": "2026-02-23 14:02:15",
@@ -1120,7 +1120,7 @@
       "Although occasional pushes trigger resizing (O(n)), most are O(1).",
       "Use the accounting method or aggregate analysis to find average cost per operation."
     ],
-    "solution": "",
+    "solution": "The amortized time complexity of a single push operation in a dynamically resizing array-based stack is O(1) because, although occasional resizes take O(n) time when the array doubles, these expensive operations are rare and their cost is spread out over many cheap pushes using the accounting or aggregate method of amortized analysis. Option 2 (O(n)) is the worst-case time for a single push during a resize, not the amortized time. Option 3 (O(log n)) and Option 4 (O(n log n)) do not reflect the actual behavior of geometric resizing strategies like doubling.",
     "starter_code": "",
     "created_at": "2026-02-23 14:02:15",
     "updated_at": "2026-02-23 14:02:15",
@@ -1163,7 +1163,7 @@
       "Big-Theta requires both upper and lower bounds that match asymptotically.",
       "Ignore lower-order terms and constant coefficients."
     ],
-    "solution": "",
+    "solution": "The correct answer is Θ(n²) because in Big-Theta notation, we focus on the dominant term as n grows large, and 3n² dominates the lower-order terms 5n and 2. Option 1 (Θ(n)) is too small since n² grows faster than n; Option 3 (Θ(n³)) is too large because n² grows slower than n³; Option 4 (Θ(log n)) is even smaller and incorrect for a quadratic function.",
     "starter_code": "",
     "created_at": "2026-02-23 14:02:15",
     "updated_at": "2026-02-23 14:02:15",
@@ -1205,7 +1205,7 @@
       "Linear structures store elements in a sequential manner.",
       "Arrays and linked lists are examples of linear structures."
     ],
-    "solution": "",
+    "solution": "Stack is a linear data structure because its elements are arranged in a sequential order where insertion and deletion occur at only one end (top), following the LIFO principle. Binary Tree, Graph, and Heap are non-linear: Binary Trees and Graphs have hierarchical or network-like connections between nodes, while Heaps are a specialized tree-based structure (usually implemented as a complete binary tree).",
     "starter_code": "",
     "created_at": "2026-02-23 14:02:22",
     "updated_at": "2026-02-23 14:02:22",
@@ -1247,7 +1247,7 @@
       "Arrays store elements in contiguous memory locations.",
       "Index-based access does not require traversal."
     ],
-    "solution": "",
+    "solution": "Accessing an element by index in an array is O(1) because arrays store elements in contiguous memory locations, allowing direct calculation of the element's address using the base address and index (base + index × element_size), which takes constant time. Options O(n), O(log n), and O(n log n) describe complexities for operations like linear search, binary search, or sorting—not direct index-based access.",
     "starter_code": "",
     "created_at": "2026-02-23 14:02:22",
     "updated_at": "2026-02-23 14:02:22",
@@ -1289,7 +1289,7 @@
       "Think about the order in which elements are added and removed.",
       "It's the same principle as stacking plates."
     ],
-    "solution": "",
+    "solution": "Stacks follow the Last In, First Out (LIFO) principle, meaning the last element added is the first one removed. Option 1 (FIFO) describes queues, not stacks. Option 3 (PIPO) is not a standard data structure principle, and Option 4 (Random Access) applies to structures like arrays, where elements can be accessed directly by index.",
     "starter_code": "",
     "created_at": "2026-02-23 14:02:22",
     "updated_at": "2026-02-23 14:02:22",
@@ -1331,7 +1331,7 @@
       "One method stores multiple items in the same bucket.",
       "Another uses probing to find the next available slot."
     ],
-    "solution": "",
+    "solution": "Quadratic probing is a common open addressing technique for resolving hash collisions by probing positions in a quadratic sequence when a collision occurs. Merge sort, binary search, and depth-first search are unrelated algorithms—merge sort is a sorting algorithm, binary search is for searching sorted arrays, and depth-first search is a graph traversal method.",
     "starter_code": "",
     "created_at": "2026-02-23 14:02:22",
     "updated_at": "2026-02-23 14:02:22",
@@ -1373,7 +1373,7 @@
       "One part stores data.",
       "The other part points to the next element."
     ],
-    "solution": "",
+    "solution": "Option 3 is correct because a node in a singly linked list consists of two parts: the data (or value) it holds and a pointer to the next node in the sequence. Option 1 is incorrect because \"Parent Pointer\" is not used in singly linked lists (it appears in trees or doubly linked lists). Option 2 is misleading—while some implementations store key-value pairs, the fundamental structure is data and next pointer, and \"key\" isn't a required component. Option 4 is wrong because a previous pointer is characteristic of a doubly linked list, not a singly linked list.",
     "starter_code": "",
     "created_at": "2026-02-23 14:02:22",
     "updated_at": "2026-02-23 14:02:22",
