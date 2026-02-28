@@ -62,7 +62,11 @@ function browser.render_exercise_list()
     local engine_icon = engines.icon(ex.engine)
     local solved_icon = state.solved_ids[ex.id] and "✓ " or "  "
 
-    local line = string.format("%s%s %s %s%s", prefix, diff_icon, engine_icon, solved_icon, ex.title)
+    local num_str = ""
+    if config.get("ui.show_numbers") then
+      num_str = string.format("%d. ", i)
+    end
+    local line = string.format("%s%s %s %s%s%s", prefix, diff_icon, engine_icon, solved_icon, num_str, ex.title)
     table.insert(lines, line)
   end
 
@@ -150,7 +154,7 @@ function browser.render_preview()
   end
 
   table.insert(lines, "")
-  table.insert(lines, "Press Enter to open, then :CPRun to test")
+  table.insert(lines, "Press Enter to open, then <C-t> to run tests")
 
   state.preview_cache[exercise.id] = lines
   return lines

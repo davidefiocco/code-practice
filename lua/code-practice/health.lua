@@ -42,11 +42,11 @@ function M.check()
     end
   end
 
-  -- :CPGenerate dependencies
+  -- :CP generate dependencies
   if vim.fn.executable("uv") == 1 then
-    vim.health.ok("uv found (needed for :CPGenerate)")
+    vim.health.ok("uv found (needed for :CP generate)")
   else
-    vim.health.warn("uv not found", { "Install uv (https://github.com/astral-sh/uv) to use :CPGenerate" })
+    vim.health.warn("uv not found", { "Install uv (https://github.com/astral-sh/uv) to use :CP generate" })
   end
 
   if vim.env.HF_TOKEN and vim.env.HF_TOKEN ~= "" then
@@ -54,7 +54,7 @@ function M.check()
   else
     vim.health.warn(
       "HF_TOKEN not set",
-      { "Set the HF_TOKEN environment variable to use :CPGenerate with Hugging Face models" }
+      { "Set the HF_TOKEN environment variable to use :CP generate with Hugging Face models" }
     )
   end
 

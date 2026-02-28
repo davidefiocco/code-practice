@@ -57,23 +57,13 @@ function code_practice.setup(opts)
         utils.notify("Auto-import failed: " .. (err or "unknown error"), "error")
       end
     else
-      utils.notify("No exercises found. Run :CPImport <path> to load exercises from a JSON file.", "warn")
+      utils.notify("No exercises found. Run :CP import <path> to load exercises from a JSON file.", "warn")
     end
   end
 
   browser.set_on_open(function(id)
     code_practice.open_exercise(id)
   end)
-
-  local keymaps = config.get("keymaps.browser")
-
-  vim.keymap.set("n", keymaps.open or "<leader>cp", function()
-    code_practice.open_browser()
-  end, { desc = "Open Code Practice browser" })
-
-  vim.keymap.set("n", keymaps.stats or "<leader>cps", function()
-    vim.cmd("CPStats")
-  end, { desc = "Show statistics" })
 
   utils.delete_temp_files()
 

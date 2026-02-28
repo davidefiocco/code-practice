@@ -45,11 +45,5 @@ require("code-practice").setup({
       enabled = true,
     },
   },
-  keymaps = {
-    browser = {
-      open = "<leader>cp",
-      run = "<leader>cpr",
-      stats = "<leader>cps",
-    },
-  },
+  keymaps = {},
 })

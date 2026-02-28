@@ -112,6 +112,7 @@ function help.show()
       17
     ) .. "Open browser",
     "",
+    "  Commands: :CP open | stats | help | import | generate",
     "  See :help code-practice for full documentation",
     "",
     "  Press q, <Esc>, or <Enter> to close",
