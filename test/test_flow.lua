@@ -90,6 +90,30 @@ test("Retrieve exercise by ID", function()
   assert_truthy(ex.test_cases and #ex.test_cases > 0, "no test cases")
 end)
 
+-- 4b. Exercise buffer instructions
+test("Exercise buffer shows correct instructions for code exercises", function()
+  local mgr = require("code-practice.manager")
+  local bufnr = mgr.open_exercise(1)
+  assert_truthy(bufnr, "buffer nil")
+  local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+  local content = table.concat(lines, "\n")
+  assert_truthy(content:match("Modify the code below"), "missing instruction for code exercises")
+end)
+
+test("Exercise buffer shows correct instructions for theory exercises", function()
+  local db = require("code-practice.db")
+  local exercises = db.get_all_exercises({ engine = "theory" })
+  if #exercises == 0 then
+    skip("no theory exercises")
+  end
+  local mgr = require("code-practice.manager")
+  local bufnr = mgr.open_exercise(exercises[1].id)
+  assert_truthy(bufnr, "buffer nil")
+  local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+  local content = table.concat(lines, "\n")
+  assert_truthy(content:match("Press %d+%-%d+ to select your answer"), "missing instruction for theory exercises")
+end)
+
 -- 5. Test cases
 test("Test cases load for exercise 1", function()
   local db = require("code-practice.db")
