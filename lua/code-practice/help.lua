@@ -7,6 +7,7 @@ end
 
 local config = require("code-practice.config")
 local engines = require("code-practice.engines")
+local popup_util = require("code-practice.popup")
 
 local help = {}
 
@@ -113,7 +114,7 @@ function help.show()
     "",
     "  See :help code-practice for full documentation",
     "",
-    "  Press q or <Esc> to close",
+    "  Press q, <Esc>, or <Enter> to close",
     "",
   }
   for _, el in ipairs(exercise_lines) do
@@ -131,15 +132,11 @@ function help.show()
     end
   end
 
-  local function close()
+  popup_util.map_close(popup.bufnr, function()
     if popup and popup.winid and vim.api.nvim_win_is_valid(popup.winid) then
       popup:unmount()
     end
-  end
-
-  vim.keymap.set({ "n", "i" }, "q", close, { buffer = popup.bufnr, silent = true, nowait = true })
-  vim.keymap.set({ "n", "i" }, "<Esc>", close, { buffer = popup.bufnr, silent = true, nowait = true })
-  vim.keymap.set({ "n", "i" }, "<CR>", close, { buffer = popup.bufnr, silent = true, nowait = true })
+  end)
 end
 
 return help

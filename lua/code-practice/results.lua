@@ -1,4 +1,5 @@
 -- Code Practice - Results Display Module
+local config = require("code-practice.config")
 local popup = require("code-practice.popup")
 
 local results = {}
@@ -43,7 +44,9 @@ function results.show(result, on_next)
     end
   end
 
-  if result.passed then
+  if result.correct_option then
+    push(result.passed and "✓ Correct!" or "✗ Incorrect")
+  elseif result.passed then
     push("✓ All tests passed!")
   else
     push("✗ Some tests failed")
@@ -82,9 +85,11 @@ function results.show(result, on_next)
     push("No detailed results available.")
   end
 
+  local next_key = (config.get("keymaps.exercise") or {}).next_exercise or "<C-n>"
+
   push("")
   if on_next then
-    push("Press n for next exercise | q, <Esc>, or <Enter> to close")
+    push("Press " .. next_key .. " for next exercise | q, <Esc>, or <Enter> to close")
   else
     push("Press q, <Esc>, or <Enter> to close")
   end
@@ -96,7 +101,7 @@ function results.show(result, on_next)
   popup.map_close(bufnr, results.close)
 
   if on_next then
-    vim.keymap.set("n", "n", on_next, { buffer = bufnr, silent = true, nowait = true })
+    vim.keymap.set("n", next_key, on_next, { buffer = bufnr, silent = true, nowait = true })
   end
 
   if result.passed then

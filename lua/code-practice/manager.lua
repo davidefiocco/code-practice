@@ -1,4 +1,5 @@
 -- Code Practice - Exercise Manager Module
+local config = require("code-practice.config")
 local db = require("code-practice.db")
 local engines = require("code-practice.engines")
 local utils = require("code-practice.utils")
@@ -94,7 +95,8 @@ function manager.open_exercise(id)
           add_meta(string.format("%d. %s", opt.option_number, opt.option_text))
         end
         add_meta("")
-        add_meta("Press 1-" .. #theory_options .. " to select your answer, then Ctrl-t to run tests.")
+        local run_key = (config.get("keymaps.exercise") or {}).run_tests or "<C-t>"
+        add_meta("Press 1-" .. #theory_options .. " to select your answer, then " .. run_key .. " to run tests.")
       end
     end
 
@@ -142,24 +144,20 @@ function manager.open_exercise(id)
     end
 
     for num, text in pairs(opts_by_num) do
-      vim.api.nvim_buf_set_keymap(bufnr, "n", tostring(num), "", {
-        noremap = true,
-        nowait = true,
-        callback = function()
-          local line_count = vim.api.nvim_buf_line_count(bufnr)
-          for i = 0, line_count - 1 do
-            local line = vim.api.nvim_buf_get_lines(bufnr, i, i + 1, false)[1]
-            if line and line:match("^Answer:") then
-              vim.bo[bufnr].modifiable = true
-              vim.api.nvim_buf_set_lines(bufnr, i, i + 1, false, {
-                string.format("Answer: %d  [%s]", num, text),
-              })
-              utils.notify(string.format("Selected option %d: %s", num, text), "info")
-              return
-            end
+      vim.keymap.set("n", tostring(num), function()
+        local line_count = vim.api.nvim_buf_line_count(bufnr)
+        for i = 0, line_count - 1 do
+          local line = vim.api.nvim_buf_get_lines(bufnr, i, i + 1, false)[1]
+          if line and line:match("^Answer:") then
+            vim.bo[bufnr].modifiable = true
+            vim.api.nvim_buf_set_lines(bufnr, i, i + 1, false, {
+              string.format("Answer: %d  [%s]", num, text),
+            })
+            utils.notify(string.format("Selected option %d: %s", num, text), "info")
+            return
           end
-        end,
-      })
+        end
+      end, { buffer = bufnr, noremap = true, nowait = true })
     end
   end
 
