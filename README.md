@@ -34,7 +34,7 @@ Then populate the exercise database. The simplest way is to import a JSON file
 (see [`test/example_exercises.json`](test/example_exercises.json) for the expected schema):
 
 ```vim
-:CPImport /path/to/exercises.json
+:CP import /path/to/exercises.json
 ```
 
 Or set `exercises_json` in your config to auto-import on first run:
@@ -55,7 +55,7 @@ export HF_TOKEN=your_token
 uv run tools/generate_exercises.py tools/syllabus.toml
 ```
 
-Or from Neovim: `:CPGenerate`.
+Or from Neovim: `:CP generate`.
 
 Requirements
 ------------
@@ -66,31 +66,30 @@ Requirements
 
 Quick Start
 -----------
-1. Open browser: `:CP` (or `<leader>cp`)
+1. Open browser: `:CP`
 2. Navigate with `j`/`k`, open with `Enter`
 3. Write your solution in the buffer
-4. Run tests: `Ctrl-t` (or `:CPRun`)
-5. Move on: `Ctrl-n` (or `:CPNext`)
+4. Run tests: `Ctrl-t`
+5. Move on: `Ctrl-n`
 
 Commands
 --------
-| Command        | Description                          |
-|----------------|--------------------------------------|
-| `:CP [action]` | Open/close/refresh browser or stats  |
-| `:CPRun`       | Run tests for the current exercise   |
-| `:CPNext`      | Open the next unsolved exercise      |
-| `:CPPrev`      | Go back to the previous exercise     |
-| `:CPSkip`      | Skip current exercise and move on    |
-| `:CPDesc`      | Show exercise description popup      |
-| `:CPHint`      | Show hints for the current exercise  |
-| `:CPSolution`  | Show reference solution in a split   |
-| `:CPStats`     | Show practice statistics             |
-| `:CPHelp`      | Show the in-editor quick guide       |
-| `:CPImport`    | Import exercises from a JSON file    |
-| `:CPImport!`   | Replace all exercises from JSON       |
-| `:CPGenerate`  | Generate exercises via LLM           |
+Everything goes through a single `:CP` command with subcommands.
+Tab completion is supported: type `:CP <Tab>` to explore.
 
-All commands support tab completion -- type `:CP<Tab>` to explore.
+| Command               | Description                          |
+|-----------------------|--------------------------------------|
+| `:CP` or `:CP open`  | Open exercise browser                |
+| `:CP close`          | Close the browser                    |
+| `:CP refresh`        | Refresh the browser list             |
+| `:CP stats`          | Show practice statistics             |
+| `:CP help`           | Show the in-editor quick guide       |
+| `:CP import <path>`  | Import exercises from a JSON file    |
+| `:CP! import <path>` | Replace all exercises from JSON      |
+| `:CP generate`       | Generate exercises via LLM           |
+
+Exercise-level actions (run tests, next, skip, hints, solution, etc.) are
+available via buffer-local keymaps only (see below).
 
 Browser Keymaps
 ---------------
@@ -109,13 +108,6 @@ Browser Keymaps
 | `q`       | Close browser                   |
 | `Esc`     | Close browser                   |
 | `?`       | Show help guide                 |
-
-Global Keymaps
---------------
-| Key            | Action                   |
-|----------------|--------------------------|
-| `<leader>cp`   | Open exercise browser   |
-| `<leader>cps`  | Show statistics         |
 
 Exercise Buffer Keymaps
 -----------------------
@@ -162,17 +154,17 @@ uv run tools/generate_exercises.py tools/syllabus.toml --dry-run
 uv run tools/generate_exercises.py tools/syllabus.toml --engines my_engines.toml
 ```
 
-Or from Neovim: `:CPGenerate` (prompts for topic, count, difficulty, and engine).
+Or from Neovim: `:CP generate` (prompts for topic, count, difficulty, and engine).
 
 Data
 ----
 Exercises are stored in an SQLite database at `stdpath("data")/code-practice/exercises.db`.
-Import exercises from a JSON file with `:CPImport <path>`, or use `:CPImport!` to
+Import exercises from a JSON file with `:CP import <path>`, or use `:CP! import <path>` to
 replace existing data. The database path is configurable via `storage.db_path`.
 
 Roadmap
 -------
-- [ ] Random exercise (`:CPRandom`)
+- [ ] Random exercise (`:CP random`)
 - [ ] Search widget in browser
 - [ ] Bug-finding exercise type
 - [ ] Context-aware LLM hint based on current buffer code

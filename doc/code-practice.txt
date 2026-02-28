@@ -59,78 +59,53 @@ Requirements:
 
 Run |:checkhealth| |code-practice| to verify all dependencies.
 
-After installing, populate the exercise database with |:CPImport| or
-|:CPGenerate|.
+After installing, populate the exercise database with |:CP| `import` or
+|:CP| `generate`.
 
 ==============================================================================
 3. QUICK START                                    *code-practice-quickstart*
 
-1. Open the browser          |:CP| or `<leader>cp`
+1. Open the browser          |:CP|
 2. Navigate with `j`/`k`     Press `Enter` to open an exercise
 3. Write your solution        Edit the buffer
-4. Run tests                  |:CPRun| or `Ctrl-t`
-5. Move on                    |:CPNext| or `Ctrl-n`
+4. Run tests                  `Ctrl-t`
+5. Move on                    `Ctrl-n`
 
 ==============================================================================
 4. COMMANDS                                        *code-practice-commands*
 
-All commands support tab completion. Type `:CP<Tab>` to explore.
+Everything goes through a single `:CP` command with subcommands.
+Tab completion is supported: type `:CP <Tab>` to explore.
 
                                                                         *:CP*
-:CP [action]            Open, close, or refresh the browser, or show stats.
-                        Actions: `open` (default), `close`, `refresh`, `stats`.
+:CP                     Open the exercise browser (same as `:CP open`).
 
-                                                                *:CodePractice*
-:CodePractice [action]  Long form of |:CP|.
+:CP open                Open the exercise browser.
 
-                                                                     *:CPRun*
-:CPRun                  Run tests for the current exercise. For theory
-                        exercises, reads the answer from the `Answer:` line
-                        in the buffer (press 1-4 to select).
+:CP close               Close the exercise browser.
 
-                                                                    *:CPNext*
-:CPNext                 Open the next unsolved exercise. Skips exercises
-                        marked with |:CPSkip| in the current session.
+:CP refresh             Refresh the exercise browser list.
 
-                                                                    *:CPPrev*
-:CPPrev                 Go back to the previous exercise in the session
-                        history.
-
-                                                                    *:CPSkip*
-:CPSkip                 Skip the current exercise and advance to the next
-                        unsolved one. Skipped exercises are remembered for
-                        the current session only.
-
-                                                                    *:CPDesc*
-:CPDesc                 Show the exercise description in a floating popup.
-
-                                                                    *:CPHint*
-:CPHint                 Show hints for the current exercise (if available).
-
-                                                                *:CPSolution*
-:CPSolution             Show the reference solution in a vertical split.
-
-                                                                   *:CPStats*
-:CPStats                Show practice statistics (total, solved, by
+:CP stats               Show practice statistics (total, solved, by
                         difficulty).
 
-                                                                    *:CPHelp*
-:CPHelp                 Show an in-editor keymap cheat-sheet reflecting your
+:CP help                Show an in-editor keymap cheat-sheet reflecting your
                         current configuration. For full documentation, see
                         this help file.
 
-                                                                  *:CPImport*
-:CPImport {path}        Import exercises from a JSON file. The expected
+:CP import {path}       Import exercises from a JSON file. The expected
                         schema matches `test/example_exercises.json` in the
                         plugin source.
 
-:CPImport! {path}       Replace all existing exercises, test cases, attempts,
+:CP import! {path}      Replace all existing exercises, test cases, attempts,
                         and theory options with the contents of {path}.
 
-                                                                *:CPGenerate*
-:CPGenerate             Interactively generate exercises via Hugging Face
+:CP generate            Interactively generate exercises via Hugging Face
                         LLM. Prompts for topic, count, difficulty, and
                         engine. See |code-practice-generate| for setup.
+
+Exercise-level actions (run tests, next, skip, hints, solution, etc.) are
+available via buffer-local keymaps only. See |code-practice-keymaps-exercise|.
 
 ==============================================================================
 5. KEYMAPS                                          *code-practice-keymaps*
@@ -156,7 +131,7 @@ Active inside the browser window opened by |:CP|.
     `gg`             Go to top of list
     `G`              Go to bottom of list
     `q` / `Esc`      Close browser
-    `?`              Show keymap cheat-sheet (|:CPHelp|)
+    `?`              Show keymap cheat-sheet (|:CP| `help`)
 
 EXERCISE BUFFER KEYMAPS ~
                                                 *code-practice-keymaps-exercise*
@@ -166,23 +141,14 @@ use Ctrl shortcuts for single-chord access. Keymaps are configurable
 via `keymaps.exercise` in config.
 
     Key            Action ~
-    `Ctrl-t`         Run tests (|:CPRun|)
-    `Ctrl-n`         Next exercise (|:CPNext|)
-    `Ctrl-p`         Previous exercise (|:CPPrev|)
-    `Ctrl-k`         Skip exercise (|:CPSkip|)
-    `Ctrl-i`         Show hints (|:CPHint|)
-    `Ctrl-l`         View solution (|:CPSolution|)
-    `Ctrl-d`         Show description (|:CPDesc|)
-    `Ctrl-b`         Open browser (|:CP|)
-
-GLOBAL KEYMAPS ~
-                                                  *code-practice-keymaps-global*
-
-Set during |code-practice.setup()|.
-
-    Key            Action ~
-    `<leader>cp`     Open exercise browser
-    `<leader>cps`    Show statistics
+    `Ctrl-t`         Run tests
+    `Ctrl-n`         Next exercise
+    `Ctrl-p`         Previous exercise
+    `Ctrl-k`         Skip exercise
+    `Ctrl-i`         Show hints
+    `Ctrl-l`         View solution
+    `Ctrl-d`         Show description
+    `Ctrl-b`         Open browser
 
 ==============================================================================
 6. CONFIGURATION                                     *code-practice-config*
@@ -220,7 +186,6 @@ Options are merged with |vim.tbl_deep_extend()|.
 
       keymaps = {
         browser = {
-          open = "<leader>cp",
           open_item = "<CR>",
           filter_easy = "e",
           filter_medium = "m",
@@ -290,7 +255,7 @@ Run |:checkhealth| |code-practice| to verify both are available.
 
 FROM NEOVIM ~
 
-Use |:CPGenerate|. It will prompt for topic, count, difficulty, and engine.
+Use |:CP| `generate`. It will prompt for topic, count, difficulty, and engine.
 
 FROM THE COMMAND LINE ~
 
@@ -330,11 +295,11 @@ its test cases, attempts, and options.
 
 IMPORTING ~
 
-Use |:CPImport| to load exercises from a JSON file: >vim
-    :CPImport /path/to/exercises.json
+Use |:CP| `import` to load exercises from a JSON file: >vim
+    :CP import /path/to/exercises.json
 <
 Use the bang form to wipe all existing data and replace: >vim
-    :CPImport! /path/to/exercises.json
+    :CP! import /path/to/exercises.json
 <
 Set `storage.exercises_json` in your config to auto-import on first run
 when the database is empty.
@@ -350,8 +315,8 @@ Run `:checkhealth code-practice` to verify:
 - Neovim version (0.10+ required)
 - nui.nvim and sqlite.lua plugins
 - Engine executables based on enabled config (iterates the registry)
-- uv executable (needed for |:CPGenerate|)
-- HF_TOKEN environment variable (needed for |:CPGenerate|)
+- uv executable (needed for |:CP| `generate`)
+- HF_TOKEN environment variable (needed for |:CP| `generate`)
 - Database file existence
 
 ==============================================================================

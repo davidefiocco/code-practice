@@ -37,7 +37,6 @@ M.defaults = {
 
   keymaps = {
     browser = {
-      open = "<leader>cp",
       open_item = "<CR>",
       filter_easy = "e",
       filter_medium = "m",

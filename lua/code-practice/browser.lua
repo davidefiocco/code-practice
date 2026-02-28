@@ -150,7 +150,7 @@ function browser.render_preview()
   end
 
   table.insert(lines, "")
-  table.insert(lines, "Press Enter to open, then :CPRun to test")
+  table.insert(lines, "Press Enter to open, then <C-t> to run tests")
 
   state.preview_cache[exercise.id] = lines
   return lines
