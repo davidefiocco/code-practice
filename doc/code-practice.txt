@@ -168,7 +168,7 @@ Options are merged with |vim.tbl_deep_extend()|.
         width = 0.8,            -- fraction of editor width
         height = 0.8,           -- fraction of editor height
         border = "rounded",
-        show_numbers = true,
+        show_numbers = true,    -- show exercise index in browser list
       },
 
       -- Engine defaults are built from the registry (see |code-practice-engines|).
