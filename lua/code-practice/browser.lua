@@ -70,9 +70,13 @@ function browser.render_exercise_list()
     table.insert(lines, "  No exercises found.")
   end
 
+  local km = config.get("keymaps.browser") or {}
   table.insert(lines, "")
   table.insert(lines, "  " .. string.rep("─", 30))
-  table.insert(lines, "  j/k:nav  Enter:open  ?:help  q:close  a:all")
+  table.insert(
+    lines,
+    "  j/k:nav  Enter:open  ?:help  " .. (km.close or "q") .. ":close  " .. (km.filter_all or "a") .. ":all"
+  )
 
   return lines
 end
@@ -244,10 +248,10 @@ function browser.setup_keymaps()
     map("<CR>", "<cmd>lua require('code-practice.browser').open_selected()<CR>")
   end
   map("o", "<cmd>lua require('code-practice.browser').open_selected()<CR>")
-  map("e", "<cmd>lua require('code-practice.browser').filter_by_difficulty('easy')<CR>")
-  map("m", "<cmd>lua require('code-practice.browser').filter_by_difficulty('medium')<CR>")
-  map("h", "<cmd>lua require('code-practice.browser').filter_by_difficulty('hard')<CR>")
-  map("a", "<cmd>lua require('code-practice.browser').clear_filters()<CR>")
+  map(keymaps.filter_easy or "e", "<cmd>lua require('code-practice.browser').filter_by_difficulty('easy')<CR>")
+  map(keymaps.filter_medium or "m", "<cmd>lua require('code-practice.browser').filter_by_difficulty('medium')<CR>")
+  map(keymaps.filter_hard or "h", "<cmd>lua require('code-practice.browser').filter_by_difficulty('hard')<CR>")
+  map(keymaps.filter_all or "a", "<cmd>lua require('code-practice.browser').clear_filters()<CR>")
 
   for _, name in ipairs(engines.list()) do
     local eng = engines.get(name)
@@ -256,8 +260,11 @@ function browser.setup_keymaps()
     end
   end
 
-  map("q", "<cmd>lua require('code-practice.browser').close()<CR>")
-  map("<esc>", "<cmd>lua require('code-practice.browser').close()<CR>")
+  local close_key = keymaps.close or "q"
+  map(close_key, "<cmd>lua require('code-practice.browser').close()<CR>")
+  if close_key ~= "<esc>" then
+    map("<esc>", "<cmd>lua require('code-practice.browser').close()<CR>")
+  end
   map("?", "<cmd>lua require('code-practice.help').show()<CR>")
 end
 
@@ -298,6 +305,9 @@ end
 
 function browser.refresh()
   fetch_exercises()
+  if state.selected_index > #state.exercises then
+    state.selected_index = math.max(1, #state.exercises)
+  end
   update_display()
 end
 
@@ -376,8 +386,6 @@ function browser.close()
 end
 
 function browser.open()
-  state.selected_index = 1
-  state.current_filter = { difficulty = nil, engine = nil, search = "" }
   browser.create_popup()
 end
 

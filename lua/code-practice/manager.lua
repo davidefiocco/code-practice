@@ -1,4 +1,5 @@
 -- Code Practice - Exercise Manager Module
+local config = require("code-practice.config")
 local db = require("code-practice.db")
 local engines = require("code-practice.engines")
 local utils = require("code-practice.utils")
@@ -41,18 +42,22 @@ function manager.open_exercise(id)
   local bufname = string.format("code-practice://exercise/%d", id)
   local bufnr = vim.fn.bufnr(bufname)
   local is_new_buf = bufnr == -1
+  local needs_content = is_new_buf
 
   if is_new_buf then
     bufnr = vim.api.nvim_create_buf(true, false)
     vim.api.nvim_buf_set_name(bufnr, bufname)
+  elseif not vim.api.nvim_buf_is_loaded(bufnr) then
+    needs_content = true
   end
 
   local filetype = engines.filetype(exercise.engine)
   vim.bo[bufnr].buftype = "nofile"
+  vim.bo[bufnr].bufhidden = "hide"
   vim.bo[bufnr].filetype = filetype
   vim.bo[bufnr].swapfile = false
 
-  if is_new_buf then
+  if needs_content then
     vim.bo[bufnr].modifiable = true
     vim.bo[bufnr].readonly = false
 
@@ -89,6 +94,9 @@ function manager.open_exercise(id)
         for _, opt in ipairs(theory_options) do
           add_meta(string.format("%d. %s", opt.option_number, opt.option_text))
         end
+        add_meta("")
+        local run_key = (config.get("keymaps.exercise") or {}).run_tests or "<C-t>"
+        add_meta("Press 1-" .. #theory_options .. " to select your answer, then " .. run_key .. " to run tests.")
       end
     end
 
@@ -128,6 +136,30 @@ function manager.open_exercise(id)
 
   vim.b[bufnr].code_practice_exercise_id = id
   vim.b[bufnr].code_practice_engine = exercise.engine
+
+  if exercise.engine == "theory" then
+    local opts_by_num = {}
+    for _, opt in ipairs(exercise.options or {}) do
+      opts_by_num[opt.option_number] = opt.option_text
+    end
+
+    for num, text in pairs(opts_by_num) do
+      vim.keymap.set("n", tostring(num), function()
+        local line_count = vim.api.nvim_buf_line_count(bufnr)
+        for i = 0, line_count - 1 do
+          local line = vim.api.nvim_buf_get_lines(bufnr, i, i + 1, false)[1]
+          if line and line:match("^Answer:") then
+            vim.bo[bufnr].modifiable = true
+            vim.api.nvim_buf_set_lines(bufnr, i, i + 1, false, {
+              string.format("Answer: %d  [%s]", num, text),
+            })
+            utils.notify(string.format("Selected option %d: %s", num, text), "info")
+            return
+          end
+        end
+      end, { buffer = bufnr, noremap = true, nowait = true })
+    end
+  end
 
   local current_win = vim.api.nvim_get_current_win()
   local function is_floating(win)

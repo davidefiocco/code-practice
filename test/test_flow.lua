@@ -641,6 +641,163 @@ test("Engine registry: helpers return defaults for unknown engine", function()
   assert_eq(engines.get("nonexistent"), nil, "get returns nil")
 end)
 
+-- 36. Theory UI: keymap selects correct answer, run_tests passes
+test("Theory UI: keymap correct answer passes", function()
+  local db = require("code-practice.db")
+  local cp = require("code-practice.init")
+  local theory = db.get_all_exercises({ engine = "theory" })
+  if #theory == 0 then
+    skip("no theory exercises in seed data")
+  end
+
+  local ex_id = theory[1].id
+  local opts = db.get_theory_options(ex_id)
+  local correct_num
+  for _, o in ipairs(opts) do
+    if o.is_correct == 1 then
+      correct_num = o.option_number
+      break
+    end
+  end
+  if not correct_num then
+    skip("no correct option marked for theory exercise " .. ex_id)
+  end
+
+  cp.open_exercise(ex_id)
+  vim.api.nvim_feedkeys(tostring(correct_num), "x", false)
+
+  local bufnr = vim.api.nvim_get_current_buf()
+  local found_answer
+  for _, line in ipairs(vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)) do
+    found_answer = line:match("^Answer:%s*(%d+)")
+    if found_answer then
+      break
+    end
+  end
+  assert_eq(found_answer, tostring(correct_num), "keymap should set answer in buffer")
+
+  local done = false
+  local original_show = require("code-practice.results").show
+  local captured_result
+  require("code-practice.results").show = function(result, _)
+    captured_result = result
+    done = true
+  end
+
+  cp.run_tests()
+
+  vim.wait(5000, function()
+    return done
+  end, 50)
+
+  require("code-practice.results").show = original_show
+
+  assert_truthy(captured_result, "result nil")
+  assert_truthy(captured_result.passed, "correct theory answer via keymap should pass")
+end)
+
+-- 37. Theory UI: keymap selects wrong answer, run_tests fails
+test("Theory UI: keymap wrong answer fails", function()
+  local db = require("code-practice.db")
+  local cp = require("code-practice.init")
+  local theory = db.get_all_exercises({ engine = "theory" })
+  if #theory == 0 then
+    skip("no theory exercises in seed data")
+  end
+
+  local ex_id = theory[1].id
+  local opts = db.get_theory_options(ex_id)
+  local correct_num
+  for _, o in ipairs(opts) do
+    if o.is_correct == 1 then
+      correct_num = o.option_number
+      break
+    end
+  end
+  if not correct_num then
+    skip("no correct option marked for theory exercise " .. ex_id)
+  end
+
+  local wrong = correct_num == 1 and 2 or 1
+
+  cp.open_exercise(ex_id)
+  vim.api.nvim_feedkeys(tostring(wrong), "x", false)
+
+  local bufnr = vim.api.nvim_get_current_buf()
+  local found_answer
+  for _, line in ipairs(vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)) do
+    found_answer = line:match("^Answer:%s*(%d+)")
+    if found_answer then
+      break
+    end
+  end
+  assert_eq(found_answer, tostring(wrong), "keymap should set wrong answer in buffer")
+
+  local done = false
+  local original_show = require("code-practice.results").show
+  local captured_result
+  require("code-practice.results").show = function(result, _)
+    captured_result = result
+    done = true
+  end
+
+  cp.run_tests()
+
+  vim.wait(5000, function()
+    return done
+  end, 50)
+
+  require("code-practice.results").show = original_show
+
+  assert_truthy(captured_result, "result nil")
+  assert_truthy(not captured_result.passed, "wrong theory answer via keymap should fail")
+end)
+
+-- 38. Importer: theory options have correct is_correct values after import
+test("Importer: only correct theory option has is_correct=1", function()
+  local importer = require("code-practice.importer")
+  local db_mod = require("code-practice.db")
+
+  local plugin_root = vim.fn.fnamemodify(debug.getinfo(1, "S").source:sub(2), ":h:h")
+  local fixture = plugin_root .. "/test/example_exercises.json"
+
+  local counts, err = importer.import(fixture, { replace = true })
+  assert_truthy(counts, "import returned nil: " .. tostring(err))
+
+  local conn = db_mod.connect()
+  local rows = conn:eval("SELECT exercise_id, COUNT(*) as cnt FROM theory_options WHERE is_correct = 1 GROUP BY exercise_id")
+  if not rows or (not rows[1] and next(rows) == nil) then
+    return
+  end
+  if rows[1] == nil and next(rows) ~= nil then
+    rows = { rows }
+  end
+  for _, row in ipairs(rows) do
+    assert_eq(row.cnt, 1, "exercise " .. row.exercise_id .. " should have exactly 1 correct option, got " .. row.cnt)
+  end
+end)
+
+-- 39. Reopening an unloaded exercise buffer repopulates content
+test("Reopen unloaded exercise: buffer content is restored", function()
+  local cp = require("code-practice.init")
+
+  local buf1 = cp.open_exercise(1)
+  assert_truthy(buf1, "open exercise 1")
+
+  local lines_before = vim.api.nvim_buf_get_lines(buf1, 0, -1, false)
+  assert_truthy(table.concat(lines_before, "\n"):find("Exercise:"), "buffer should have content")
+
+  cp.open_exercise(2)
+  vim.cmd("bunload " .. buf1)
+  assert_truthy(not vim.api.nvim_buf_is_loaded(buf1), "buffer should be unloaded after bunload")
+
+  local buf1_again = cp.open_exercise(1)
+  assert_truthy(buf1_again, "reopen exercise 1")
+  local lines_after = vim.api.nvim_buf_get_lines(buf1_again, 0, -1, false)
+  local content = table.concat(lines_after, "\n")
+  assert_truthy(content:find("Exercise:"), "unloaded buffer should be repopulated with content")
+end)
+
 -- Summary
 io.write("\n" .. string.rep("=", 44) .. "\n")
 io.write(string.format("  Results: %d passed, %d failed, %d skipped\n", passed, failed, skipped))

@@ -68,8 +68,8 @@ After installing, populate the exercise database with |:CPImport| or
 1. Open the browser          |:CP| or `<leader>cp`
 2. Navigate with `j`/`k`     Press `Enter` to open an exercise
 3. Write your solution        Edit the buffer
-4. Run tests                  |:CPRun| or `<leader>r`
-5. Move on                    |:CPNext| or `<leader>n`
+4. Run tests                  |:CPRun| or `Ctrl-t`
+5. Move on                    |:CPNext| or `Ctrl-n`
 
 ==============================================================================
 4. COMMANDS                                        *code-practice-commands*
@@ -85,8 +85,8 @@ All commands support tab completion. Type `:CP<Tab>` to explore.
 
                                                                      *:CPRun*
 :CPRun                  Run tests for the current exercise. For theory
-                        exercises, expects a line like `Answer: 2` in the
-                        buffer.
+                        exercises, reads the answer from the `Answer:` line
+                        in the buffer (press 1-4 to select).
 
                                                                     *:CPNext*
 :CPNext                 Open the next unsolved exercise. Skips exercises
@@ -161,17 +161,19 @@ Active inside the browser window opened by |:CP|.
 EXERCISE BUFFER KEYMAPS ~
                                                 *code-practice-keymaps-exercise*
 
-Active inside exercise buffers (set via `keymaps.exercise` in config).
+Active inside exercise buffers (normal mode only). All exercise keymaps
+use Ctrl shortcuts for single-chord access. Keymaps are configurable
+via `keymaps.exercise` in config.
 
     Key            Action ~
-    `<leader>r`      Run tests (|:CPRun|)
-    `<leader>h`      Show hints (|:CPHint|)
-    `<leader>s`      View solution (|:CPSolution|)
-    `<leader>d`      Show description (|:CPDesc|)
-    `<leader>n`      Next exercise (|:CPNext|)
-    `<leader>p`      Previous exercise (|:CPPrev|)
-    `<leader>k`      Skip exercise (|:CPSkip|)
-    `<leader>m`      Open browser (|:CP|)
+    `Ctrl-t`         Run tests (|:CPRun|)
+    `Ctrl-n`         Next exercise (|:CPNext|)
+    `Ctrl-p`         Previous exercise (|:CPPrev|)
+    `Ctrl-k`         Skip exercise (|:CPSkip|)
+    `Ctrl-i`         Show hints (|:CPHint|)
+    `Ctrl-l`         View solution (|:CPSolution|)
+    `Ctrl-d`         Show description (|:CPDesc|)
+    `Ctrl-b`         Open browser (|:CP|)
 
 GLOBAL KEYMAPS ~
                                                   *code-practice-keymaps-global*
@@ -227,14 +229,14 @@ Options are merged with |vim.tbl_deep_extend()|.
           close = "q",
         },
         exercise = {
-          run_tests = "<leader>r",
-          show_hint = "<leader>h",
-          view_solution = "<leader>s",
-          show_description = "<leader>d",
-          next_exercise = "<leader>n",
-          prev_exercise = "<leader>p",
-          skip_exercise = "<leader>k",
-          open_browser = "<leader>m",
+          run_tests = "<C-t>",
+          show_hint = "<C-i>",
+          view_solution = "<C-l>",
+          show_description = "<C-d>",
+          next_exercise = "<C-n>",
+          prev_exercise = "<C-p>",
+          skip_exercise = "<C-k>",
+          open_browser = "<C-b>",
         },
       },
     })

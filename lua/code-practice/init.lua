@@ -162,23 +162,15 @@ function code_practice.run_tests()
 
   if engine_name == "theory" then
     local answer = nil
-    local has_answer_line = false
     for _, line in ipairs(vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)) do
-      if line:match("^[Aa]nswer:") then
-        has_answer_line = true
-        answer = line:match("^[Aa]nswer:%s*(%d+)")
-        if answer then
-          break
-        end
+      answer = line:match("^Answer:%s*(%d+)")
+      if answer then
+        break
       end
     end
 
     if not answer then
-      if has_answer_line then
-        utils.notify("Please set 'Answer: <number>' before running tests", "error")
-      else
-        utils.notify("Missing answer. Add a line like 'Answer: 2'", "error")
-      end
+      utils.notify("Select an answer first (press 1-4)", "error")
       return
     end
 
@@ -243,26 +235,25 @@ end
 function code_practice.show_stats()
   local stats = manager.get_stats()
 
-  local msg = string.format(
-    [[
-Code Practice Statistics
-========================
-Total Exercises: %d
-Solved: %d
+  local lines = {
+    "",
+    "  Total Exercises: " .. (stats.total or 0),
+    "  Solved:          " .. (stats.solved or 0),
+    "",
+    "  By Difficulty:",
+    "    Easy:   " .. (stats.by_difficulty and stats.by_difficulty.easy or 0),
+    "    Medium: " .. (stats.by_difficulty and stats.by_difficulty.medium or 0),
+    "    Hard:   " .. (stats.by_difficulty and stats.by_difficulty.hard or 0),
+    "",
+  }
 
-By Difficulty:
-  Easy: %d
-  Medium: %d
-  Hard: %d
-]],
-    stats.total or 0,
-    stats.solved or 0,
-    stats.by_difficulty and stats.by_difficulty.easy or 0,
-    stats.by_difficulty and stats.by_difficulty.medium or 0,
-    stats.by_difficulty and stats.by_difficulty.hard or 0
-  )
-
-  vim.api.nvim_echo({ { msg, "Normal" } }, true, {})
+  local bufnr, winid = popup.open_float({ width = 0.3, height = 0.3, title = " Statistics " })
+  popup.set_lines(bufnr, lines)
+  popup.map_close(bufnr, function()
+    if winid and vim.api.nvim_win_is_valid(winid) then
+      vim.api.nvim_win_close(winid, true)
+    end
+  end)
 end
 
 function code_practice.get_current_exercise_id()
@@ -288,12 +279,19 @@ function code_practice.show_hints()
     return
   end
 
-  local msg = "Hints:\n"
+  local lines = { "" }
   for i, hint in ipairs(hints) do
-    msg = msg .. string.format("%d. %s\n", i, hint)
+    table.insert(lines, string.format("  %d. %s", i, hint))
+    table.insert(lines, "")
   end
 
-  vim.api.nvim_echo({ { msg, "Normal" } }, true, {})
+  local bufnr, winid = popup.open_float({ width = 0.5, height = 0.4, title = " Hints " })
+  popup.set_lines(bufnr, lines)
+  popup.map_close(bufnr, function()
+    if winid and vim.api.nvim_win_is_valid(winid) then
+      vim.api.nvim_win_close(winid, true)
+    end
+  end)
 end
 
 function code_practice.show_solution()
