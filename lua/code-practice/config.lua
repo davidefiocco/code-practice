@@ -31,8 +31,6 @@ config.defaults = {
 
   runner = {
     timeout = 5,
-    show_time = true,
-    auto_save = true,
   },
 
   ai_hints = {
