@@ -72,28 +72,33 @@ M.registry = {
   },
 }
 
--- Stable iteration order (alphabetical, but theory last for UI consistency).
-M._order = { "python", "rust", "theory" }
+local function sorted_names()
+  local names = vim.tbl_keys(M.registry)
+  table.sort(names, function(a, b)
+    local ta, tb = M.registry[a].type, M.registry[b].type
+    if ta == "theory" and tb ~= "theory" then
+      return false
+    end
+    if ta ~= "theory" and tb == "theory" then
+      return true
+    end
+    return a < b
+  end)
+  return names
+end
 
 function M.get(name)
   return M.registry[name]
 end
 
 function M.list()
-  local result = {}
-  for _, name in ipairs(M._order) do
-    if M.registry[name] then
-      table.insert(result, name)
-    end
-  end
-  return result
+  return sorted_names()
 end
 
 function M.coding_engines()
   local result = {}
-  for _, name in ipairs(M._order) do
-    local eng = M.registry[name]
-    if eng and eng.type == "coding" then
+  for _, name in ipairs(sorted_names()) do
+    if M.registry[name].type == "coding" then
       table.insert(result, name)
     end
   end

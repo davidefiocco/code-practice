@@ -91,7 +91,7 @@ local function setup_exercise_keymaps(bufnr)
   end
   vim.b[bufnr].code_practice_keymaps_set = true
 
-  local km = config.get("keymaps.exercise") or {}
+  local km = config.get("keymaps.exercise", {})
   local function bmap(key, fn, desc)
     if key then
       vim.keymap.set("n", key, fn, { buffer = bufnr, silent = true, desc = desc })

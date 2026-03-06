@@ -73,7 +73,7 @@ function browser.render_exercise_list()
     table.insert(lines, "  No exercises found.")
   end
 
-  local km = config.get("keymaps.browser") or {}
+  local km = config.get("keymaps.browser", {})
   table.insert(lines, "")
   table.insert(lines, "  " .. string.rep("─", 30))
   table.insert(

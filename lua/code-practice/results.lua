@@ -86,7 +86,7 @@ function results.show(result, on_next)
     push("No detailed results available.")
   end
 
-  local next_key = (config.get("keymaps.exercise") or {}).next_exercise or "<C-n>"
+  local next_key = config.get("keymaps.exercise.next_exercise", "<C-n>")
 
   push("")
   if on_next then

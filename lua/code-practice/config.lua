@@ -72,14 +72,14 @@ function M.setup(user_config)
   vim.fn.mkdir(M.config.storage.home, "p")
 end
 
-function M.get(key)
+function M.get(key, default)
   local keys = vim.split(key, ".", { plain = true })
   local value = M.config
 
   for _, k in ipairs(keys) do
     value = value[k]
     if value == nil then
-      return nil
+      return default
     end
   end
 

@@ -28,7 +28,7 @@ end
 
 function M.generate(exercise, buffer_content, callback)
   local model = config.get("ai_hints.model")
-  local token_env = config.get("ai_hints.hf_token_env") or "HF_TOKEN"
+  local token_env = config.get("ai_hints.hf_token_env", "HF_TOKEN")
   local token = vim.env[token_env]
 
   if not token or token == "" then
@@ -62,6 +62,9 @@ function M.generate(exercise, buffer_content, callback)
     max_tokens = 256,
   })
 
+  local header_file = vim.fn.tempname()
+  vim.fn.writefile({ "Authorization: Bearer " .. token }, header_file)
+
   vim.system({
     "curl",
     "-s",
@@ -69,10 +72,11 @@ function M.generate(exercise, buffer_content, callback)
     "-H",
     "Content-Type: application/json",
     "-H",
-    "Authorization: Bearer " .. token,
+    "@" .. header_file,
     "-d",
     payload,
   }, { text = true }, function(result)
+    vim.fn.delete(header_file)
     vim.schedule(function()
       if result.code ~= 0 then
         callback(nil, "curl failed (exit " .. tostring(result.code) .. ")")

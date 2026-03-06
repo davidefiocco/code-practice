@@ -152,7 +152,7 @@ function manager.open_exercise(id)
     vim.bo[bufnr].readonly = false
 
     local lines, add_meta = manager.build_header_lines(exercise, "Exercise")
-    local run_key = (config.get("keymaps.exercise") or {}).run_tests or "<C-t>"
+    local run_key = config.get("keymaps.exercise.run_tests", "<C-t>")
 
     local theory_options = nil
     if exercise.engine == "theory" then

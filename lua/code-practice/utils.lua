@@ -75,11 +75,4 @@ function utils.json_decode(str)
   return ok and result or nil
 end
 
-function utils.escape_sql(s)
-  if type(s) ~= "string" then
-    return s
-  end
-  return s:gsub("'", "''")
-end
-
 return utils
