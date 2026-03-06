@@ -62,9 +62,6 @@ function M.generate(exercise, buffer_content, callback)
     max_tokens = 256,
   })
 
-  local header_file = vim.fn.tempname()
-  vim.fn.writefile({ "Authorization: Bearer " .. token }, header_file)
-
   vim.system({
     "curl",
     "-s",
@@ -72,11 +69,10 @@ function M.generate(exercise, buffer_content, callback)
     "-H",
     "Content-Type: application/json",
     "-H",
-    "@" .. header_file,
+    "Authorization: Bearer " .. token,
     "-d",
     payload,
   }, { text = true }, function(result)
-    vim.fn.delete(header_file)
     vim.schedule(function()
       if result.code ~= 0 then
         callback(nil, "curl failed (exit " .. tostring(result.code) .. ")")

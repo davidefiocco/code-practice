@@ -260,6 +260,10 @@ function runner.run_test_async(exercise_id, code, engine_name, callback)
     return callback(nil, "Unsupported engine: " .. engine_name)
   end
 
+  if config.get("engines." .. engine_name .. ".enabled") == false then
+    return callback(nil, engine_name .. " engine is disabled. Enable it in your config to run exercises.")
+  end
+
   if eng.type == "theory" then
     run_theory_async(exercise_id, code, finish)
   elseif eng.compile_cmd then
