@@ -2,9 +2,9 @@
 local db = require("code-practice.db")
 local utils = require("code-practice.utils")
 
-local M = {}
+local importer = {}
 
-function M.import(json_path, opts)
+function importer.import(json_path, opts)
   opts = opts or {}
 
   if not json_path or json_path == "" then
@@ -133,4 +133,4 @@ function M.import(json_path, opts)
   return tx_result, nil
 end
 
-return M
+return importer

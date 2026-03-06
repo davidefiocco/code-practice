@@ -1,8 +1,8 @@
 local engines = require("code-practice.engines")
 
-local M = {}
+local health = {}
 
-function M.check()
+function health.check()
   vim.health.start("code-practice")
 
   if vim.fn.has("nvim-0.10") == 1 then
@@ -74,4 +74,4 @@ function M.check()
   end
 end
 
-return M
+return health

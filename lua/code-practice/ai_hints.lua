@@ -1,7 +1,7 @@
 -- Code Practice - AI-Assisted Hints
 local config = require("code-practice.config")
 
-local M = {}
+local ai_hints = {}
 
 local OPEN_SYSTEM_PROMPT = "You are a tutor. A student is working on an exercise. "
   .. "Based on the exercise description, their current attempt, and the reference solution, "
@@ -26,7 +26,7 @@ local function format_options(options)
   return table.concat(parts, "\n")
 end
 
-function M.generate(exercise, buffer_content, callback)
+function ai_hints.generate(exercise, buffer_content, callback)
   local model = config.get("ai_hints.model")
   local token_env = config.get("ai_hints.hf_token_env", "HF_TOKEN")
   local token = vim.env[token_env]
@@ -101,4 +101,4 @@ function M.generate(exercise, buffer_content, callback)
   end)
 end
 
-return M
+return ai_hints

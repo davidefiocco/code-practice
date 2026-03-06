@@ -345,10 +345,7 @@ function code_practice.show_solution()
   local bufnr = popup.create_scratch_buf({ filetype = engines.filetype(exercise.engine) })
   popup.set_lines(bufnr, lines)
 
-  vim.cmd("rightbelow vsplit")
-  vim.cmd.buffer(bufnr)
-
-  solution_window.winid = vim.api.nvim_get_current_win()
+  solution_window.winid = vim.api.nvim_open_win(bufnr, true, { split = "right" })
   solution_window.bufnr = bufnr
 
   popup.map_close(bufnr, close_solution_window)

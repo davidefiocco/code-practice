@@ -5,9 +5,9 @@ if not ok_nui then
   return {}
 end
 
-local M = {}
+local popup = {}
 
-function M.create_scratch_buf(opts)
+function popup.create_scratch_buf(opts)
   opts = opts or {}
   local bufnr = vim.api.nvim_create_buf(false, true)
   vim.bo[bufnr].buftype = "nofile"
@@ -19,7 +19,7 @@ function M.create_scratch_buf(opts)
   return bufnr
 end
 
-function M.open_float(opts)
+function popup.open_float(opts)
   opts = opts or {}
   local ui_border = require("code-practice.config").get("ui.border", "rounded")
 
@@ -57,7 +57,7 @@ function M.open_float(opts)
   return popup.bufnr, popup.winid
 end
 
-function M.set_lines(bufnr, lines)
+function popup.set_lines(bufnr, lines)
   vim.bo[bufnr].modifiable = true
   vim.bo[bufnr].readonly = false
   vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
@@ -65,10 +65,10 @@ function M.set_lines(bufnr, lines)
   vim.bo[bufnr].readonly = true
 end
 
-function M.map_close(bufnr, close_fn)
+function popup.map_close(bufnr, close_fn)
   for _, key in ipairs({ "q", "<Esc>", "<CR>" }) do
     vim.keymap.set({ "n", "i" }, key, close_fn, { buffer = bufnr, silent = true, nowait = true })
   end
 end
 
-return M
+return popup

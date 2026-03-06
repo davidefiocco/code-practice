@@ -206,7 +206,9 @@ function manager.open_exercise(id)
   vim.b[bufnr].code_practice_exercise_id = id
   vim.b[bufnr].code_practice_engine = exercise.engine
 
-  if exercise.engine == "theory" then
+  if exercise.engine == "theory" and not vim.b[bufnr].code_practice_theory_keymaps then
+    vim.b[bufnr].code_practice_theory_keymaps = true
+
     local opts_by_num = {}
     for _, opt in ipairs(exercise.options or {}) do
       opts_by_num[opt.option_number] = opt.option_text
@@ -245,7 +247,7 @@ function manager.open_exercise(id)
     end
   end
 
-  vim.cmd.buffer(bufnr)
+  vim.api.nvim_set_current_buf(bufnr)
 
   return bufnr
 end
