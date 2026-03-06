@@ -49,6 +49,14 @@ function M.check()
     vim.health.warn("uv not found", { "Install uv (https://github.com/astral-sh/uv) to use :CP generate" })
   end
 
+  if config.get("ai_hints.enabled") then
+    if vim.fn.executable("curl") == 1 then
+      vim.health.ok("curl found (needed for AI hints)")
+    else
+      vim.health.warn("curl not found", { "Install curl to use AI hints" })
+    end
+  end
+
   if vim.env.HF_TOKEN and vim.env.HF_TOKEN ~= "" then
     vim.health.ok("HF_TOKEN is set")
   else

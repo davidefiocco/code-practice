@@ -42,9 +42,13 @@ end
 function code_practice.setup(opts)
   config.setup(opts or {})
 
-  local conn = db.connect()
-  local row = conn:eval("SELECT COUNT(*) as count FROM exercises")
-  local count = row and (row.count or (row[1] and row[1].count)) or 0
+  local ok, conn = pcall(db.connect)
+  if not ok or not conn then
+    utils.notify("Database error: " .. tostring(conn) .. ". Try :CP import to re-create.", "error")
+    return
+  end
+  local row_ok, row = pcall(conn.eval, conn, "SELECT COUNT(*) as count FROM exercises")
+  local count = row_ok and row and (row.count or (row[1] and row[1].count)) or 0
 
   if count == 0 then
     local json_path = config.get("storage.exercises_json")

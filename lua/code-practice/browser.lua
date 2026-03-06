@@ -56,7 +56,7 @@ function browser.render_exercise_list()
     elseif ex.difficulty == "medium" then
       diff_icon = "◐"
     elseif ex.difficulty == "hard" then
-      diff_icon = "○"
+      diff_icon = "◇"
     end
 
     local engine_icon = engines.icon(ex.engine)

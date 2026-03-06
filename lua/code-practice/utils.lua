@@ -11,9 +11,9 @@ function utils.write_file(path, content)
   if not file then
     return false
   end
-  file:write(content)
+  local ok, err = file:write(content)
   file:close()
-  return true
+  return ok ~= nil
 end
 
 function utils.get_buffer_content(bufnr)
@@ -35,7 +35,7 @@ function utils.trim(s)
 end
 
 function utils.split_lines(str)
-  return vim.split(str, "\n", { plain = true })
+  return vim.split(str or "", "\n", { plain = true })
 end
 
 function utils.create_temp_file(prefix, extension)
