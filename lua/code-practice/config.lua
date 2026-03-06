@@ -1,5 +1,5 @@
 -- Code Practice - Configuration Module
-local M = {}
+local config = {}
 
 local function build_engine_defaults()
   local engines = require("code-practice.engines")
@@ -13,7 +13,7 @@ local function build_engine_defaults()
   return defaults
 end
 
-M.defaults = {
+config.defaults = {
   storage = {
     home = vim.fn.stdpath("data") .. "/code-practice",
     db_path = vim.fn.stdpath("data") .. "/code-practice/exercises.db",
@@ -33,6 +33,12 @@ M.defaults = {
     timeout = 5,
     show_time = true,
     auto_save = true,
+  },
+
+  ai_hints = {
+    enabled = false,
+    model = "Qwen/Qwen3-Coder-Next",
+    hf_token_env = "HF_TOKEN",
   },
 
   keymaps = {
@@ -57,27 +63,27 @@ M.defaults = {
   },
 }
 
-M.config = vim.deepcopy(M.defaults)
+config.config = vim.deepcopy(config.defaults)
 
-function M.setup(user_config)
+function config.setup(user_config)
   user_config = user_config or {}
-  M.config = vim.tbl_deep_extend("force", M.defaults, user_config)
+  config.config = vim.tbl_deep_extend("force", config.defaults, user_config)
 
-  vim.fn.mkdir(M.config.storage.home, "p")
+  vim.fn.mkdir(config.config.storage.home, "p")
 end
 
-function M.get(key)
+function config.get(key, default)
   local keys = vim.split(key, ".", { plain = true })
-  local value = M.config
+  local value = config.config
 
   for _, k in ipairs(keys) do
     value = value[k]
     if value == nil then
-      return nil
+      return default
     end
   end
 
   return value
 end
 
-return M
+return config

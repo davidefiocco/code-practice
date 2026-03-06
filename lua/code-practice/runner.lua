@@ -105,8 +105,8 @@ local function run_interpreted_async(eng, eng_name, exercise_id, code, callback)
   local temp_file = utils.create_temp_file("solution", eng.ext)
   local results = {}
   local all_passed = true
-  local timeout_ms = (config.get("runner.timeout") or 5) * 1000
-  local cmd = eng.run_cmd(config.get("engines." .. eng_name) or {})
+  local timeout_ms = config.get("runner.timeout", 5) * 1000
+  local cmd = eng.run_cmd(config.get("engines." .. eng_name, {}))
 
   local function run_case(i)
     if i > #test_cases then
@@ -148,10 +148,10 @@ local function run_compiled_async(eng, eng_name, exercise_id, code, callback)
 
   local src_file = utils.create_temp_file("solution", eng.ext)
   local bin_file = src_file:gsub("%." .. eng.ext .. "$", "")
-  local cfg = config.get("engines." .. eng_name) or {}
+  local cfg = config.get("engines." .. eng_name, {})
   local results = {}
   local all_passed = true
-  local timeout_ms = (config.get("runner.timeout") or 5) * 1000
+  local timeout_ms = config.get("runner.timeout", 5) * 1000
 
   local function cleanup()
     vim.fn.delete(src_file)
@@ -258,6 +258,10 @@ function runner.run_test_async(exercise_id, code, engine_name, callback)
   local eng = engines.get(engine_name)
   if not eng then
     return callback(nil, "Unsupported engine: " .. engine_name)
+  end
+
+  if config.get("engines." .. engine_name .. ".enabled") == false then
+    return callback(nil, engine_name .. " engine is disabled. Enable it in your config to run exercises.")
   end
 
   if eng.type == "theory" then

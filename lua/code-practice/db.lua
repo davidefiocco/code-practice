@@ -1,6 +1,5 @@
 -- Code Practice - Database Module
 local config = require("code-practice.config")
-local utils = require("code-practice.utils")
 
 local ok_sqlite, sqlite = pcall(require, "sqlite")
 if not ok_sqlite then
@@ -40,28 +39,6 @@ local function normalize_single(results)
   return nil
 end
 
-local function safe_insert(conn, table_name, columns, values)
-  local col_list = table.concat(columns, ", ")
-  local val_list = {}
-  for _, v in ipairs(values) do
-    if type(v) == "string" then
-      table.insert(val_list, "'" .. utils.escape_sql(v) .. "'")
-    elseif type(v) == "boolean" then
-      table.insert(val_list, v and 1 or 0)
-    elseif v == nil then
-      table.insert(val_list, "NULL")
-    else
-      table.insert(val_list, tostring(v))
-    end
-  end
-  local sql = string.format("INSERT INTO %s (%s) VALUES (%s)", table_name, col_list, table.concat(val_list, ", "))
-  local ok, err = pcall(conn.eval, conn, sql)
-  if not ok then
-    return false, tostring(err)
-  end
-  return true
-end
-
 function db.connect()
   if db_connection then
     return db_connection
@@ -82,88 +59,42 @@ function db.connect()
   return db_connection
 end
 
-function db.create_tables()
-  local conn = db_connection
-
-  conn:eval([[
-        CREATE TABLE IF NOT EXISTS exercises (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            title TEXT NOT NULL,
-            description TEXT NOT NULL,
-            difficulty TEXT CHECK(difficulty IN ('easy', 'medium', 'hard')),
-            engine TEXT NOT NULL,
-            tags TEXT DEFAULT '[]',
-            hints TEXT DEFAULT '[]',
-            solution TEXT,
-            starter_code TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    ]])
-
-  conn:eval([[
-        CREATE TABLE IF NOT EXISTS test_cases (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            exercise_id INTEGER NOT NULL,
-            input TEXT,
-            expected_output TEXT NOT NULL,
-            is_hidden INTEGER DEFAULT 0,
-            description TEXT,
-            FOREIGN KEY (exercise_id) REFERENCES exercises(id) ON DELETE CASCADE
-        )
-    ]])
-
-  conn:eval([[
-        CREATE TABLE IF NOT EXISTS attempts (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            exercise_id INTEGER NOT NULL,
-            code TEXT,
-            passed INTEGER NOT NULL,
-            output TEXT,
-            duration_ms INTEGER,
-            attempted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (exercise_id) REFERENCES exercises(id) ON DELETE CASCADE
-        )
-    ]])
-
-  conn:eval([[
-        CREATE TABLE IF NOT EXISTS theory_options (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            exercise_id INTEGER NOT NULL,
-            option_number INTEGER NOT NULL,
-            option_text TEXT NOT NULL,
-            is_correct INTEGER DEFAULT 0,
-            FOREIGN KEY (exercise_id) REFERENCES exercises(id) ON DELETE CASCADE
-        )
-    ]])
-
-  conn:eval("CREATE INDEX IF NOT EXISTS idx_exercises_engine ON exercises(engine)")
-  conn:eval("CREATE INDEX IF NOT EXISTS idx_exercises_difficulty ON exercises(difficulty)")
-  conn:eval("CREATE INDEX IF NOT EXISTS idx_test_cases_exercise ON test_cases(exercise_id)")
-  conn:eval("CREATE INDEX IF NOT EXISTS idx_attempts_exercise ON attempts(exercise_id)")
+local function read_schema()
+  local src = debug.getinfo(1, "S").source:sub(2)
+  local plugin_root = vim.fn.fnamemodify(src, ":h:h:h")
+  local schema_path = plugin_root .. "/schema.sql"
+  return table.concat(vim.fn.readfile(schema_path), "\n")
 end
 
--- Filters are only populated by the browser UI (hardcoded difficulty/engine
--- strings), never from raw user input.  utils.escape_sql is a defence-in-depth
--- measure, not a substitute for parameterised queries.
+function db.create_tables()
+  local conn = db_connection
+  local schema = read_schema()
+  for stmt in schema:gmatch("[^;]+") do
+    stmt = stmt:match("^%s*(.-)%s*$")
+    if stmt ~= "" then
+      conn:eval(stmt)
+    end
+  end
+end
+
 function db.get_all_exercises(filters)
   local conn = db.connect()
   local query = "SELECT * FROM exercises"
   local conditions = {}
+  local params = {}
 
   if filters then
     if filters.difficulty then
-      table.insert(conditions, string.format("difficulty = '%s'", utils.escape_sql(filters.difficulty)))
+      table.insert(conditions, "difficulty = :difficulty")
+      params.difficulty = filters.difficulty
     end
     if filters.engine then
-      table.insert(conditions, string.format("engine = '%s'", utils.escape_sql(filters.engine)))
+      table.insert(conditions, "engine = :engine")
+      params.engine = filters.engine
     end
     if filters.search and filters.search ~= "" then
-      local search_term = utils.escape_sql(filters.search)
-      table.insert(
-        conditions,
-        string.format("(title LIKE '%%%s%%' OR description LIKE '%%%s%%')", search_term, search_term)
-      )
+      table.insert(conditions, "(title LIKE :search OR description LIKE :search)")
+      params.search = "%" .. filters.search .. "%"
     end
   end
 
@@ -173,33 +104,34 @@ function db.get_all_exercises(filters)
 
   query = query .. " ORDER BY difficulty, title"
 
+  if next(params) then
+    return normalize_rows(conn:eval(query, params))
+  end
   return normalize_rows(conn:eval(query))
 end
 
 function db.get_exercise_by_id(id)
   local conn = db.connect()
-  return normalize_single(conn:eval(string.format("SELECT * FROM exercises WHERE id = %d", id)))
+  return normalize_single(conn:eval("SELECT * FROM exercises WHERE id = ?", id))
 end
 
 function db.get_test_cases(exercise_id)
   local conn = db.connect()
-  return normalize_rows(
-    conn:eval(string.format("SELECT * FROM test_cases WHERE exercise_id = %d ORDER BY id", exercise_id))
-  )
+  return normalize_rows(conn:eval("SELECT * FROM test_cases WHERE exercise_id = ? ORDER BY id", exercise_id))
 end
 
 function db.record_attempt(exercise_id, code, passed, output, duration_ms)
   local conn = db.connect()
 
-  local ok, err = safe_insert(
+  local ok, err = pcall(
+    conn.eval,
     conn,
-    "attempts",
-    { "exercise_id", "code", "passed", "output", "duration_ms" },
-    { exercise_id, code, passed and 1 or 0, output, duration_ms }
+    "INSERT INTO attempts (exercise_id, code, passed, output, duration_ms) VALUES (:eid, :code, :passed, :output, :dur)",
+    { eid = exercise_id, code = code, passed = passed and 1 or 0, output = output, dur = duration_ms }
   )
 
   if not ok then
-    vim.notify("[code-practice] Failed to record attempt: " .. (err or "unknown"), vim.log.levels.WARN)
+    require("code-practice.utils").notify("Failed to record attempt: " .. (tostring(err) or "unknown"), "warn")
   end
 
   return ok
@@ -253,7 +185,7 @@ end
 function db.get_theory_options(exercise_id)
   local conn = db.connect()
   return normalize_rows(
-    conn:eval(string.format("SELECT * FROM theory_options WHERE exercise_id = %d ORDER BY option_number", exercise_id))
+    conn:eval("SELECT * FROM theory_options WHERE exercise_id = ? ORDER BY option_number", exercise_id)
   )
 end
 

@@ -5,6 +5,7 @@ local popup = require("code-practice.popup")
 local results = {}
 results._winid = nil
 results._bufnr = nil
+local ns = vim.api.nvim_create_namespace("code_practice_results")
 
 function results.close()
   if results._winid and vim.api.nvim_win_is_valid(results._winid) then
@@ -85,7 +86,7 @@ function results.show(result, on_next)
     push("No detailed results available.")
   end
 
-  local next_key = (config.get("keymaps.exercise") or {}).next_exercise or "<C-n>"
+  local next_key = config.get("keymaps.exercise.next_exercise", "<C-n>")
 
   push("")
   if on_next then
@@ -105,9 +106,9 @@ function results.show(result, on_next)
   end
 
   if result.passed then
-    vim.api.nvim_buf_add_highlight(bufnr, -1, "DiagnosticOk", 0, 0, -1)
+    vim.api.nvim_buf_add_highlight(bufnr, ns, "DiagnosticOk", 0, 0, -1)
   else
-    vim.api.nvim_buf_add_highlight(bufnr, -1, "DiagnosticError", 0, 0, -1)
+    vim.api.nvim_buf_add_highlight(bufnr, ns, "DiagnosticError", 0, 0, -1)
   end
 end
 

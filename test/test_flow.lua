@@ -90,6 +90,30 @@ test("Retrieve exercise by ID", function()
   assert_truthy(ex.test_cases and #ex.test_cases > 0, "no test cases")
 end)
 
+-- 4b. Exercise buffer instructions
+test("Exercise buffer shows correct instructions for code exercises", function()
+  local mgr = require("code-practice.manager")
+  local bufnr = mgr.open_exercise(1)
+  assert_truthy(bufnr, "buffer nil")
+  local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+  local content = table.concat(lines, "\n")
+  assert_truthy(content:match("Modify the code below"), "missing instruction for code exercises")
+end)
+
+test("Exercise buffer shows correct instructions for theory exercises", function()
+  local db = require("code-practice.db")
+  local exercises = db.get_all_exercises({ engine = "theory" })
+  if #exercises == 0 then
+    skip("no theory exercises")
+  end
+  local mgr = require("code-practice.manager")
+  local bufnr = mgr.open_exercise(exercises[1].id)
+  assert_truthy(bufnr, "buffer nil")
+  local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+  local content = table.concat(lines, "\n")
+  assert_truthy(content:match("Press %d+%-%d+ to select your answer"), "missing instruction for theory exercises")
+end)
+
 -- 5. Test cases
 test("Test cases load for exercise 1", function()
   local db = require("code-practice.db")
@@ -796,6 +820,59 @@ test("Reopen unloaded exercise: buffer content is restored", function()
   local lines_after = vim.api.nvim_buf_get_lines(buf1_again, 0, -1, false)
   local content = table.concat(lines_after, "\n")
   assert_truthy(content:find("Exercise:"), "unloaded buffer should be repopulated with content")
+end)
+
+-- 40. AI hints config defaults
+test("AI hints: config defaults are present", function()
+  local config = require("code-practice.config")
+  assert_eq(config.get("ai_hints.enabled"), false, "ai_hints.enabled default")
+  assert_eq(config.get("ai_hints.model"), "Qwen/Qwen3-Coder-Next", "ai_hints.model default")
+  assert_eq(config.get("ai_hints.hf_token_env"), "HF_TOKEN", "ai_hints.hf_token_env default")
+end)
+
+-- 41. AI hints: missing token returns error via callback
+test("AI hints: missing HF token produces error callback", function()
+  local ai_hints = require("code-practice.ai_hints")
+  local saved = vim.env.HF_TOKEN
+  vim.env.HF_TOKEN = nil
+
+  local cb_err
+  ai_hints.generate({ description = "test", solution = "test" }, "buffer", function(_, err)
+    cb_err = err
+  end)
+
+  vim.env.HF_TOKEN = saved
+  assert_truthy(cb_err, "expected error callback when token is missing")
+  assert_contains(cb_err, "HF_TOKEN", "error should mention the env var name")
+end)
+
+-- 42. AI hints: show_hints falls back to static hints when disabled
+test("AI hints: show_hints uses static path when disabled", function()
+  local config = require("code-practice.config")
+  assert_eq(config.get("ai_hints.enabled"), false, "ai_hints should be disabled")
+
+  local cp = require("code-practice.init")
+  cp.open_exercise(1)
+
+  local notifications = {}
+  local original_notify = vim.notify
+  vim.notify = function(msg, ...)
+    table.insert(notifications, msg)
+    original_notify(msg, ...)
+  end
+
+  cp.show_hints()
+
+  vim.notify = original_notify
+
+  -- Should not have triggered AI path (no "Generating hint..." notification)
+  local found_generating = false
+  for _, msg in ipairs(notifications) do
+    if msg:find("Generating") then
+      found_generating = true
+    end
+  end
+  assert_eq(found_generating, false, "should not trigger AI hints when disabled")
 end)
 
 -- Summary

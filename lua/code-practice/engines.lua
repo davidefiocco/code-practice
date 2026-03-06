@@ -6,9 +6,9 @@
 -- To add a new engine, add an entry here and (for generation) a matching
 -- section in tools/engines.toml.  No other files need to change.
 
-local M = {}
+local engines = {}
 
-M.registry = {
+engines.registry = {
   python = {
     type = "coding",
     filetype = "python",
@@ -72,56 +72,61 @@ M.registry = {
   },
 }
 
--- Stable iteration order (alphabetical, but theory last for UI consistency).
-M._order = { "python", "rust", "theory" }
-
-function M.get(name)
-  return M.registry[name]
+local function sorted_names()
+  local names = vim.tbl_keys(engines.registry)
+  table.sort(names, function(a, b)
+    local ta, tb = engines.registry[a].type, engines.registry[b].type
+    if ta == "theory" and tb ~= "theory" then
+      return false
+    end
+    if ta ~= "theory" and tb == "theory" then
+      return true
+    end
+    return a < b
+  end)
+  return names
 end
 
-function M.list()
+function engines.get(name)
+  return engines.registry[name]
+end
+
+function engines.list()
+  return sorted_names()
+end
+
+function engines.coding_engines()
   local result = {}
-  for _, name in ipairs(M._order) do
-    if M.registry[name] then
+  for _, name in ipairs(sorted_names()) do
+    if engines.registry[name].type == "coding" then
       table.insert(result, name)
     end
   end
   return result
 end
 
-function M.coding_engines()
-  local result = {}
-  for _, name in ipairs(M._order) do
-    local eng = M.registry[name]
-    if eng and eng.type == "coding" then
-      table.insert(result, name)
-    end
-  end
-  return result
-end
-
-function M.comment_prefix(name)
-  local eng = M.registry[name]
+function engines.comment_prefix(name)
+  local eng = engines.registry[name]
   if eng then
     return eng.comment_prefix
   end
   return "#"
 end
 
-function M.filetype(name)
-  local eng = M.registry[name]
+function engines.filetype(name)
+  local eng = engines.registry[name]
   if eng then
     return eng.filetype
   end
   return "text"
 end
 
-function M.icon(name)
-  local eng = M.registry[name]
+function engines.icon(name)
+  local eng = engines.registry[name]
   if eng then
     return eng.icon
   end
   return "📝"
 end
 
-return M
+return engines

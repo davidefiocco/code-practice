@@ -11,9 +11,9 @@ function utils.write_file(path, content)
   if not file then
     return false
   end
-  file:write(content)
+  local _, err = file:write(content)
   file:close()
-  return true
+  return err == nil
 end
 
 function utils.get_buffer_content(bufnr)
@@ -35,7 +35,7 @@ function utils.trim(s)
 end
 
 function utils.split_lines(str)
-  return vim.split(str, "\n", { plain = true })
+  return vim.split(str or "", "\n", { plain = true })
 end
 
 function utils.create_temp_file(prefix, extension)
@@ -52,16 +52,27 @@ function utils.delete_temp_files()
   end
 end
 
+function utils.meta_writer(lines, comment_prefix)
+  return function(line)
+    if comment_prefix == "" then
+      table.insert(lines, line)
+    elseif line == "" then
+      table.insert(lines, comment_prefix)
+    else
+      table.insert(lines, comment_prefix .. " " .. line)
+    end
+  end
+end
+
+function utils.close_win(winid)
+  if winid and vim.api.nvim_win_is_valid(winid) then
+    vim.api.nvim_win_close(winid, true)
+  end
+end
+
 function utils.json_decode(str)
   local ok, result = pcall(vim.json.decode, str)
   return ok and result or nil
-end
-
-function utils.escape_sql(s)
-  if type(s) ~= "string" then
-    return s
-  end
-  return s:gsub("'", "''")
 end
 
 return utils

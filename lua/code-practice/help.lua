@@ -63,7 +63,7 @@ function help.show()
   end
   vim.cmd("stopinsert")
 
-  local km = config.get("keymaps.exercise") or {}
+  local km = config.get("keymaps.exercise", {})
 
   local filter_lines = {}
   for _, name in ipairs(engines.list()) do
