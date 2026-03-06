@@ -11,9 +11,9 @@ function utils.write_file(path, content)
   if not file then
     return false
   end
-  local ok, err = file:write(content)
+  local _, err = file:write(content)
   file:close()
-  return ok ~= nil
+  return err == nil
 end
 
 function utils.get_buffer_content(bufnr)
@@ -49,6 +49,24 @@ function utils.delete_temp_files()
   local tmpdir = vim.fn.stdpath("data") .. "/code-practice/tmp"
   if vim.fn.isdirectory(tmpdir) == 1 then
     vim.fn.delete(tmpdir, "rf")
+  end
+end
+
+function utils.meta_writer(lines, comment_prefix)
+  return function(line)
+    if comment_prefix == "" then
+      table.insert(lines, line)
+    elseif line == "" then
+      table.insert(lines, comment_prefix)
+    else
+      table.insert(lines, comment_prefix .. " " .. line)
+    end
+  end
+end
+
+function utils.close_win(winid)
+  if winid and vim.api.nvim_win_is_valid(winid) then
+    vim.api.nvim_win_close(winid, true)
   end
 end
 

@@ -92,9 +92,14 @@ function M.import(json_path, opts)
           sql_val(tc.is_hidden == true or tc.is_hidden == 1),
           sql_val(tc.description or "")
         )
-        local tc_ok = pcall(conn.eval, conn, tc_sql)
+        local tc_ok, tc_err = pcall(conn.eval, conn, tc_sql)
         if tc_ok then
           counts.test_cases = counts.test_cases + 1
+        else
+          utils.notify(
+            "Failed to insert test case for exercise " .. tostring(ex.id) .. ": " .. tostring(tc_err),
+            "warn"
+          )
         end
       end
 
@@ -107,9 +112,14 @@ function M.import(json_path, opts)
           sql_val(opt.option_text),
           sql_val(opt.is_correct == 1)
         )
-        local opt_ok = pcall(conn.eval, conn, opt_sql)
+        local opt_ok, opt_err = pcall(conn.eval, conn, opt_sql)
         if opt_ok then
           counts.theory_options = counts.theory_options + 1
+        else
+          utils.notify(
+            "Failed to insert theory option for exercise " .. tostring(ex.id) .. ": " .. tostring(opt_err),
+            "warn"
+          )
         end
       end
     end

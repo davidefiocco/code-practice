@@ -296,9 +296,11 @@ CONFIGURATION FILES ~
 Exercises are stored in an SQLite database at the path configured by
 `storage.db_path` (default: `stdpath("data")/code-practice/exercises.db`).
 
-The database contains four tables: exercises, test_cases, attempts, and
-theory_options. Foreign keys are enabled; deleting an exercise cascades to
-its test cases, attempts, and options.
+The database schema is defined in `schema.sql` at the repository root --
+the single source of truth shared by the Lua plugin, the test seeder, and
+the exercise generator. It contains four tables: exercises, test_cases,
+attempts, and theory_options. Foreign keys are enabled; deleting an
+exercise cascades to its test cases, attempts, and options.
 
 IMPORTING ~
 

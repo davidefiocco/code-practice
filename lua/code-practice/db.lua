@@ -39,7 +39,6 @@ local function normalize_single(results)
   return nil
 end
 
-
 function db.connect()
   if db_connection then
     return db_connection
@@ -60,65 +59,22 @@ function db.connect()
   return db_connection
 end
 
+local function read_schema()
+  local src = debug.getinfo(1, "S").source:sub(2)
+  local plugin_root = vim.fn.fnamemodify(src, ":h:h:h")
+  local schema_path = plugin_root .. "/schema.sql"
+  return table.concat(vim.fn.readfile(schema_path), "\n")
+end
+
 function db.create_tables()
   local conn = db_connection
-
-  conn:eval([[
-        CREATE TABLE IF NOT EXISTS exercises (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            title TEXT NOT NULL,
-            description TEXT NOT NULL,
-            difficulty TEXT CHECK(difficulty IN ('easy', 'medium', 'hard')),
-            engine TEXT NOT NULL,
-            tags TEXT DEFAULT '[]',
-            hints TEXT DEFAULT '[]',
-            solution TEXT,
-            starter_code TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    ]])
-
-  conn:eval([[
-        CREATE TABLE IF NOT EXISTS test_cases (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            exercise_id INTEGER NOT NULL,
-            input TEXT,
-            expected_output TEXT NOT NULL,
-            is_hidden INTEGER DEFAULT 0,
-            description TEXT,
-            FOREIGN KEY (exercise_id) REFERENCES exercises(id) ON DELETE CASCADE
-        )
-    ]])
-
-  conn:eval([[
-        CREATE TABLE IF NOT EXISTS attempts (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            exercise_id INTEGER NOT NULL,
-            code TEXT,
-            passed INTEGER NOT NULL,
-            output TEXT,
-            duration_ms INTEGER,
-            attempted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (exercise_id) REFERENCES exercises(id) ON DELETE CASCADE
-        )
-    ]])
-
-  conn:eval([[
-        CREATE TABLE IF NOT EXISTS theory_options (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            exercise_id INTEGER NOT NULL,
-            option_number INTEGER NOT NULL,
-            option_text TEXT NOT NULL,
-            is_correct INTEGER DEFAULT 0,
-            FOREIGN KEY (exercise_id) REFERENCES exercises(id) ON DELETE CASCADE
-        )
-    ]])
-
-  conn:eval("CREATE INDEX IF NOT EXISTS idx_exercises_engine ON exercises(engine)")
-  conn:eval("CREATE INDEX IF NOT EXISTS idx_exercises_difficulty ON exercises(difficulty)")
-  conn:eval("CREATE INDEX IF NOT EXISTS idx_test_cases_exercise ON test_cases(exercise_id)")
-  conn:eval("CREATE INDEX IF NOT EXISTS idx_attempts_exercise ON attempts(exercise_id)")
+  local schema = read_schema()
+  for stmt in schema:gmatch("[^;]+") do
+    stmt = stmt:match("^%s*(.-)%s*$")
+    if stmt ~= "" then
+      conn:eval(stmt)
+    end
+  end
 end
 
 function db.get_all_exercises(filters)
@@ -175,7 +131,7 @@ function db.record_attempt(exercise_id, code, passed, output, duration_ms)
   )
 
   if not ok then
-    vim.notify("[code-practice] Failed to record attempt: " .. (tostring(err) or "unknown"), vim.log.levels.WARN)
+    require("code-practice.utils").notify("Failed to record attempt: " .. (tostring(err) or "unknown"), "warn")
   end
 
   return ok
@@ -228,7 +184,9 @@ end
 
 function db.get_theory_options(exercise_id)
   local conn = db.connect()
-  return normalize_rows(conn:eval("SELECT * FROM theory_options WHERE exercise_id = ? ORDER BY option_number", exercise_id))
+  return normalize_rows(
+    conn:eval("SELECT * FROM theory_options WHERE exercise_id = ? ORDER BY option_number", exercise_id)
+  )
 end
 
 return db

@@ -6,6 +6,24 @@ local utils = require("code-practice.utils")
 
 local manager = {}
 
+function manager.build_header_lines(exercise, label)
+  local comment_prefix = engines.comment_prefix(exercise.engine)
+  local lines = {}
+  local add_meta = utils.meta_writer(lines, comment_prefix)
+
+  add_meta(label .. ": " .. exercise.title)
+  add_meta("Difficulty: " .. exercise.difficulty .. " | Engine: " .. exercise.engine)
+  add_meta("")
+  if exercise.description and exercise.description ~= "" then
+    for _, desc_line in ipairs(utils.split_lines(exercise.description)) do
+      add_meta(desc_line)
+    end
+    add_meta("")
+  end
+
+  return lines, add_meta
+end
+
 function manager.get_exercise(id)
   local exercise = db.get_exercise_by_id(id)
   if not exercise then
@@ -26,6 +44,78 @@ end
 
 function manager.list_exercises(filters)
   return db.get_all_exercises(filters)
+end
+
+function manager.format_exercise_preview(exercise, opts)
+  opts = opts or {}
+  local lines = {}
+
+  table.insert(lines, string.format("# %s", exercise.title))
+  table.insert(lines, "")
+  table.insert(lines, string.format("Difficulty: %s | Engine: %s", exercise.difficulty, exercise.engine))
+  table.insert(lines, "")
+
+  if opts.description_header then
+    table.insert(lines, "## Description")
+    table.insert(lines, "")
+  end
+  for _, line in ipairs(utils.split_lines(exercise.description)) do
+    table.insert(lines, line)
+  end
+  table.insert(lines, "")
+
+  local test_cases = exercise.test_cases or {}
+  local visible = {}
+  for _, tc in ipairs(test_cases) do
+    if not tc.is_hidden or tc.is_hidden == 0 then
+      table.insert(visible, tc)
+    end
+  end
+  if #visible > 0 then
+    table.insert(lines, "## Test Cases")
+    table.insert(lines, "")
+    for i, tc in ipairs(visible) do
+      table.insert(lines, string.format("Test %d:", i))
+      if tc.description and tc.description ~= "" then
+        table.insert(lines, string.format("  %s", tc.description))
+      end
+      if tc.input and tc.input ~= "" then
+        table.insert(lines, string.format("  Input: %s", tc.input))
+      end
+      table.insert(lines, string.format("  Expected: %s", tc.expected_output))
+      table.insert(lines, "")
+    end
+  end
+
+  local eng = engines.get(exercise.engine)
+  if eng and eng.type == "theory" then
+    local options = exercise.options or {}
+    if #options > 0 then
+      table.insert(lines, "## Options")
+      table.insert(lines, "")
+      for _, opt in ipairs(options) do
+        table.insert(lines, string.format("%d. %s", opt.option_number, opt.option_text))
+      end
+      table.insert(lines, "")
+    end
+  end
+
+  local tags = exercise.tags or {}
+  if type(tags) == "string" then
+    tags = utils.json_decode(tags) or {}
+  end
+  if #tags > 0 then
+    table.insert(lines, "## Tags")
+    table.insert(lines, table.concat(tags, ", "))
+    table.insert(lines, "")
+  end
+
+  if opts.footer then
+    table.insert(lines, "")
+    table.insert(lines, opts.footer)
+  end
+
+  return lines
 end
 
 function manager.get_stats()
@@ -61,30 +151,8 @@ function manager.open_exercise(id)
     vim.bo[bufnr].modifiable = true
     vim.bo[bufnr].readonly = false
 
-    local comment_prefix = engines.comment_prefix(exercise.engine)
-
-    local lines = {}
-    local function add_meta(line)
-      if comment_prefix == "" then
-        table.insert(lines, line)
-      else
-        if line == "" then
-          table.insert(lines, comment_prefix)
-        else
-          table.insert(lines, comment_prefix .. " " .. line)
-        end
-      end
-    end
-
-    add_meta("Exercise: " .. exercise.title)
-    add_meta("Difficulty: " .. exercise.difficulty .. " | Engine: " .. exercise.engine)
-    add_meta("")
-    if exercise.description and exercise.description ~= "" then
-      for _, desc_line in ipairs(utils.split_lines(exercise.description)) do
-        add_meta(desc_line)
-      end
-      add_meta("")
-    end
+    local lines, add_meta = manager.build_header_lines(exercise, "Exercise")
+    local run_key = (config.get("keymaps.exercise") or {}).run_tests or "<C-t>"
 
     local theory_options = nil
     if exercise.engine == "theory" then
@@ -95,11 +163,9 @@ function manager.open_exercise(id)
           add_meta(string.format("%d. %s", opt.option_number, opt.option_text))
         end
         add_meta("")
-        local run_key = (config.get("keymaps.exercise") or {}).run_tests or "<C-t>"
         add_meta("Press 1-" .. #theory_options .. " to select your answer, then " .. run_key .. " to check.")
       end
     else
-      local run_key = (config.get("keymaps.exercise") or {}).run_tests or "<C-t>"
       add_meta("Modify the code below, then " .. run_key .. " to run tests.")
     end
 
@@ -179,7 +245,7 @@ function manager.open_exercise(id)
     end
   end
 
-  vim.api.nvim_command("buffer " .. bufnr)
+  vim.cmd.buffer(bufnr)
 
   return bufnr
 end

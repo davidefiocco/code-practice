@@ -1,5 +1,6 @@
 -- Code Practice - Plugin Commands
 local code_practice = require("code-practice.init")
+local utils = require("code-practice.utils")
 
 vim.api.nvim_create_user_command("CP", function(opts)
   local args = opts.fargs
@@ -18,29 +19,28 @@ vim.api.nvim_create_user_command("CP", function(opts)
   elseif sub == "import" then
     local path = args[2] or require("code-practice.config").get("storage.exercises_json") or ""
     if path == "" then
-      vim.notify("[code-practice] Usage: :CP import <path-to-exercises.json>", vim.log.levels.WARN)
+      utils.notify("Usage: :CP import <path-to-exercises.json>", "warn")
       return
     end
     local importer = require("code-practice.importer")
     local counts, err = importer.import(path, { replace = opts.bang })
     if counts then
       local mode = opts.bang and "Replaced with" or "Imported"
-      vim.notify(
+      utils.notify(
         string.format(
-          "[code-practice] %s %d exercises, %d test cases, %d theory options",
+          "%s %d exercises, %d test cases, %d theory options",
           mode,
           counts.exercises,
           counts.test_cases,
           counts.theory_options
-        ),
-        vim.log.levels.INFO
+        )
       )
       local browser = require("code-practice.browser")
       if browser.refresh then
         browser.refresh()
       end
     else
-      vim.notify("[code-practice] Import failed: " .. (err or "unknown"), vim.log.levels.ERROR)
+      utils.notify("Import failed: " .. (err or "unknown"), "error")
     end
   elseif sub == "generate" then
     local topic = vim.fn.input("Topic: ")
@@ -71,7 +71,7 @@ vim.api.nvim_create_user_command("CP", function(opts)
 
     local cmd = { "uv", "run", script, tmp, "--db-path", db_path }
 
-    vim.notify("[code-practice] Generating exercises...", vim.log.levels.INFO)
+    utils.notify("Generating exercises...")
 
     local output_lines = {}
     vim.fn.jobstart(cmd, {
@@ -92,19 +92,19 @@ vim.api.nvim_create_user_command("CP", function(opts)
         vim.schedule(function()
           local msg = table.concat(output_lines, "\n")
           if exit_code == 0 then
-            vim.notify("[code-practice] " .. msg, vim.log.levels.INFO)
+            utils.notify(msg)
             local browser = require("code-practice.browser")
             if browser.refresh then
               browser.refresh()
             end
           else
-            vim.notify("[code-practice] Generation failed:\n" .. msg, vim.log.levels.ERROR)
+            utils.notify("Generation failed:\n" .. msg, "error")
           end
         end)
       end,
     })
   else
-    vim.notify("[code-practice] Unknown subcommand: " .. sub, vim.log.levels.WARN)
+    utils.notify("Unknown subcommand: " .. sub, "warn")
   end
 end, {
   nargs = "*",

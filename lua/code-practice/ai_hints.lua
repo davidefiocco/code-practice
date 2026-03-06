@@ -1,6 +1,5 @@
 -- Code Practice - AI-Assisted Hints
 local config = require("code-practice.config")
-local utils = require("code-practice.utils")
 
 local M = {}
 
@@ -17,7 +16,9 @@ local STRUCTURED_SYSTEM_PROMPT = "You are a tutor. A student is answering a mult
 local API_URL = "https://router.huggingface.co/v1/chat/completions"
 
 local function format_options(options)
-  if not options or #options == 0 then return "" end
+  if not options or #options == 0 then
+    return ""
+  end
   local parts = {}
   for _, opt in ipairs(options) do
     parts[#parts + 1] = string.format("%d. %s", opt.option_number, opt.option_text)
@@ -40,11 +41,8 @@ function M.generate(exercise, buffer_content, callback)
 
   if has_options then
     system_prompt = STRUCTURED_SYSTEM_PROMPT
-    user_msg = string.format(
-      "## Question\n%s\n\n## Options\n%s",
-      exercise.description or "",
-      format_options(exercise.options)
-    )
+    user_msg =
+      string.format("## Question\n%s\n\n## Options\n%s", exercise.description or "", format_options(exercise.options))
   else
     system_prompt = OPEN_SYSTEM_PROMPT
     user_msg = string.format(
@@ -65,11 +63,15 @@ function M.generate(exercise, buffer_content, callback)
   })
 
   vim.system({
-    "curl", "-s",
+    "curl",
+    "-s",
     API_URL,
-    "-H", "Content-Type: application/json",
-    "-H", "Authorization: Bearer " .. token,
-    "-d", payload,
+    "-H",
+    "Content-Type: application/json",
+    "-H",
+    "Authorization: Bearer " .. token,
+    "-d",
+    payload,
   }, { text = true }, function(result)
     vim.schedule(function()
       if result.code ~= 0 then

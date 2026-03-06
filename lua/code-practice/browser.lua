@@ -3,7 +3,6 @@ local db = require("code-practice.db")
 local engines = require("code-practice.engines")
 local manager = require("code-practice.manager")
 local config = require("code-practice.config")
-local utils = require("code-practice.utils")
 
 local ok_popup, Popup = pcall(require, "nui.popup")
 local ok_layout, Layout = pcall(require, "nui.layout")
@@ -99,62 +98,15 @@ function browser.render_preview()
     return state.preview_cache[exercise.id]
   end
 
-  local lines = {}
-
-  table.insert(lines, string.format("# %s", exercise.title))
-  table.insert(lines, "")
-
-  table.insert(lines, string.format("Difficulty: %s | Engine: %s", exercise.difficulty, exercise.engine))
-  table.insert(lines, "")
-
-  table.insert(lines, "## Description")
-  table.insert(lines, "")
-  for _, line in ipairs(utils.split_lines(exercise.description)) do
-    table.insert(lines, line)
-  end
-  table.insert(lines, "")
-
-  local test_cases = db.get_test_cases(exercise.id)
-  if #test_cases > 0 then
-    table.insert(lines, "## Test Cases")
-    table.insert(lines, "")
-    for i, tc in ipairs(test_cases) do
-      if not tc.is_hidden or tc.is_hidden == 0 then
-        table.insert(lines, string.format("Test %d:", i))
-        if tc.description then
-          table.insert(lines, string.format("  %s", tc.description))
-        end
-        if tc.input and tc.input ~= "" then
-          table.insert(lines, string.format("  Input: %s", tc.input))
-        end
-        table.insert(lines, string.format("  Expected: %s", tc.expected_output))
-        table.insert(lines, "")
-      end
-    end
+  local enriched = manager.get_exercise(exercise.id)
+  if not enriched then
+    return { "Exercise not found" }
   end
 
-  local eng = engines.get(exercise.engine)
-  if eng and eng.type == "theory" then
-    local options = db.get_theory_options(exercise.id)
-    if #options > 0 then
-      table.insert(lines, "## Options")
-      table.insert(lines, "")
-      for _, opt in ipairs(options) do
-        table.insert(lines, string.format("%d. %s", opt.option_number, opt.option_text))
-      end
-      table.insert(lines, "")
-    end
-  end
-
-  local tags = utils.json_decode(exercise.tags)
-  if tags and #tags > 0 then
-    table.insert(lines, "## Tags")
-    table.insert(lines, table.concat(tags, ", "))
-    table.insert(lines, "")
-  end
-
-  table.insert(lines, "")
-  table.insert(lines, "Press Enter to open, then <C-t> to run tests")
+  local lines = manager.format_exercise_preview(enriched, {
+    description_header = true,
+    footer = "Press Enter to open, then <C-t> to run tests",
+  })
 
   state.preview_cache[exercise.id] = lines
   return lines
@@ -240,36 +192,54 @@ function browser.setup_keymaps()
     vim.keymap.set("n", key, action, vim.tbl_extend("force", opts, { buffer = preview_buf }))
   end
 
-  map("j", "<cmd>lua require('code-practice.browser').move_selection(1)<CR>")
-  map("k", "<cmd>lua require('code-practice.browser').move_selection(-1)<CR>")
-  map("<down>", "<cmd>lua require('code-practice.browser').move_selection(1)<CR>")
-  map("<up>", "<cmd>lua require('code-practice.browser').move_selection(-1)<CR>")
-  map("gg", "<cmd>lua require('code-practice.browser').go_top()<CR>")
-  map("G", "<cmd>lua require('code-practice.browser').go_bottom()<CR>")
+  map("j", function()
+    browser.move_selection(1)
+  end)
+  map("k", function()
+    browser.move_selection(-1)
+  end)
+  map("<down>", function()
+    browser.move_selection(1)
+  end)
+  map("<up>", function()
+    browser.move_selection(-1)
+  end)
+  map("gg", browser.go_top)
+  map("G", browser.go_bottom)
   local open_key = keymaps.open_item or keymaps.open or "<CR>"
-  map(open_key, "<cmd>lua require('code-practice.browser').open_selected()<CR>")
+  map(open_key, browser.open_selected)
   if open_key ~= "<CR>" then
-    map("<CR>", "<cmd>lua require('code-practice.browser').open_selected()<CR>")
+    map("<CR>", browser.open_selected)
   end
-  map("o", "<cmd>lua require('code-practice.browser').open_selected()<CR>")
-  map(keymaps.filter_easy or "e", "<cmd>lua require('code-practice.browser').filter_by_difficulty('easy')<CR>")
-  map(keymaps.filter_medium or "m", "<cmd>lua require('code-practice.browser').filter_by_difficulty('medium')<CR>")
-  map(keymaps.filter_hard or "h", "<cmd>lua require('code-practice.browser').filter_by_difficulty('hard')<CR>")
-  map(keymaps.filter_all or "a", "<cmd>lua require('code-practice.browser').clear_filters()<CR>")
+  map("o", browser.open_selected)
+  map(keymaps.filter_easy or "e", function()
+    browser.filter_by_difficulty("easy")
+  end)
+  map(keymaps.filter_medium or "m", function()
+    browser.filter_by_difficulty("medium")
+  end)
+  map(keymaps.filter_hard or "h", function()
+    browser.filter_by_difficulty("hard")
+  end)
+  map(keymaps.filter_all or "a", browser.clear_filters)
 
   for _, name in ipairs(engines.list()) do
     local eng = engines.get(name)
     if eng.filter_key then
-      map(eng.filter_key, "<cmd>lua require('code-practice.browser').filter_by_engine('" .. name .. "')<CR>")
+      map(eng.filter_key, function()
+        browser.filter_by_engine(name)
+      end)
     end
   end
 
   local close_key = keymaps.close or "q"
-  map(close_key, "<cmd>lua require('code-practice.browser').close()<CR>")
+  map(close_key, browser.close)
   if close_key ~= "<esc>" then
-    map("<esc>", "<cmd>lua require('code-practice.browser').close()<CR>")
+    map("<esc>", browser.close)
   end
-  map("?", "<cmd>lua require('code-practice.help').show()<CR>")
+  map("?", function()
+    require("code-practice.help").show()
+  end)
 end
 
 local function update_display()

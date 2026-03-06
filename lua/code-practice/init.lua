@@ -16,9 +16,7 @@ local solution_window = {
 }
 
 local function close_solution_window()
-  if solution_window.winid and vim.api.nvim_win_is_valid(solution_window.winid) then
-    vim.api.nvim_win_close(solution_window.winid, true)
-  end
+  utils.close_win(solution_window.winid)
   solution_window.winid = nil
   solution_window.bufnr = nil
 end
@@ -244,9 +242,7 @@ function code_practice.show_stats()
   local bufnr, winid = popup.open_float({ width = 0.3, height = 0.3, title = " Statistics " })
   popup.set_lines(bufnr, lines)
   popup.map_close(bufnr, function()
-    if winid and vim.api.nvim_win_is_valid(winid) then
-      vim.api.nvim_win_close(winid, true)
-    end
+    utils.close_win(winid)
   end)
 end
 
@@ -271,9 +267,7 @@ local function show_static_hints(exercise)
   local bufnr, winid = popup.open_float({ width = 0.5, height = 0.4, title = " Hints " })
   popup.set_lines(bufnr, lines)
   popup.map_close(bufnr, function()
-    if winid and vim.api.nvim_win_is_valid(winid) then
-      vim.api.nvim_win_close(winid, true)
-    end
+    utils.close_win(winid)
   end)
 end
 
@@ -298,9 +292,7 @@ function code_practice.show_hints()
   local hint_bufnr, hint_winid = popup.open_float({ width = 0.5, height = 0.4, title = " AI Hint " })
   popup.set_lines(hint_bufnr, { "", "  Generating hint..." })
   popup.map_close(hint_bufnr, function()
-    if hint_winid and vim.api.nvim_win_is_valid(hint_winid) then
-      vim.api.nvim_win_close(hint_winid, true)
-    end
+    utils.close_win(hint_winid)
   end)
 
   local ai_hints = require("code-practice.ai_hints")
@@ -311,9 +303,7 @@ function code_practice.show_hints()
 
     if err then
       utils.notify("AI hint failed: " .. err, "error")
-      if hint_winid and vim.api.nvim_win_is_valid(hint_winid) then
-        vim.api.nvim_win_close(hint_winid, true)
-      end
+      utils.close_win(hint_winid)
       show_static_hints(exercise)
       return
     end
@@ -342,30 +332,8 @@ function code_practice.show_solution()
 
   close_solution_window()
 
-  local comment_prefix = engines.comment_prefix(exercise.engine)
-
-  local lines = {}
-  local function add_meta(line)
-    if comment_prefix == "" then
-      table.insert(lines, line)
-    else
-      if line == "" then
-        table.insert(lines, comment_prefix)
-      else
-        table.insert(lines, comment_prefix .. " " .. line)
-      end
-    end
-  end
-
-  add_meta("Solution: " .. exercise.title)
-  add_meta("Difficulty: " .. exercise.difficulty .. " | Engine: " .. exercise.engine)
+  local lines, add_meta = manager.build_header_lines(exercise, "Solution")
   add_meta("")
-  if exercise.description and exercise.description ~= "" then
-    for _, desc_line in ipairs(utils.split_lines(exercise.description)) do
-      add_meta(desc_line)
-    end
-    add_meta("")
-  end
   add_meta("")
   add_meta(string.rep("-", 40))
   add_meta("")
@@ -377,8 +345,8 @@ function code_practice.show_solution()
   local bufnr = popup.create_scratch_buf({ filetype = engines.filetype(exercise.engine) })
   popup.set_lines(bufnr, lines)
 
-  vim.api.nvim_command("rightbelow vsplit")
-  vim.api.nvim_command("buffer " .. bufnr)
+  vim.cmd("rightbelow vsplit")
+  vim.cmd.buffer(bufnr)
 
   solution_window.winid = vim.api.nvim_get_current_win()
   solution_window.bufnr = bufnr
@@ -401,68 +369,14 @@ function code_practice.show_description()
     return
   end
 
-  local lines = {}
-  table.insert(lines, "# " .. exercise.title)
-  table.insert(lines, "")
-  table.insert(lines, string.format("Difficulty: %s | Engine: %s", exercise.difficulty, exercise.engine))
-  table.insert(lines, "")
-
-  for _, line in ipairs(utils.split_lines(exercise.description)) do
-    table.insert(lines, line)
-  end
-  table.insert(lines, "")
-
-  if exercise.engine == "theory" then
-    local options = exercise.options or {}
-    if #options > 0 then
-      table.insert(lines, "## Options")
-      table.insert(lines, "")
-      for _, opt in ipairs(options) do
-        table.insert(lines, string.format("%d. %s", opt.option_number, opt.option_text))
-      end
-      table.insert(lines, "")
-    end
-  else
-    local test_cases = exercise.test_cases or {}
-    local visible = {}
-    for _, tc in ipairs(test_cases) do
-      if not tc.is_hidden or tc.is_hidden == 0 then
-        table.insert(visible, tc)
-      end
-    end
-    if #visible > 0 then
-      table.insert(lines, "## Test Cases")
-      table.insert(lines, "")
-      for i, tc in ipairs(visible) do
-        table.insert(lines, string.format("Test %d:", i))
-        if tc.description and tc.description ~= "" then
-          table.insert(lines, string.format("  %s", tc.description))
-        end
-        if tc.input and tc.input ~= "" then
-          table.insert(lines, string.format("  Input: %s", tc.input))
-        end
-        table.insert(lines, string.format("  Expected: %s", tc.expected_output))
-        table.insert(lines, "")
-      end
-    end
-  end
-
-  local tags = exercise.tags or {}
-  if #tags > 0 then
-    table.insert(lines, "## Tags")
-    table.insert(lines, table.concat(tags, ", "))
-    table.insert(lines, "")
-  end
-
-  table.insert(lines, "")
-  table.insert(lines, "Press q, <Esc>, or <Enter> to close")
+  local lines = manager.format_exercise_preview(exercise, {
+    footer = "Press q, <Esc>, or <Enter> to close",
+  })
 
   local bufnr, winid = popup.open_float({ filetype = "markdown", title = " Description " })
   popup.set_lines(bufnr, lines)
   popup.map_close(bufnr, function()
-    if winid and vim.api.nvim_win_is_valid(winid) then
-      vim.api.nvim_win_close(winid, true)
-    end
+    utils.close_win(winid)
   end)
 end
 

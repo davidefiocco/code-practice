@@ -179,6 +179,9 @@ Exercises are stored in an SQLite database at `stdpath("data")/code-practice/exe
 Import exercises from a JSON file with `:CP import <path>`, or use `:CP! import <path>` to
 replace existing data. The database path is configurable via `storage.db_path`.
 
+The database schema is defined in [`schema.sql`](schema.sql) at the repository root and
+shared by the Lua plugin, the test seeder, and the exercise generator.
+
 Roadmap
 -------
 - [ ] Random exercise (`:CP random`)

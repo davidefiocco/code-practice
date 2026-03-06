@@ -346,39 +346,11 @@ def parse_titles(raw: str) -> list[str]:
 # Database
 # ---------------------------------------------------------------------------
 
+SCHEMA_PATH = Path(__file__).resolve().parent.parent / "schema.sql"
+
+
 def ensure_tables(conn: sqlite3.Connection):
-    conn.executescript("""
-        CREATE TABLE IF NOT EXISTS exercises (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            title TEXT NOT NULL,
-            description TEXT NOT NULL,
-            difficulty TEXT CHECK(difficulty IN ('easy', 'medium', 'hard')),
-            engine TEXT NOT NULL,
-            tags TEXT DEFAULT '[]',
-            hints TEXT DEFAULT '[]',
-            solution TEXT,
-            starter_code TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );
-        CREATE TABLE IF NOT EXISTS test_cases (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            exercise_id INTEGER NOT NULL,
-            input TEXT,
-            expected_output TEXT NOT NULL,
-            is_hidden INTEGER DEFAULT 0,
-            description TEXT,
-            FOREIGN KEY (exercise_id) REFERENCES exercises(id) ON DELETE CASCADE
-        );
-        CREATE TABLE IF NOT EXISTS theory_options (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            exercise_id INTEGER NOT NULL,
-            option_number INTEGER NOT NULL,
-            option_text TEXT NOT NULL,
-            is_correct INTEGER DEFAULT 0,
-            FOREIGN KEY (exercise_id) REFERENCES exercises(id) ON DELETE CASCADE
-        );
-    """)
+    conn.executescript(SCHEMA_PATH.read_text())
 
 
 def wipe_exercise_tables(conn: sqlite3.Connection):
