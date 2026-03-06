@@ -32,6 +32,7 @@ Features:
 - Results window with per-test pass/fail detail
 - Reference solution viewer
 - Solved/unsolved status indicators in the browser
+- AI-powered contextual hints (open-ended and multiple-choice aware)
 - LLM-powered exercise generation from a configurable syllabus
 
 ==============================================================================
@@ -184,6 +185,12 @@ Options are merged with |vim.tbl_deep_extend()|.
         auto_save = true,
       },
 
+      ai_hints = {
+        enabled = false,        -- set true to use AI hints instead of static
+        model = "Qwen/Qwen3-Coder-Next",   -- HF Inference API model
+        hf_token_env = "HF_TOKEN",          -- env var holding the HF token
+      },
+
       keymaps = {
         browser = {
           open_item = "<CR>",
@@ -316,7 +323,8 @@ Run `:checkhealth code-practice` to verify:
 - nui.nvim and sqlite.lua plugins
 - Engine executables based on enabled config (iterates the registry)
 - uv executable (needed for |:CP| `generate`)
-- HF_TOKEN environment variable (needed for |:CP| `generate`)
+- curl executable (needed when `ai_hints.enabled` is true)
+- HF_TOKEN environment variable (needed for |:CP| `generate` and AI hints)
 - Database file existence
 
 ==============================================================================
