@@ -35,6 +35,12 @@ M.defaults = {
     auto_save = true,
   },
 
+  ai_hints = {
+    enabled = false,
+    model = "Qwen/Qwen3-Coder-Next",
+    hf_token_env = "HF_TOKEN",
+  },
+
   keymaps = {
     browser = {
       open_item = "<CR>",

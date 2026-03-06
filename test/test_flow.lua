@@ -822,6 +822,59 @@ test("Reopen unloaded exercise: buffer content is restored", function()
   assert_truthy(content:find("Exercise:"), "unloaded buffer should be repopulated with content")
 end)
 
+-- 40. AI hints config defaults
+test("AI hints: config defaults are present", function()
+  local config = require("code-practice.config")
+  assert_eq(config.get("ai_hints.enabled"), false, "ai_hints.enabled default")
+  assert_eq(config.get("ai_hints.model"), "Qwen/Qwen3-Coder-Next", "ai_hints.model default")
+  assert_eq(config.get("ai_hints.hf_token_env"), "HF_TOKEN", "ai_hints.hf_token_env default")
+end)
+
+-- 41. AI hints: missing token returns error via callback
+test("AI hints: missing HF token produces error callback", function()
+  local ai_hints = require("code-practice.ai_hints")
+  local saved = vim.env.HF_TOKEN
+  vim.env.HF_TOKEN = nil
+
+  local cb_err
+  ai_hints.generate({ description = "test", solution = "test" }, "buffer", function(_, err)
+    cb_err = err
+  end)
+
+  vim.env.HF_TOKEN = saved
+  assert_truthy(cb_err, "expected error callback when token is missing")
+  assert_contains(cb_err, "HF_TOKEN", "error should mention the env var name")
+end)
+
+-- 42. AI hints: show_hints falls back to static hints when disabled
+test("AI hints: show_hints uses static path when disabled", function()
+  local config = require("code-practice.config")
+  assert_eq(config.get("ai_hints.enabled"), false, "ai_hints should be disabled")
+
+  local cp = require("code-practice.init")
+  cp.open_exercise(1)
+
+  local notifications = {}
+  local original_notify = vim.notify
+  vim.notify = function(msg, ...)
+    table.insert(notifications, msg)
+    original_notify(msg, ...)
+  end
+
+  cp.show_hints()
+
+  vim.notify = original_notify
+
+  -- Should not have triggered AI path (no "Generating hint..." notification)
+  local found_generating = false
+  for _, msg in ipairs(notifications) do
+    if msg:find("Generating") then
+      found_generating = true
+    end
+  end
+  assert_eq(found_generating, false, "should not trigger AI hints when disabled")
+end)
+
 -- Summary
 io.write("\n" .. string.rep("=", 44) .. "\n")
 io.write(string.format("  Results: %d passed, %d failed, %d skipped\n", passed, failed, skipped))

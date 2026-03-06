@@ -251,18 +251,7 @@ function code_practice.get_current_exercise_id()
   return vim.b[bufnr].code_practice_exercise_id
 end
 
-function code_practice.show_hints()
-  local exercise_id = code_practice.get_current_exercise_id()
-  if not exercise_id then
-    utils.notify("No exercise associated with this buffer", "error")
-    return
-  end
-
-  local exercise = manager.get_exercise(exercise_id)
-  if not exercise then
-    return
-  end
-
+local function show_static_hints(exercise)
   local hints = exercise.hints
   if not hints or #hints == 0 then
     utils.notify("No hints available for this exercise", "info")
@@ -281,6 +270,56 @@ function code_practice.show_hints()
     if winid and vim.api.nvim_win_is_valid(winid) then
       vim.api.nvim_win_close(winid, true)
     end
+  end)
+end
+
+function code_practice.show_hints()
+  local exercise_id = code_practice.get_current_exercise_id()
+  if not exercise_id then
+    utils.notify("No exercise associated with this buffer", "error")
+    return
+  end
+
+  local exercise = manager.get_exercise(exercise_id)
+  if not exercise then
+    return
+  end
+
+  if not config.get("ai_hints.enabled") then
+    show_static_hints(exercise)
+    return
+  end
+
+  local buffer_content = utils.get_buffer_content(vim.api.nvim_get_current_buf())
+  local hint_bufnr, hint_winid = popup.open_float({ width = 0.5, height = 0.4, title = " AI Hint " })
+  popup.set_lines(hint_bufnr, { "", "  Generating hint..." })
+  popup.map_close(hint_bufnr, function()
+    if hint_winid and vim.api.nvim_win_is_valid(hint_winid) then
+      vim.api.nvim_win_close(hint_winid, true)
+    end
+  end)
+
+  local ai_hints = require("code-practice.ai_hints")
+  ai_hints.generate(exercise, buffer_content, function(hint_text, err)
+    if not hint_bufnr or not vim.api.nvim_buf_is_valid(hint_bufnr) then
+      return
+    end
+
+    if err then
+      utils.notify("AI hint failed: " .. err, "error")
+      if hint_winid and vim.api.nvim_win_is_valid(hint_winid) then
+        vim.api.nvim_win_close(hint_winid, true)
+      end
+      show_static_hints(exercise)
+      return
+    end
+
+    local lines = { "" }
+    for _, line in ipairs(utils.split_lines(hint_text)) do
+      table.insert(lines, "  " .. line)
+    end
+    table.insert(lines, "")
+    popup.set_lines(hint_bufnr, lines)
   end)
 end
 

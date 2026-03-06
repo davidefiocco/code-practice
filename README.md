@@ -1,8 +1,7 @@
 Code Practice (Neovim)
 ======================
 
-A Neovim plugin for browsing coding exercises, solving them, and running tests
-— all without leaving the editor.
+A Neovim plugin for browsing coding exercises, solving them (potentially getting some help from AI 🤖), and running tests — all without leaving the editor.
 
 Features
 --------
@@ -12,6 +11,7 @@ Features
 - Theory questions with answer checking
 - Results window and solution viewer
 - LLM-powered exercise generation (see Tools below)
+- LLM-powered context-aware hints (opt-in, via Hugging Face Inference API)
 
 Installation
 ------------
@@ -156,6 +156,23 @@ uv run tools/generate_exercises.py tools/syllabus.toml --engines my_engines.toml
 
 Or from Neovim: `:CP generate` (prompts for topic, count, difficulty, and engine).
 
+### AI Hints
+
+When enabled, `Ctrl-i` generates a context-aware hint using a Hugging Face model
+instead of showing static hints. The hint is based on your current buffer and the
+reference solution.
+
+Requires `curl` and a HF token (`HF_TOKEN` env var).
+
+```lua
+require("code-practice").setup({
+  ai_hints = {
+    enabled = true,
+    model = "Qwen/Qwen3-Coder-Next",  -- default
+  },
+})
+```
+
 Data
 ----
 Exercises are stored in an SQLite database at `stdpath("data")/code-practice/exercises.db`.
@@ -167,7 +184,6 @@ Roadmap
 - [ ] Random exercise (`:CP random`)
 - [ ] Search widget in browser
 - [ ] Bug-finding exercise type
-- [ ] Context-aware LLM hint based on current buffer code
 - [ ] Live timer with opt-out config
 - [ ] Git theory questions
 - [ ] Haskell engine
