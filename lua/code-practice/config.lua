@@ -50,7 +50,7 @@ config.defaults = {
     },
     exercise = {
       run_tests = "<C-t>",
-      show_hint = "<C-i>",
+      show_hint = "<C-h>",
       view_solution = "<C-l>",
       show_description = "<C-d>",
       next_exercise = "<C-n>",

@@ -146,7 +146,7 @@ via `keymaps.exercise` in config.
     `Ctrl-n`         Next exercise
     `Ctrl-p`         Previous exercise
     `Ctrl-k`         Skip exercise
-    `Ctrl-i`         Show hints
+    `Ctrl-h`         Show hints
     `Ctrl-l`         View solution
     `Ctrl-d`         Show description
     `Ctrl-b`         Open browser
@@ -200,7 +200,7 @@ Options are merged with |vim.tbl_deep_extend()|.
         },
         exercise = {
           run_tests = "<C-t>",
-          show_hint = "<C-i>",
+          show_hint = "<C-h>",
           view_solution = "<C-l>",
           show_description = "<C-d>",
           next_exercise = "<C-n>",

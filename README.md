@@ -120,7 +120,7 @@ single-chord access (configurable via `keymaps.exercise`):
 | `Ctrl-n`  | Next exercise                   |
 | `Ctrl-p`  | Previous exercise               |
 | `Ctrl-k`  | Skip exercise                   |
-| `Ctrl-i`  | Show hints                      |
+| `Ctrl-h`  | Show hints                      |
 | `Ctrl-l`  | View solution (split)           |
 | `Ctrl-d`  | Show description                |
 | `Ctrl-b`  | Open browser                    |
@@ -158,7 +158,7 @@ Or from Neovim: `:CP generate` (prompts for topic, count, difficulty, and engine
 
 ### AI Hints
 
-When enabled, `Ctrl-i` generates a context-aware hint using a Hugging Face model
+When enabled, `Ctrl-h` generates a context-aware hint using a Hugging Face model
 instead of showing static hints. The hint is based on your current buffer and the
 reference solution.
 
