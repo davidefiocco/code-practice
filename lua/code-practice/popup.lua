@@ -54,6 +54,11 @@ function popup.open_float(opts)
 
   popup:mount()
 
+  if popup.winid then
+    vim.api.nvim_set_current_win(popup.winid)
+  end
+  vim.cmd("stopinsert")
+
   return popup.bufnr, popup.winid
 end
 
