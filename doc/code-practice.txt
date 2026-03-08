@@ -181,8 +181,6 @@ Options are merged with |vim.tbl_deep_extend()|.
 
       runner = {
         timeout = 5,            -- seconds per test case
-        show_time = true,
-        auto_save = true,
       },
 
       ai_hints = {
