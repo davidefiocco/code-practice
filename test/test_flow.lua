@@ -875,6 +875,132 @@ test("AI hints: show_hints uses static path when disabled", function()
   assert_eq(found_generating, false, "should not trigger AI hints when disabled")
 end)
 
+-- 43. Popup: open_float focuses window in normal mode, Esc closes it
+test("Popup: open_float focuses in normal mode and Esc closes", function()
+  local popup_mod = require("code-practice.popup")
+  local utils = require("code-practice.utils")
+
+  local bufnr, winid = popup_mod.open_float({ width = 0.4, height = 0.3, title = " Test Popup " })
+  assert_truthy(bufnr, "bufnr nil")
+  assert_truthy(winid, "winid nil")
+
+  assert_eq(vim.api.nvim_get_current_win(), winid, "current window should be the popup")
+  assert_eq(vim.api.nvim_get_mode().mode, "n", "should be in normal mode")
+
+  popup_mod.map_close(bufnr, function()
+    utils.close_win(winid)
+  end)
+
+  vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "x", false)
+
+  assert_truthy(not vim.api.nvim_win_is_valid(winid), "popup window should be closed after Esc")
+end)
+
+-- 44. Importer: theory options with function-like text survive import
+test("Importer: theory options with parenthesised text survive replace import", function()
+  local importer = require("code-practice.importer")
+  local db_mod = require("code-practice.db")
+
+  local plugin_root = vim.fn.fnamemodify(debug.getinfo(1, "S").source:sub(2), ":h:h")
+  local fixture = plugin_root .. "/test/example_exercises.json"
+
+  local counts, err = importer.import(fixture, { replace = true })
+  assert_truthy(counts, "import returned nil: " .. tostring(err))
+  assert_gt(counts.theory_options, 0, "theory_options imported")
+
+  local conn = db_mod.connect()
+  local rows = conn:eval("SELECT COUNT(*) as count FROM theory_options")
+  local total = rows and (rows.count or (rows[1] and rows[1].count)) or 0
+  assert_gt(total, 0, "theory_options should exist after import, got " .. total)
+
+  local problematic = conn:eval(
+    "SELECT * FROM theory_options WHERE option_text LIKE '%(%' ORDER BY exercise_id, option_number"
+  )
+  if type(problematic) == "table" and problematic[1] then
+    for _, row in ipairs(problematic) do
+      assert_truthy(
+        row.option_text and row.option_text ~= "",
+        "option_text should not be empty for exercise " .. row.exercise_id .. " option " .. row.option_number
+      )
+    end
+  end
+end)
+
+-- 45. Theory buffer: options and Answer line are present
+test("Theory buffer: options and Answer line displayed", function()
+  local db_mod = require("code-practice.db")
+  local mgr = require("code-practice.manager")
+
+  local theory = db_mod.get_all_exercises({ engine = "theory" })
+  if #theory == 0 then
+    skip("no theory exercises in seed data")
+  end
+
+  local ex_id = theory[1].id
+  local opts = db_mod.get_theory_options(ex_id)
+  if #opts == 0 then
+    skip("no theory options for exercise " .. ex_id)
+  end
+
+  local bufnr = mgr.open_exercise(ex_id)
+  assert_truthy(bufnr, "buffer nil")
+
+  local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+  local content = table.concat(lines, "\n")
+
+  for _, opt in ipairs(opts) do
+    assert_truthy(
+      content:find(opt.option_text, 1, true),
+      "buffer should contain option " .. opt.option_number .. ": " .. opt.option_text
+    )
+  end
+
+  assert_truthy(content:find("Answer:", 1, true), "buffer should contain Answer: line")
+end)
+
+-- 46. Theory buffer: all options visible after replace import
+test("Theory buffer: options visible after replace import", function()
+  local importer = require("code-practice.importer")
+  local db_mod = require("code-practice.db")
+  local mgr = require("code-practice.manager")
+
+  local plugin_root = vim.fn.fnamemodify(debug.getinfo(1, "S").source:sub(2), ":h:h")
+  local fixture = plugin_root .. "/test/example_exercises.json"
+  local counts, err = importer.import(fixture, { replace = true })
+  assert_truthy(counts, "import returned nil: " .. tostring(err))
+
+  local theory = db_mod.get_all_exercises({ engine = "theory" })
+  if #theory == 0 then
+    skip("no theory exercises after import")
+  end
+
+  local failures = {}
+  for _, ex_row in ipairs(theory) do
+    local opts = db_mod.get_theory_options(ex_row.id)
+    if #opts == 0 then
+      table.insert(failures, string.format("exercise %d (%s): 0 options", ex_row.id, ex_row.title))
+    else
+      local bufnr = mgr.open_exercise(ex_row.id)
+      if bufnr then
+        local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+        local content = table.concat(lines, "\n")
+        for _, opt in ipairs(opts) do
+          if not content:find(opt.option_text, 1, true) then
+            table.insert(
+              failures,
+              string.format("exercise %d option %d: %q not in buffer", ex_row.id, opt.option_number, opt.option_text)
+            )
+          end
+        end
+      end
+    end
+  end
+
+  if #failures > 0 then
+    error("Theory display failures:\n  " .. table.concat(failures, "\n  "))
+  end
+end)
+
 -- Summary
 io.write("\n" .. string.rep("=", 44) .. "\n")
 io.write(string.format("  Results: %d passed, %d failed, %d skipped\n", passed, failed, skipped))
