@@ -1,13 +1,7 @@
 -- Code Practice - Keymap Cheat-Sheet
-local ok, Popup = pcall(require, "nui.popup")
-if not ok then
-  vim.notify("[code-practice] nui.nvim not found. Install MunifTanjim/nui.nvim", vim.log.levels.ERROR)
-  return {}
-end
-
 local config = require("code-practice.config")
 local engines = require("code-practice.engines")
-local popup_util = require("code-practice.popup")
+local popup = require("code-practice.popup")
 
 local help = {}
 
@@ -28,40 +22,8 @@ end
 function help.show()
   local width = math.min(90, vim.o.columns - 4)
   local height = math.min(30, vim.o.lines - 4)
-  local row = math.max(1, math.floor((vim.o.lines - height) / 2))
-  local col = math.max(1, math.floor((vim.o.columns - width) / 2))
 
-  local popup = Popup({
-    relative = "editor",
-    position = {
-      row = row,
-      col = col,
-    },
-    size = {
-      width = width,
-      height = height,
-    },
-    border = {
-      style = "rounded",
-      text = {
-        top = " Keymaps ",
-        top_align = "center",
-      },
-    },
-    buf_options = {
-      modifiable = true,
-      readonly = false,
-    },
-    win_options = {
-      winhighlight = "Normal:Normal,FloatBorder:FloatBorder",
-    },
-  })
-
-  popup:mount()
-  if popup.winid then
-    vim.api.nvim_set_current_win(popup.winid)
-  end
-  vim.cmd("stopinsert")
+  local bufnr, _, close_fn = popup.open_float({ width = width, height = height, title = " Keymaps " })
 
   local km = config.get("keymaps.exercise", {})
 
@@ -122,22 +84,16 @@ function help.show()
     table.insert(lines, el)
   end
 
-  vim.bo[popup.bufnr].modifiable = true
-  vim.api.nvim_buf_set_lines(popup.bufnr, 0, -1, false, lines)
-  vim.bo[popup.bufnr].modifiable = false
+  popup.set_lines(bufnr, lines)
 
   local ns_help = vim.api.nvim_create_namespace("code_practice_help")
   for i, line in ipairs(lines) do
     if line:match("^  [A-Z]") and not line:match("^  See") and not line:match("^  Press") then
-      vim.api.nvim_buf_add_highlight(popup.bufnr, ns_help, "Underlined", i - 1, 0, -1)
+      vim.api.nvim_buf_add_highlight(bufnr, ns_help, "Underlined", i - 1, 0, -1)
     end
   end
 
-  popup_util.map_close(popup.bufnr, function()
-    if popup and popup.winid and vim.api.nvim_win_is_valid(popup.winid) then
-      popup:unmount()
-    end
-  end)
+  popup.map_close(bufnr, close_fn)
 end
 
 return help

@@ -1001,6 +1001,57 @@ test("Theory buffer: options visible after replace import", function()
   end
 end)
 
+-- 47. manager.open_exercise content parity after bunload
+test("Manager: open_exercise content identical after bunload", function()
+  local mgr = require("code-practice.manager")
+
+  local buf1 = mgr.open_exercise(1)
+  assert_truthy(buf1, "first open nil")
+  local lines_before = vim.api.nvim_buf_get_lines(buf1, 0, -1, false)
+
+  mgr.open_exercise(2)
+  vim.cmd("bunload " .. buf1)
+
+  local buf1_again = mgr.open_exercise(1)
+  assert_truthy(buf1_again, "reopen nil")
+  local lines_after = vim.api.nvim_buf_get_lines(buf1_again, 0, -1, false)
+
+  assert_eq(#lines_before, #lines_after, "line count mismatch")
+  for i, line in ipairs(lines_before) do
+    assert_eq(line, lines_after[i], "line " .. i .. " differs")
+  end
+end)
+
+-- 48. manager.open_exercise focuses non-floating window
+test("Manager: open_exercise lands in non-floating window", function()
+  local mgr = require("code-practice.manager")
+
+  local buf = mgr.open_exercise(1)
+  assert_truthy(buf, "open nil")
+
+  local win = vim.api.nvim_get_current_win()
+  local ok_cfg, cfg = pcall(vim.api.nvim_win_get_config, win)
+  local is_floating = ok_cfg and cfg and cfg.relative and cfg.relative ~= ""
+  assert_eq(is_floating, false, "current window should not be floating after open_exercise")
+end)
+
+-- 49. popup.open_float with absolute sizes
+test("Popup: open_float respects absolute width/height", function()
+  local popup_mod = require("code-practice.popup")
+  local utils_mod = require("code-practice.utils")
+
+  local bufnr, winid = popup_mod.open_float({ width = 50, height = 20, title = " Abs Test " })
+  assert_truthy(bufnr, "bufnr nil")
+  assert_truthy(winid, "winid nil")
+
+  local win_width = vim.api.nvim_win_get_width(winid)
+  local win_height = vim.api.nvim_win_get_height(winid)
+  assert_eq(win_width, 50, "width")
+  assert_eq(win_height, 20, "height")
+
+  utils_mod.close_win(winid)
+end)
+
 -- Summary
 io.write("\n" .. string.rep("=", 44) .. "\n")
 io.write(string.format("  Results: %d passed, %d failed, %d skipped\n", passed, failed, skipped))

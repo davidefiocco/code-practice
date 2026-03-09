@@ -65,6 +65,7 @@ config.config = vim.deepcopy(config.defaults)
 
 function config.setup(user_config)
   user_config = user_config or {}
+  config.defaults.engines = build_engine_defaults()
   config.config = vim.tbl_deep_extend("force", config.defaults, user_config)
 
   vim.fn.mkdir(config.config.storage.home, "p")

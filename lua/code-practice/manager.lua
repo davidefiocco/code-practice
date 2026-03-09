@@ -122,6 +122,104 @@ function manager.get_stats()
   return db.get_stats()
 end
 
+local function build_exercise_content(exercise)
+  local lines, add_meta = manager.build_header_lines(exercise, "Exercise")
+  local run_key = config.get("keymaps.exercise.run_tests", "<C-t>")
+
+  local theory_options = nil
+  if exercise.engine == "theory" then
+    theory_options = exercise.options or db.get_theory_options(exercise.id)
+    if theory_options and #theory_options > 0 then
+      add_meta("Options:")
+      for _, opt in ipairs(theory_options) do
+        add_meta(string.format("%d. %s", opt.option_number, opt.option_text))
+      end
+      add_meta("")
+      add_meta("Press 1-" .. #theory_options .. " to select your answer, then " .. run_key .. " to check.")
+    end
+  else
+    add_meta("Modify the code below, then " .. run_key .. " to run tests.")
+  end
+
+  add_meta("")
+  add_meta(string.rep("-", 40))
+  add_meta("")
+
+  local starter = exercise.starter_code or ""
+  if exercise.engine == "theory" and theory_options and #theory_options > 0 then
+    starter = ""
+  end
+  if exercise.engine == "theory" then
+    if starter ~= "" then
+      for _, line in ipairs(utils.split_lines(starter)) do
+        table.insert(lines, line)
+      end
+    end
+    local has_answer_line = false
+    for _, line in ipairs(lines) do
+      if line:match("^[Aa]nswer:") then
+        has_answer_line = true
+        break
+      end
+    end
+    if not has_answer_line then
+      table.insert(lines, "Answer: ")
+    end
+  else
+    for _, line in ipairs(utils.split_lines(starter)) do
+      table.insert(lines, line)
+    end
+  end
+
+  return table.concat(lines, "\n")
+end
+
+local function setup_theory_keymaps(bufnr, exercise)
+  if vim.b[bufnr].code_practice_theory_keymaps then
+    return
+  end
+  vim.b[bufnr].code_practice_theory_keymaps = true
+
+  local opts_by_num = {}
+  for _, opt in ipairs(exercise.options or {}) do
+    opts_by_num[opt.option_number] = opt.option_text
+  end
+
+  for num, text in pairs(opts_by_num) do
+    vim.keymap.set("n", tostring(num), function()
+      local line_count = vim.api.nvim_buf_line_count(bufnr)
+      for i = 0, line_count - 1 do
+        local line = vim.api.nvim_buf_get_lines(bufnr, i, i + 1, false)[1]
+        if line and line:match("^Answer:") then
+          vim.bo[bufnr].modifiable = true
+          vim.api.nvim_buf_set_lines(bufnr, i, i + 1, false, {
+            string.format("Answer: %d  [%s]", num, text),
+          })
+          utils.notify(string.format("Selected option %d: %s", num, text), "info")
+          return
+        end
+      end
+    end, { buffer = bufnr, noremap = true, nowait = true })
+  end
+end
+
+local function is_floating(win)
+  local ok, cfg = pcall(vim.api.nvim_win_get_config, win)
+  return ok and cfg and cfg.relative and cfg.relative ~= ""
+end
+
+local function focus_non_floating_window()
+  if not is_floating(vim.api.nvim_get_current_win()) then
+    return
+  end
+  for _, win in ipairs(vim.api.nvim_list_wins()) do
+    if not is_floating(win) then
+      vim.api.nvim_set_current_win(win)
+      return
+    end
+  end
+end
+
 function manager.open_exercise(id)
   local exercise = manager.get_exercise(id)
   if not exercise then
@@ -150,103 +248,17 @@ function manager.open_exercise(id)
   if needs_content then
     vim.bo[bufnr].modifiable = true
     vim.bo[bufnr].readonly = false
-
-    local lines, add_meta = manager.build_header_lines(exercise, "Exercise")
-    local run_key = config.get("keymaps.exercise.run_tests", "<C-t>")
-
-    local theory_options = nil
-    if exercise.engine == "theory" then
-      theory_options = exercise.options or db.get_theory_options(exercise.id)
-      if theory_options and #theory_options > 0 then
-        add_meta("Options:")
-        for _, opt in ipairs(theory_options) do
-          add_meta(string.format("%d. %s", opt.option_number, opt.option_text))
-        end
-        add_meta("")
-        add_meta("Press 1-" .. #theory_options .. " to select your answer, then " .. run_key .. " to check.")
-      end
-    else
-      add_meta("Modify the code below, then " .. run_key .. " to run tests.")
-    end
-
-    add_meta("")
-    add_meta(string.rep("-", 40))
-    add_meta("")
-
-    local starter = exercise.starter_code or ""
-    if exercise.engine == "theory" and theory_options and #theory_options > 0 then
-      starter = ""
-    end
-    if exercise.engine == "theory" then
-      if starter ~= "" then
-        for _, line in ipairs(utils.split_lines(starter)) do
-          table.insert(lines, line)
-        end
-      end
-      local has_answer_line = false
-      for _, line in ipairs(lines) do
-        if line:match("^[Aa]nswer:") then
-          has_answer_line = true
-          break
-        end
-      end
-      if not has_answer_line then
-        table.insert(lines, "Answer: ")
-      end
-    else
-      for _, line in ipairs(utils.split_lines(starter)) do
-        table.insert(lines, line)
-      end
-    end
-
-    local content = table.concat(lines, "\n")
-    utils.set_buffer_content(bufnr, content)
+    utils.set_buffer_content(bufnr, build_exercise_content(exercise))
   end
 
   vim.b[bufnr].code_practice_exercise_id = id
   vim.b[bufnr].code_practice_engine = exercise.engine
 
-  if exercise.engine == "theory" and not vim.b[bufnr].code_practice_theory_keymaps then
-    vim.b[bufnr].code_practice_theory_keymaps = true
-
-    local opts_by_num = {}
-    for _, opt in ipairs(exercise.options or {}) do
-      opts_by_num[opt.option_number] = opt.option_text
-    end
-
-    for num, text in pairs(opts_by_num) do
-      vim.keymap.set("n", tostring(num), function()
-        local line_count = vim.api.nvim_buf_line_count(bufnr)
-        for i = 0, line_count - 1 do
-          local line = vim.api.nvim_buf_get_lines(bufnr, i, i + 1, false)[1]
-          if line and line:match("^Answer:") then
-            vim.bo[bufnr].modifiable = true
-            vim.api.nvim_buf_set_lines(bufnr, i, i + 1, false, {
-              string.format("Answer: %d  [%s]", num, text),
-            })
-            utils.notify(string.format("Selected option %d: %s", num, text), "info")
-            return
-          end
-        end
-      end, { buffer = bufnr, noremap = true, nowait = true })
-    end
+  if exercise.engine == "theory" then
+    setup_theory_keymaps(bufnr, exercise)
   end
 
-  local current_win = vim.api.nvim_get_current_win()
-  local function is_floating(win)
-    local ok, cfg = pcall(vim.api.nvim_win_get_config, win)
-    return ok and cfg and cfg.relative and cfg.relative ~= ""
-  end
-
-  if is_floating(current_win) then
-    for _, win in ipairs(vim.api.nvim_list_wins()) do
-      if not is_floating(win) then
-        vim.api.nvim_set_current_win(win)
-        break
-      end
-    end
-  end
-
+  focus_non_floating_window()
   vim.api.nvim_set_current_buf(bufnr)
 
   return bufnr

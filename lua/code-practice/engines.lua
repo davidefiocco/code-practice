@@ -23,8 +23,8 @@ engines.registry = {
       enabled = true,
       cmd = "python3",
     },
-    run_cmd = function(cfg)
-      return cfg.cmd or "python3"
+    run_cmd = function(cfg, file)
+      return { cfg.cmd or "python3", file }
     end,
     wrap_test = function(code, input)
       local call = (input or ""):match("^%s*$") and "solution()" or ("solution(" .. input .. ")")

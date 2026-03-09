@@ -98,7 +98,7 @@ Tab completion is supported: type `:CP <Tab>` to explore.
                         schema matches `test/example_exercises.json` in the
                         plugin source.
 
-:CP import! {path}      Replace all existing exercises, test cases, attempts,
+:CP! import {path}      Replace all existing exercises, test cases, attempts,
                         and theory options with the contents of {path}.
 
 :CP generate            Interactively generate exercises via Hugging Face
@@ -146,7 +146,7 @@ via `keymaps.exercise` in config.
     `Ctrl-n`         Next exercise
     `Ctrl-p`         Previous exercise
     `Ctrl-k`         Skip exercise
-    `Ctrl-h`         Show hints
+    `Ctrl-g`         Show hints
     `Ctrl-l`         View solution
     `Ctrl-d`         Show description
     `Ctrl-b`         Open browser

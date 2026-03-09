@@ -43,66 +43,70 @@ vim.api.nvim_create_user_command("CP", function(opts)
       utils.notify("Import failed: " .. (err or "unknown"), "error")
     end
   elseif sub == "generate" then
-    local topic = vim.fn.input("Topic: ")
-    if not topic or topic == "" then
-      return
-    end
-    local count = vim.fn.input("Count [5]: ")
-    count = (count and count ~= "") and count or "5"
-    local difficulty = vim.fn.input("Difficulty (easy/medium/hard) [medium]: ")
-    difficulty = (difficulty and difficulty ~= "") and difficulty or "medium"
-    local engine_names = table.concat(require("code-practice.engines").list(), "/")
-    local engine = vim.fn.input("Engine (" .. engine_names .. ") [python]: ")
-    engine = (engine and engine ~= "") and engine or "python"
+    vim.ui.input({ prompt = "Topic: " }, function(topic)
+      if not topic or topic == "" then
+        return
+      end
+      vim.ui.input({ prompt = "Count (default 5): " }, function(count)
+        count = (count and count ~= "") and count or "5"
+        vim.ui.select({ "easy", "medium", "hard" }, { prompt = "Difficulty:" }, function(difficulty)
+          difficulty = difficulty or "medium"
+          local engine_list = require("code-practice.engines").list()
+          vim.ui.select(engine_list, { prompt = "Engine:" }, function(engine)
+            engine = engine or "python"
 
-    local plugin_dir = vim.fn.fnamemodify(debug.getinfo(1, "S").source:sub(2), ":h:h")
-    local script = plugin_dir .. "/tools/generate_exercises.py"
-    local db_path = require("code-practice.config").get("storage.db_path")
+            local plugin_dir = vim.fn.fnamemodify(debug.getinfo(1, "S").source:sub(2), ":h:h")
+            local script = plugin_dir .. "/tools/generate_exercises.py"
+            local db_path = require("code-practice.config").get("storage.db_path")
 
-    local tmp = vim.fn.tempname() .. ".toml"
-    local toml = string.format(
-      '[[exercises]]\ntopic = "%s"\nengine = "%s"\ndifficulty = "%s"\ncount = %s\n',
-      topic:gsub('"', '\\"'),
-      engine,
-      difficulty,
-      count
-    )
-    vim.fn.writefile(vim.split(toml, "\n"), tmp)
+            local tmp = vim.fn.tempname() .. ".toml"
+            local toml = string.format(
+              '[[exercises]]\ntopic = "%s"\nengine = "%s"\ndifficulty = "%s"\ncount = %s\n',
+              topic:gsub('"', '\\"'),
+              engine,
+              difficulty,
+              count
+            )
+            vim.fn.writefile(vim.split(toml, "\n"), tmp)
 
-    local cmd = { "uv", "run", script, tmp, "--db-path", db_path }
+            local cmd = { "uv", "run", script, tmp, "--db-path", db_path }
 
-    utils.notify("Generating exercises...")
+            utils.notify("Generating exercises...")
 
-    local output_lines = {}
-    vim.fn.jobstart(cmd, {
-      stdout_buffered = true,
-      stderr_buffered = true,
-      on_stdout = function(_, data)
-        if data then
-          vim.list_extend(output_lines, data)
-        end
-      end,
-      on_stderr = function(_, data)
-        if data then
-          vim.list_extend(output_lines, data)
-        end
-      end,
-      on_exit = function(_, exit_code)
-        vim.fn.delete(tmp)
-        vim.schedule(function()
-          local msg = table.concat(output_lines, "\n")
-          if exit_code == 0 then
-            utils.notify(msg)
-            local browser = require("code-practice.browser")
-            if browser.refresh then
-              browser.refresh()
-            end
-          else
-            utils.notify("Generation failed:\n" .. msg, "error")
-          end
+            local output_lines = {}
+            vim.fn.jobstart(cmd, {
+              stdout_buffered = true,
+              stderr_buffered = true,
+              on_stdout = function(_, data)
+                if data then
+                  vim.list_extend(output_lines, data)
+                end
+              end,
+              on_stderr = function(_, data)
+                if data then
+                  vim.list_extend(output_lines, data)
+                end
+              end,
+              on_exit = function(_, exit_code)
+                vim.fn.delete(tmp)
+                vim.schedule(function()
+                  local msg = table.concat(output_lines, "\n")
+                  if exit_code == 0 then
+                    utils.notify(msg)
+                    local browser = require("code-practice.browser")
+                    if browser.refresh then
+                      browser.refresh()
+                    end
+                  else
+                    utils.notify("Generation failed:\n" .. msg, "error")
+                  end
+                end)
+              end,
+            })
+          end)
         end)
-      end,
-    })
+      end)
+    end)
   else
     utils.notify("Unknown subcommand: " .. sub, "warn")
   end

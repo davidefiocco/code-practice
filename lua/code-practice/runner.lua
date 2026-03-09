@@ -95,7 +95,7 @@ local function build_test_result(i, test, jr, timeout_ms)
 end
 
 -- Generic interpreted-engine runner.  Works for any engine that provides
--- `wrap_test(code, input)` and `run_cmd(cfg)` in the registry.
+-- `wrap_test(code, input)` and `run_cmd(cfg, file)` in the registry.
 local function run_interpreted_async(eng, eng_name, exercise_id, code, callback)
   local test_cases = db.get_test_cases(exercise_id)
   if #test_cases == 0 then
@@ -106,7 +106,7 @@ local function run_interpreted_async(eng, eng_name, exercise_id, code, callback)
   local results = {}
   local all_passed = true
   local timeout_ms = config.get("runner.timeout", 5) * 1000
-  local cmd = eng.run_cmd(config.get("engines." .. eng_name, {}))
+  local cfg = config.get("engines." .. eng_name, {})
 
   local function run_case(i)
     if i > #test_cases then
@@ -118,7 +118,7 @@ local function run_interpreted_async(eng, eng_name, exercise_id, code, callback)
     local test = test_cases[i]
     utils.write_file(temp_file, eng.wrap_test(code, test.input or ""))
 
-    local job_id = run_job({ cmd, temp_file }, { timeout_ms = timeout_ms }, function(jr)
+    local job_id = run_job(eng.run_cmd(cfg, temp_file), { timeout_ms = timeout_ms }, function(jr)
       local entry, passed = build_test_result(i, test, jr, timeout_ms)
       if not passed then
         all_passed = false

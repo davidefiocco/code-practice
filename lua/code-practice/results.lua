@@ -3,15 +3,15 @@ local config = require("code-practice.config")
 local popup = require("code-practice.popup")
 
 local results = {}
-results._winid = nil
+results._close_fn = nil
 results._bufnr = nil
 local ns = vim.api.nvim_create_namespace("code_practice_results")
 
 function results.close()
-  if results._winid and vim.api.nvim_win_is_valid(results._winid) then
-    vim.api.nvim_win_close(results._winid, true)
+  if results._close_fn then
+    results._close_fn()
   end
-  results._winid = nil
+  results._close_fn = nil
   results._bufnr = nil
 end
 
@@ -21,13 +21,9 @@ function results.show(result, on_next)
     return
   end
 
-  local bufnr, winid = popup.open_float()
+  local bufnr, _, close_fn = popup.open_float()
   results._bufnr = bufnr
-  results._winid = winid
-  if winid then
-    vim.api.nvim_set_current_win(winid)
-  end
-  vim.cmd("stopinsert")
+  results._close_fn = close_fn
 
   local lines = {}
   local function push(line)
