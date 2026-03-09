@@ -44,7 +44,7 @@ function popup.open_float(opts)
     buf_options.filetype = opts.filetype
   end
 
-  local popup = NuiPopup({
+  local win = NuiPopup({
     relative = "editor",
     position = "50%",
     size = { width = width, height = height },
@@ -52,14 +52,14 @@ function popup.open_float(opts)
     buf_options = buf_options,
   })
 
-  popup:mount()
+  win:mount()
 
-  if popup.winid then
-    vim.api.nvim_set_current_win(popup.winid)
+  if win.winid then
+    vim.api.nvim_set_current_win(win.winid)
   end
   vim.cmd("stopinsert")
 
-  return popup.bufnr, popup.winid
+  return win.bufnr, win.winid
 end
 
 function popup.set_lines(bufnr, lines)
