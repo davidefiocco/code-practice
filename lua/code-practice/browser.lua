@@ -275,6 +275,16 @@ local function update_display()
   vim.bo[preview_buf].modifiable = false
   vim.bo[list_buf].readonly = true
   vim.bo[preview_buf].readonly = true
+
+  local list_win = state.popup.list.winid
+  if
+    list_win
+    and vim.api.nvim_win_is_valid(list_win)
+    and state.selected_index > 0
+    and state.selected_index <= #list_lines
+  then
+    vim.api.nvim_win_set_cursor(list_win, { state.selected_index, 0 })
+  end
 end
 
 function browser.refresh()

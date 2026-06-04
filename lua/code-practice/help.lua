@@ -1,13 +1,7 @@
 -- Code Practice - Keymap Cheat-Sheet
-local ok, Popup = pcall(require, "nui.popup")
-if not ok then
-  vim.notify("[code-practice] nui.nvim not found. Install MunifTanjim/nui.nvim", vim.log.levels.ERROR)
-  return {}
-end
-
 local config = require("code-practice.config")
 local engines = require("code-practice.engines")
-local popup_util = require("code-practice.popup")
+local popup = require("code-practice.popup")
 
 local help = {}
 
@@ -28,42 +22,20 @@ end
 function help.show()
   local width = math.min(90, vim.o.columns - 4)
   local height = math.min(30, vim.o.lines - 4)
-  local row = math.max(1, math.floor((vim.o.lines - height) / 2))
-  local col = math.max(1, math.floor((vim.o.columns - width) / 2))
 
-  local popup = Popup({
-    relative = "editor",
-    position = {
-      row = row,
-      col = col,
-    },
-    size = {
-      width = width,
-      height = height,
-    },
-    border = {
-      style = "rounded",
-      text = {
-        top = " Keymaps ",
-        top_align = "center",
-      },
-    },
-    buf_options = {
-      modifiable = true,
-      readonly = false,
-    },
-    win_options = {
-      winhighlight = "Normal:Normal,FloatBorder:FloatBorder",
-    },
-  })
-
-  popup:mount()
-  if popup.winid then
-    vim.api.nvim_set_current_win(popup.winid)
-  end
-  vim.cmd("stopinsert")
+  local bufnr, _, close_fn = popup.open_float({ width = width, height = height, title = " Keymaps " })
 
   local km = config.get("keymaps.exercise", {})
+  local bkm = config.get("keymaps.browser", {})
+
+  -- Two-column row with the right column aligned to a fixed offset.
+  local function row(lkey, ldesc, rkey, rdesc)
+    local left = "  " .. pad(fmt_key(lkey), 19) .. ldesc
+    if rkey == nil and rdesc == nil then
+      return left
+    end
+    return pad(left, 54) .. pad(fmt_key(rkey), 17) .. (rdesc or "")
+  end
 
   local filter_lines = {}
   for _, name in ipairs(engines.list()) do
@@ -73,21 +45,22 @@ function help.show()
     end
   end
 
+  local open_key = bkm.open_item or bkm.open or "<CR>"
+
   local lines = {
     "",
     "  BROWSER",
     "  " .. string.rep("─", width - 4),
-    "  j / k            Move up / down                     Enter / o        Open exercise",
-    "  e                Filter by Easy difficulty          m                Filter by Medium",
-    "  h                Filter by Hard difficulty          a                Clear all filters",
+    row("j / k", "Move up / down", open_key .. " / o", "Open exercise"),
+    row(bkm.filter_easy or "e", "Filter by Easy difficulty", bkm.filter_medium or "m", "Filter by Medium"),
+    row(bkm.filter_hard or "h", "Filter by Hard difficulty", bkm.filter_all or "a", "Clear all filters"),
   }
 
   for _, fl in ipairs(filter_lines) do
     table.insert(lines, fl)
   end
 
-  table.insert(lines, "  q / Esc          Close browser")
-  table.insert(lines, "  ?                Show this cheat-sheet")
+  table.insert(lines, row(bkm.close or "q", "Close browser", "?", "Show this cheat-sheet"))
 
   local exercise_lines = {
     "",
@@ -122,22 +95,16 @@ function help.show()
     table.insert(lines, el)
   end
 
-  vim.bo[popup.bufnr].modifiable = true
-  vim.api.nvim_buf_set_lines(popup.bufnr, 0, -1, false, lines)
-  vim.bo[popup.bufnr].modifiable = false
+  popup.set_lines(bufnr, lines)
 
   local ns_help = vim.api.nvim_create_namespace("code_practice_help")
   for i, line in ipairs(lines) do
     if line:match("^  [A-Z]") and not line:match("^  See") and not line:match("^  Press") then
-      vim.api.nvim_buf_add_highlight(popup.bufnr, ns_help, "Underlined", i - 1, 0, -1)
+      vim.api.nvim_buf_add_highlight(bufnr, ns_help, "Underlined", i - 1, 0, -1)
     end
   end
 
-  popup_util.map_close(popup.bufnr, function()
-    if popup and popup.winid and vim.api.nvim_win_is_valid(popup.winid) then
-      popup:unmount()
-    end
-  end)
+  popup.map_close(bufnr, close_fn)
 end
 
 return help

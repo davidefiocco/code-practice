@@ -31,8 +31,6 @@ config.defaults = {
 
   runner = {
     timeout = 5,
-    show_time = true,
-    auto_save = true,
   },
 
   ai_hints = {
@@ -52,7 +50,7 @@ config.defaults = {
     },
     exercise = {
       run_tests = "<C-t>",
-      show_hint = "<C-i>",
+      show_hint = "<C-g>",
       view_solution = "<C-l>",
       show_description = "<C-d>",
       next_exercise = "<C-n>",
@@ -67,6 +65,7 @@ config.config = vim.deepcopy(config.defaults)
 
 function config.setup(user_config)
   user_config = user_config or {}
+  config.defaults.engines = build_engine_defaults()
   config.config = vim.tbl_deep_extend("force", config.defaults, user_config)
 
   vim.fn.mkdir(config.config.storage.home, "p")

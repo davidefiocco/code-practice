@@ -4,6 +4,20 @@ local utils = require("code-practice.utils")
 
 local importer = {}
 
+-- sqlite.lua's stmt:bind treats strings matching "^[%S]+%(.*%)$" as SQL
+-- functions and skips binding them (see kkharji/sqlite.lua#87).  Values like
+-- "O(n)" or "O(n log n)" trigger this and silently become NULL.  We work
+-- around it by formatting values directly into the SQL string.
+local function sql_escape(val)
+  if val == nil then
+    return "NULL"
+  elseif type(val) == "number" then
+    return tostring(val)
+  else
+    return "'" .. tostring(val):gsub("'", "''") .. "'"
+  end
+end
+
 function importer.import(json_path, opts)
   opts = opts or {}
 
@@ -101,14 +115,13 @@ function importer.import(json_path, opts)
         local opt_ok, opt_err = pcall(
           conn.eval,
           conn,
-          [[INSERT INTO theory_options (exercise_id, option_number, option_text, is_correct)
-            VALUES (:eid, :num, :text, :correct)]],
-          {
-            eid = ex.id,
-            num = opt.option_number,
-            text = opt.option_text,
-            correct = opt.is_correct == 1 and 1 or 0,
-          }
+          string.format(
+            "INSERT INTO theory_options (exercise_id, option_number, option_text, is_correct) VALUES (%s, %s, %s, %s)",
+            sql_escape(ex.id),
+            sql_escape(opt.option_number),
+            sql_escape(opt.option_text),
+            sql_escape((opt.is_correct == 1 or opt.is_correct == true) and 1 or 0)
+          )
         )
         if opt_ok then
           counts.theory_options = counts.theory_options + 1

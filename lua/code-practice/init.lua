@@ -239,11 +239,9 @@ function code_practice.show_stats()
     "",
   }
 
-  local bufnr, winid = popup.open_float({ width = 0.3, height = 0.3, title = " Statistics " })
+  local bufnr, _, close_fn = popup.open_float({ width = 0.3, height = 0.3, title = " Statistics " })
   popup.set_lines(bufnr, lines)
-  popup.map_close(bufnr, function()
-    utils.close_win(winid)
-  end)
+  popup.map_close(bufnr, close_fn)
 end
 
 function code_practice.get_current_exercise_id()
@@ -264,11 +262,9 @@ local function show_static_hints(exercise)
     table.insert(lines, "")
   end
 
-  local bufnr, winid = popup.open_float({ width = 0.5, height = 0.4, title = " Hints " })
+  local bufnr, _, close_fn = popup.open_float({ width = 0.5, height = 0.4, title = " Hints " })
   popup.set_lines(bufnr, lines)
-  popup.map_close(bufnr, function()
-    utils.close_win(winid)
-  end)
+  popup.map_close(bufnr, close_fn)
 end
 
 function code_practice.show_hints()
@@ -289,11 +285,9 @@ function code_practice.show_hints()
   end
 
   local buffer_content = utils.get_buffer_content(vim.api.nvim_get_current_buf())
-  local hint_bufnr, hint_winid = popup.open_float({ width = 0.5, height = 0.4, title = " AI Hint " })
+  local hint_bufnr, _, hint_close = popup.open_float({ width = 0.5, height = 0.4, title = " AI Hint " })
   popup.set_lines(hint_bufnr, { "", "  Generating hint..." })
-  popup.map_close(hint_bufnr, function()
-    utils.close_win(hint_winid)
-  end)
+  popup.map_close(hint_bufnr, hint_close)
 
   local ai_hints = require("code-practice.ai_hints")
   ai_hints.generate(exercise, buffer_content, function(hint_text, err)
@@ -303,7 +297,7 @@ function code_practice.show_hints()
 
     if err then
       utils.notify("AI hint failed: " .. err, "error")
-      utils.close_win(hint_winid)
+      hint_close()
       show_static_hints(exercise)
       return
     end
@@ -370,11 +364,9 @@ function code_practice.show_description()
     footer = "Press q, <Esc>, or <Enter> to close",
   })
 
-  local bufnr, winid = popup.open_float({ filetype = "markdown", title = " Description " })
+  local bufnr, _, close_fn = popup.open_float({ filetype = "markdown", title = " Description " })
   popup.set_lines(bufnr, lines)
-  popup.map_close(bufnr, function()
-    utils.close_win(winid)
-  end)
+  popup.map_close(bufnr, close_fn)
 end
 
 function code_practice.show_help()

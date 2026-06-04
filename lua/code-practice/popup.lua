@@ -23,10 +23,10 @@ function popup.open_float(opts)
   opts = opts or {}
   local ui_border = require("code-practice.config").get("ui.border", "rounded")
 
-  local width_ratio = opts.width or 0.6
-  local height_ratio = opts.height or 0.6
-  local width = math.floor(vim.o.columns * width_ratio)
-  local height = math.floor(vim.o.lines * height_ratio)
+  local w = opts.width or 0.6
+  local h = opts.height or 0.6
+  local width = w >= 1 and math.floor(w) or math.floor(vim.o.columns * w)
+  local height = h >= 1 and math.floor(h) or math.floor(vim.o.lines * h)
 
   local border = { style = opts.border or ui_border }
   if opts.title then
@@ -44,7 +44,7 @@ function popup.open_float(opts)
     buf_options.filetype = opts.filetype
   end
 
-  local popup = NuiPopup({
+  local win = NuiPopup({
     relative = "editor",
     position = "50%",
     size = { width = width, height = height },
@@ -52,9 +52,20 @@ function popup.open_float(opts)
     buf_options = buf_options,
   })
 
-  popup:mount()
+  win:mount()
 
-  return popup.bufnr, popup.winid
+  if win.winid then
+    vim.api.nvim_set_current_win(win.winid)
+  end
+  vim.cmd("stopinsert")
+
+  local function close_fn()
+    if win.winid and vim.api.nvim_win_is_valid(win.winid) then
+      vim.api.nvim_win_close(win.winid, true)
+    end
+  end
+
+  return win.bufnr, win.winid, close_fn
 end
 
 function popup.set_lines(bufnr, lines)
