@@ -57,18 +57,24 @@ function results.show(result, on_next)
     for i, r in ipairs(result.results) do
       local status = r.passed and "✓ PASS" or "✗ FAIL"
       local duration = r.duration and string.format(" (%.0fms)", r.duration) or ""
-      push(string.format("Test %d: %s%s", i, status, duration))
+      local hidden_tag = r.hidden and " (hidden)" or ""
+      push(string.format("Test %d: %s%s%s", i, status, hidden_tag, duration))
 
       if r.error then
         append_block("  Error: ", r.error)
         push("")
       elseif not r.passed then
-        if r.input then
-          append_block("  Input: ", r.input)
+        if r.hidden then
+          push("  (hidden test — input and expected output withheld)")
+          push("")
+        else
+          if r.input then
+            append_block("  Input: ", r.input)
+          end
+          append_block("  Expected: ", r.expected)
+          append_block("  Got: ", r.actual)
+          push("")
         end
-        append_block("  Expected: ", r.expected)
-        append_block("  Got: ", r.actual)
-        push("")
       end
     end
   elseif result.correct_option then

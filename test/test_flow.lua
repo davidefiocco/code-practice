@@ -1052,6 +1052,74 @@ test("Popup: open_float respects absolute width/height", function()
   utils_mod.close_win(winid)
 end)
 
+-- 50. Results: hidden failing test must not leak its input/expected/actual
+test("Results: hidden failing test does not leak details", function()
+  local results = require("code-practice.results")
+
+  local result = {
+    passed = false,
+    results = {
+      { test_num = 1, passed = true, hidden = false, duration = 1, input = "[1]", expected = "1", actual = "1" },
+      {
+        test_num = 2,
+        passed = false,
+        hidden = true,
+        duration = 1,
+        input = "SECRET_INPUT",
+        expected = "SECRET_EXPECTED",
+        actual = "WRONG_ACTUAL",
+      },
+    },
+  }
+
+  results.show(result, nil)
+  local bufnr = results._bufnr
+  assert_truthy(bufnr, "results buffer nil")
+  local content = table.concat(vim.api.nvim_buf_get_lines(bufnr, 0, -1, false), "\n")
+  results.close()
+
+  -- The failed hidden test should still be listed as a failure...
+  assert_truthy(content:find("Test 2", 1, true), "hidden test should still appear as a result row")
+  -- ...but none of its internals may be revealed.
+  assert_truthy(not content:find("SECRET_INPUT", 1, true), "hidden test input leaked")
+  assert_truthy(not content:find("SECRET_EXPECTED", 1, true), "hidden test expected output leaked")
+  assert_truthy(not content:find("WRONG_ACTUAL", 1, true), "hidden test actual output leaked")
+end)
+
+-- 51. Help: browser cheat-sheet reflects configured keymaps
+test("Help: browser cheat-sheet reflects configured keymaps", function()
+  local config = require("code-practice.config")
+  local help = require("code-practice.help")
+  local utils = require("code-practice.utils")
+
+  local original = config.config.keymaps.browser
+  config.config.keymaps.browser = {
+    open_item = "<F6>",
+    filter_easy = "<F2>",
+    filter_medium = "<F3>",
+    filter_hard = "<F4>",
+    filter_all = "<F5>",
+    close = "<F7>",
+  }
+
+  local ok, err = pcall(function()
+    help.show()
+    local bufnr = vim.api.nvim_get_current_buf()
+    local winid = vim.api.nvim_get_current_win()
+    local content = table.concat(vim.api.nvim_buf_get_lines(bufnr, 0, -1, false), "\n")
+    utils.close_win(winid)
+
+    for _, key in ipairs({ "<F2>", "<F3>", "<F4>", "<F5>", "<F6>", "<F7>" }) do
+      assert_truthy(content:find(key, 1, true), "cheat-sheet missing configured browser key " .. key)
+    end
+  end)
+
+  config.config.keymaps.browser = original
+  if not ok then
+    error(err)
+  end
+end)
+
 -- Summary
 io.write("\n" .. string.rep("=", 44) .. "\n")
 io.write(string.format("  Results: %d passed, %d failed, %d skipped\n", passed, failed, skipped))

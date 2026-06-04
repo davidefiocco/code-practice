@@ -26,6 +26,16 @@ function help.show()
   local bufnr, _, close_fn = popup.open_float({ width = width, height = height, title = " Keymaps " })
 
   local km = config.get("keymaps.exercise", {})
+  local bkm = config.get("keymaps.browser", {})
+
+  -- Two-column row with the right column aligned to a fixed offset.
+  local function row(lkey, ldesc, rkey, rdesc)
+    local left = "  " .. pad(fmt_key(lkey), 19) .. ldesc
+    if rkey == nil and rdesc == nil then
+      return left
+    end
+    return pad(left, 54) .. pad(fmt_key(rkey), 17) .. (rdesc or "")
+  end
 
   local filter_lines = {}
   for _, name in ipairs(engines.list()) do
@@ -35,21 +45,22 @@ function help.show()
     end
   end
 
+  local open_key = bkm.open_item or bkm.open or "<CR>"
+
   local lines = {
     "",
     "  BROWSER",
     "  " .. string.rep("─", width - 4),
-    "  j / k            Move up / down                     Enter / o        Open exercise",
-    "  e                Filter by Easy difficulty          m                Filter by Medium",
-    "  h                Filter by Hard difficulty          a                Clear all filters",
+    row("j / k", "Move up / down", open_key .. " / o", "Open exercise"),
+    row(bkm.filter_easy or "e", "Filter by Easy difficulty", bkm.filter_medium or "m", "Filter by Medium"),
+    row(bkm.filter_hard or "h", "Filter by Hard difficulty", bkm.filter_all or "a", "Clear all filters"),
   }
 
   for _, fl in ipairs(filter_lines) do
     table.insert(lines, fl)
   end
 
-  table.insert(lines, "  q / Esc          Close browser")
-  table.insert(lines, "  ?                Show this cheat-sheet")
+  table.insert(lines, row(bkm.close or "q", "Close browser", "?", "Show this cheat-sheet"))
 
   local exercise_lines = {
     "",
